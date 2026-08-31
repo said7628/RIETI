@@ -8,44 +8,53 @@
 
 ## Índice
 
-1. Qué es RIETI
-2. Arquitectura general
-3. Estructura del repositorio
-4. Qué contiene cada carpeta
-5. Reglas generales del proyecto
-6. Programas necesarios
-7. Git y GitHub desde cero
-8. Configuración inicial de Git
-9. Cómo obtener el proyecto por primera vez
-10. Cómo abrir Android en Android Studio
-11. Cómo inicializar Android por primera vez
-12. Cómo inicializar la Web por primera vez
-13. Cómo inicializar la API por primera vez
-14. Base de datos
-15. Variables de entorno y secretos
-16. Flujo de trabajo diario con Git
-17. Ramas
-18. Commits
-19. Push
-20. Pull Requests
-21. Cómo actualizar tu computadora después de un merge
-22. Pull vs Push
-23. Cambios locales y `git stash`
-24. Conflictos de Git
-25. Comandos más importantes
-26. Convenciones de nombres
-27. Reglas por componente
-28. Seguridad
-29. GitHub Actions
-30. Infraestructura AWS
-31. Cómo integrar una funcionalidad completa
-32. Checklist antes de subir código
-33. Errores comunes
-34. Comandos rápidos
-35. Regla de oro
+1. [Qué es RIETI](#s1)
+2. [Arquitectura general](#s2)
+3. [Estructura del repositorio](#s3)
+4. [Qué contiene cada carpeta](#s4)
+5. [Reglas generales del proyecto](#s5)
+6. [Programas necesarios](#s6)
+7. [Git y GitHub desde cero](#s7)
+8. [Configuración inicial de Git](#s8)
+9. [Cómo obtener el proyecto por primera vez](#s9)
+10. [Cómo abrir Android en Android Studio](#s10)
+11. [Cómo inicializar Android por primera vez](#s11)
+12. [Cómo inicializar la Web por primera vez](#s12)
+13. [Cómo inicializar la API por primera vez](#s13)
+14. [Base de datos](#s14)
+15. [Variables de entorno y secretos](#s15)
+16. [Flujo de trabajo diario con Git](#s16)
+17. [Ramas](#s17)
+18. [Commits](#s18)
+19. [Push](#s19)
+20. [Pull Requests](#s20)
+21. [Cómo actualizar tu computadora después de un merge](#s21)
+22. [Pull vs Push](#s22)
+23. [Cambios locales y `git stash`](#s23)
+24. [Conflictos de Git](#s24)
+25. [Comandos de Git más importantes](#s25)
+26. [Convenciones de nombres](#s26)
+27. [Reglas específicas por componente](#s27)
+28. [Seguridad](#s28)
+29. [GitHub Actions](#s29)
+30. [Infraestructura AWS](#s30)
+31. [Cómo integrar una funcionalidad completa](#s31)
+32. [Checklist antes de subir código](#s32)
+33. [Errores comunes](#s33)
+34. [Comandos rápidos](#s34)
+35. [Regla de oro](#s35)
+
+### Anexos
+
+- [Anexo A — `.gitignore` recomendado](#anexo-a)
+- [Anexo B — Clonar usando Android Studio](#anexo-b)
+- [Anexo C — Configuración recomendada de GitHub para proteger `main`](#anexo-c)
+- [Anexo D — Qué hacer justo después de clonar RIETI](#anexo-d)
+- [Anexo E — Docker](#anexo-e)
 
 ---
 
+<a id="s1"></a>
 # 1. Qué es RIETI
 
 RIETI es una solución digital para la captura, canalización, seguimiento y análisis de reportes relacionados con posibles casos de trabajo infantil.
@@ -70,6 +79,7 @@ Otros servicios de AWS pueden agregarse únicamente cuando exista una necesidad 
 
 ---
 
+<a id="s2"></a>
 # 2. Arquitectura general
 
 ```mermaid
@@ -110,6 +120,7 @@ Las reglas de negocio y permisos deben ser validados por el backend, aunque la i
 
 ---
 
+<a id="s3"></a>
 # 3. Estructura del repositorio
 
 RIETI utiliza **un único repositorio Git** organizado como monorepo.
@@ -165,6 +176,7 @@ Los archivos `.gitkeep` existen únicamente porque Git no guarda carpetas vacía
 
 ---
 
+<a id="s4"></a>
 # 4. Qué contiene cada carpeta
 
 ## `apps/android`
@@ -364,6 +376,7 @@ build Android
 
 ---
 
+<a id="s5"></a>
 # 5. Reglas generales del proyecto
 
 ## 5.1 No trabajar directamente sobre `main`
@@ -442,6 +455,7 @@ No solucionar permisos únicamente escondiendo botones.
 
 ---
 
+<a id="s6"></a>
 # 6. Programas necesarios
 
 Cada desarrollador necesita como mínimo:
@@ -490,6 +504,7 @@ Visual Studio Code
 
 ---
 
+<a id="s7"></a>
 # 7. Git y GitHub desde cero
 
 Git y GitHub cumplen papeles distintos: Git lleva el historial local y GitHub permite compartir ese historial con el resto del equipo.
@@ -575,6 +590,7 @@ feat/algo → main
 
 ---
 
+<a id="s8"></a>
 # 8. Configuración inicial de Git
 
 Se hace **una sola vez por computadora**.
@@ -598,67 +614,71 @@ git config --global core.autocrlf true
 
 ---
 
+<a id="s9"></a>
 # 9. Cómo obtener el proyecto por primera vez
 
-## Importante
-
-Si el repositorio ya existe en GitHub, **NO crees otro repositorio ni otro proyecto Git**.
-
-Debes **clonarlo**.
+El repositorio oficial de RIETI es:
 
 ```text
-GitHub → Clone → trabajar
+https://github.com/said7628/RIETI.git
 ```
 
-## Paso 1 — Copiar URL del repositorio
+Cada integrante del equipo debe **clonar este repositorio** en su computadora. No se crea un proyecto Git diferente ni una copia manual de las carpetas.
 
-En GitHub:
+## Paso 1 — Elegir dónde guardar RIETI
 
-```text
-Code → HTTPS → copiar URL
-```
+Abre PowerShell, Git Bash o la terminal que prefieras y muévete a la carpeta donde quieras guardar el proyecto.
 
-Parecida a:
-
-```text
-https://github.com/ORGANIZACION/rieti.git
-```
-
-## Paso 2 — Elegir dónde guardar el proyecto
-
-Ejemplo en PowerShell:
+Ejemplo en Windows:
 
 ```powershell
 cd C:\Users\TU_USUARIO\Documents
 ```
 
-## Paso 3 — Clonar
+> No necesitas crear manualmente una carpeta `RIETI`. `git clone` la creará.
+
+## Paso 2 — Clonar el repositorio
+
+Ejecuta:
 
 ```bash
-git clone https://github.com/ORGANIZACION/rieti.git
+git clone https://github.com/said7628/RIETI.git
 ```
 
-## Paso 4 — Entrar
+Git descargará el repositorio completo y creará una carpeta llamada:
+
+```text
+RIETI
+```
+
+## Paso 3 — Entrar al repositorio
 
 ```bash
-cd rieti
+cd RIETI
 ```
 
-## Paso 5 — Verificar remoto
+## Paso 4 — Verificar que estás conectado al repositorio correcto
 
 ```bash
 git remote -v
 ```
 
-Debe aparecer `origin` para fetch y push.
+Debe aparecer algo equivalente a:
 
-## Paso 6 — Verificar estado
+```text
+origin  https://github.com/said7628/RIETI.git (fetch)
+origin  https://github.com/said7628/RIETI.git (push)
+```
+
+`origin` es el nombre que Git utiliza normalmente para referirse al repositorio remoto de GitHub.
+
+## Paso 5 — Verificar la rama y el estado
 
 ```bash
 git status
 ```
 
-Si aparece:
+En una copia recién clonada debería mostrar algo parecido a:
 
 ```text
 On branch main
@@ -666,10 +686,43 @@ Your branch is up to date with 'origin/main'.
 nothing to commit, working tree clean
 ```
 
-está correcto.
+También puedes verificar la rama actual con:
+
+```bash
+git branch
+```
+
+Debe aparecer:
+
+```text
+* main
+```
+
+## Paso 6 — A partir de aquí
+
+Ya tienes RIETI en tu computadora.
+
+No ejecutes:
+
+```bash
+git init
+```
+
+dentro de RIETI. El repositorio ya fue clonado y Git ya está configurado dentro de esa carpeta.
+
+A partir de aquí puedes:
+
+- abrir `apps/android` en Android Studio;
+- abrir la raíz `RIETI` o `apps/web` / `services/api` en VS Code;
+- instalar las dependencias necesarias;
+- hacer `git pull` para recibir cambios;
+- crear una rama para comenzar una tarea.
+
+El flujo normal de trabajo se explica en la sección [16. Flujo de trabajo diario con Git](#s16).
 
 ---
 
+<a id="s10"></a>
 # 10. Cómo abrir Android en Android Studio
 
 RIETI es un monorepo. El proyecto Android está en:
@@ -698,6 +751,7 @@ View → Tool Windows → Terminal
 
 ---
 
+<a id="s11"></a>
 # 11. Cómo inicializar Android por primera vez
 
 > Esta sección la ejecuta **una sola persona una sola vez**. Después de que el proyecto Android se suba a GitHub, el resto solo lo clonará.
@@ -799,6 +853,7 @@ git status
 Revisar los archivos y subir la inicialización acordada.
 
 ---
+<a id="s12"></a>
 # 12. Cómo inicializar la Web por primera vez
 
 > Se ejecuta una sola vez para crear el proyecto React.
@@ -860,6 +915,7 @@ git status
 
 ---
 
+<a id="s13"></a>
 # 13. Cómo inicializar la API por primera vez
 
 > Se ejecuta una sola vez para crear el proyecto del backend.
@@ -912,6 +968,7 @@ cd ../..
 
 ---
 
+<a id="s14"></a>
 # 14. Base de datos
 
 La base inicial se encuentra en:
@@ -980,6 +1037,7 @@ cambio SQL
 
 ---
 
+<a id="s15"></a>
 # 15. Variables de entorno y secretos
 
 Los secretos **NO se suben a GitHub**.
@@ -1030,6 +1088,7 @@ En AWS Lambda, los secretos reales deben administrarse mediante configuración s
 
 ---
 
+<a id="s16"></a>
 # 16. Flujo de trabajo diario con Git
 
 Supongamos que vas a implementar el login Android.
@@ -1130,6 +1189,7 @@ Otro integrante revisa y después se hace merge.
 
 ---
 
+<a id="s17"></a>
 # 17. Ramas
 
 ## Rama principal
@@ -1181,6 +1241,7 @@ refactor/api-report-service
 
 ---
 
+<a id="s18"></a>
 # 18. Commits
 
 Un commit debe representar un cambio lógico.
@@ -1220,6 +1281,7 @@ infra     infraestructura
 
 ---
 
+<a id="s19"></a>
 # 19. Push
 
 `push` envía commits locales a GitHub.
@@ -1248,6 +1310,7 @@ Si aparece un error que parece requerir `--force`, detenerse y pedir revisión.
 
 ---
 
+<a id="s20"></a>
 # 20. Pull Requests
 
 Un Pull Request permite revisar código antes de integrarlo.
@@ -1296,6 +1359,7 @@ Antes de merge revisar:
 
 ---
 
+<a id="s21"></a>
 # 21. Cómo actualizar tu computadora después de un merge
 
 Si otra persona terminó una funcionalidad y su PR ya fue integrado:
@@ -1324,6 +1388,7 @@ git branch -d feat/android-login
 
 ---
 
+<a id="s22"></a>
 # 22. Pull vs Push
 
 
@@ -1364,6 +1429,7 @@ flowchart LR
 
 ---
 
+<a id="s23"></a>
 # 23. Cambios locales y `git stash`
 
 Primero:
@@ -1415,6 +1481,7 @@ git restore .
 
 ---
 
+<a id="s24"></a>
 # 24. Conflictos de Git
 
 Un conflicto ocurre cuando Git no puede combinar automáticamente cambios de dos personas.
@@ -1443,6 +1510,7 @@ Si no entiendes el conflicto:
 > No borres archivos completos, no uses force push y no hagas reset aleatoriamente. Pide ayuda antes de continuar.
 
 ---
+<a id="s25"></a>
 # 25. Comandos de Git más importantes
 
 ## Ver estado
@@ -1559,6 +1627,7 @@ git stash pop
 
 ---
 
+<a id="s26"></a>
 # 26. Convenciones de nombres
 
 ## Código
@@ -1604,6 +1673,7 @@ Usar nombres descriptivos.
 
 ---
 
+<a id="s27"></a>
 # 27. Reglas específicas por componente
 
 ## Android
@@ -1648,6 +1718,7 @@ Usar nombres descriptivos.
 
 ---
 
+<a id="s28"></a>
 # 28. Seguridad
 
 Este proyecto maneja información sensible.
@@ -1692,6 +1763,7 @@ Las operaciones sensibles deben poder rastrearse.
 
 ---
 
+<a id="s29"></a>
 # 29. GitHub Actions
 
 La carpeta:
@@ -1740,6 +1812,7 @@ No es obligatorio configurarlos el primer día.
 
 ---
 
+<a id="s30"></a>
 # 30. Infraestructura AWS
 
 La arquitectura objetivo en AWS se entiende mejor así:
@@ -1839,6 +1912,7 @@ tokens
 
 ---
 
+<a id="s31"></a>
 # 31. Cómo integrar una funcionalidad completa
 
 Ejemplo: crear un reporte.
@@ -1897,6 +1971,7 @@ también debe modificarse.
 
 ---
 
+<a id="s32"></a>
 # 32. Checklist antes de subir código
 
 Antes de `git push`:
@@ -1917,6 +1992,7 @@ Antes de `git push`:
 
 ---
 
+<a id="s33"></a>
 # 33. Errores comunes
 
 ## `fatal: not a git repository`
@@ -2014,6 +2090,7 @@ No importa si la carpeta ahora contiene archivos reales. `.gitkeep` solo servía
 
 ---
 
+<a id="s34"></a>
 # 34. Comandos rápidos
 
 ## Empezar una tarea nueva
@@ -2062,6 +2139,7 @@ git log --oneline -10
 
 ---
 
+<a id="s35"></a>
 # 35. Regla de oro
 
 Si no sabes qué está pasando en Git:
@@ -2119,6 +2197,7 @@ Después de eso, el desarrollo debe realizarse mediante ramas y Pull Requests.
 
 ---
 
+<a id="anexo-a"></a>
 # Anexo A — `.gitignore` recomendado
 
 El archivo `.gitignore` está en la raíz del monorepo y sirve para evitar que Git intente subir archivos locales, compilados, dependencias o secretos.
@@ -2215,68 +2294,8 @@ Si un secreto real llegó a GitHub, no basta con eliminar el archivo: la credenc
 
 ---
 
-# Anexo B — Inicialización del repositorio GitHub (solo responsable inicial)
-
-Esta sección **NO la ejecuta cada integrante**. Se utiliza únicamente si el repositorio todavía no existe en GitHub.
-
-## 1. Crear repositorio en GitHub
-
-En GitHub:
-
-```text
-New repository
-→ nombre: rieti
-→ elegir Private si corresponde
-→ Create repository
-```
-
-Si ya tienes archivos locales, es preferible crear el repositorio remoto sin generar archivos adicionales que puedan chocar con los locales.
-
-## 2. Desde la raíz local de RIETI
-
-```bash
-git init
-```
-
-Agregar archivos:
-
-```bash
-git add .
-```
-
-Primer commit:
-
-```bash
-git commit -m "chore: initialize RIETI monorepo"
-```
-
-Usar `main` como rama principal:
-
-```bash
-git branch -M main
-```
-
-Conectar GitHub:
-
-```bash
-git remote add origin https://github.com/ORGANIZACION/rieti.git
-```
-
-Subir:
-
-```bash
-git push -u origin main
-```
-
-A partir de ese momento, los demás desarrolladores **no ejecutan `git init`**. Ellos ejecutan:
-
-```bash
-git clone https://github.com/ORGANIZACION/rieti.git
-```
-
----
-
-# Anexo C — Clonar usando Android Studio
+<a id="anexo-b"></a>
+# Anexo B — Clonar usando Android Studio
 
 En la pantalla inicial de Android Studio también existe:
 
@@ -2288,9 +2307,14 @@ Puede utilizarse, pero para este proyecto se recomienda aprender primero el fluj
 
 Si utilizas `Clone Repository`:
 
-1. Copia la URL HTTPS del repositorio GitHub.
-2. En Android Studio selecciona `Clone Repository`.
-3. Pega la URL.
+1. En Android Studio selecciona `Clone Repository`.
+2. Usa esta URL:
+
+```text
+https://github.com/said7628/RIETI.git
+```
+
+3. Pega la URL en el campo del repositorio.
 4. Elige una carpeta local.
 5. Espera a que termine el clone.
 6. Si Android Studio intenta abrir la raíz completa como proyecto Gradle, ciérrala.
@@ -2305,9 +2329,10 @@ Una vez que Android ya fue inicializado, **los compañeros NO deben usar `New Pr
 
 ---
 
-# Anexo D — Configuración recomendada de GitHub para proteger `main`
+<a id="anexo-c"></a>
+# Anexo C — Configuración recomendada de GitHub para proteger `main`
 
-Cuando el repositorio ya esté funcionando, es recomendable proteger `main` para evitar pushes accidentales.
+Es recomendable proteger `main` para evitar pushes accidentales.
 
 En GitHub, según la interfaz disponible:
 
@@ -2341,15 +2366,16 @@ GitHub puede rechazarlo.
 
 ---
 
-# Anexo E — Qué hacer justo después de clonar RIETI
+<a id="anexo-d"></a>
+# Anexo D — Qué hacer justo después de clonar RIETI
 
-Una vez que Android, Web y API ya estén inicializados en GitHub, una computadora nueva se prepara así.
+Para preparar una computadora nueva después de clonar RIETI:
 
 ## 1. Clonar
 
 ```bash
-git clone https://github.com/ORGANIZACION/rieti.git
-cd rieti
+git clone https://github.com/said7628/RIETI.git
+cd RIETI
 ```
 
 ## 2. Revisar estado
@@ -2416,7 +2442,8 @@ Después crear la rama de la tarea.
 
 ---
 
-# Anexo F — Docker
+<a id="anexo-e"></a>
+# Anexo E — Docker
 
 RIETI **no utiliza Docker actualmente**.
 
