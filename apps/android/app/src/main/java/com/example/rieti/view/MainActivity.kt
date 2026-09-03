@@ -1,4 +1,4 @@
-package com.example.rieti
+package com.example.rieti.view
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
