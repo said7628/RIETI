@@ -1,3 +1,21 @@
-.idea/RIETI.iml
-.idea/markdown.xml
-.idea/caches/deviceStreaming.xml
+# IDEs
+.idea/
+**/.idea/
+*.iml
+
+# Gradle
+.gradle/
+**/.gradle/
+build/
+**/build/
+
+# Configuración local
+local.properties
+
+# Android generated
+captures/
+.externalNativeBuild/
+.cxx/
+
+# macOS
+.DS_Store
