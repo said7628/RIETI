@@ -1,127 +1,207 @@
-# Guía para trabajar modo claro / oscuro con MVVM en Kotlin
+# Guía de equipo: modo claro / oscuro con MVVM en Kotlin (basado en nuestras pantallas)
 
-La idea de esta guía es que todos trabajemos las pantallas de la misma forma para que al final no tengamos problemas cuando juntemos todo.
+Hice esta guía para que todos trabajemos igual y no terminemos arreglando colores a lo loco cuando juntemos las pantallas.
 
-Cada quien va a hacer diferentes pantallas en **Kotlin + Jetpack Compose**, pero todos tenemos que respetar la misma estructura para que el modo claro y el modo oscuro funcionen en toda la app sin tener que hacer dos versiones de cada pantalla.
+Esta vez sí la estoy aterrizando a **las pantallas que ya tenemos**. Tomé como referencia las 4 que compartí:
 
-También vamos a usar **MVVM**, porque es el modelo que estamos viendo en clase.
+- **Inicio oscuro**
+- **Inicio claro**
+- **Login oscuro**
+- **Login claro**
 
----
-
-## 1. La idea general
-
-No vamos a hacer esto:
-
-```text
-Login claro
-Login oscuro
-
-Home claro
-Home oscuro
-
-Perfil claro
-Perfil oscuro
-```
-
-Eso sería duplicar trabajo y además se volvería un problema cuando juntemos todo.
-
-Vamos a hacer **una sola pantalla** y esa pantalla va a tomar sus colores del tema global.
-
-Más o menos así:
-
-```text
-                ThemeViewModel
-                      |
-                      v
-                   AppTheme
-                      |
-          -------------------------
-          |           |           |
-          v           v           v
-       Login        Home        Perfil
-```
-
-Entonces, si la app está en claro, todas las pantallas usan la paleta clara.
-
-Si la app está en oscuro, todas usan la paleta oscura.
-
-La pantalla como tal no cambia.
+Entonces la idea ya no es hablar de colores genéricos, sino de **nuestros colores reales**:  
+**negro / blanco**, **rosa-magenta**, **teal/turquesa** y algunos tonos **mint/cian muy claros** para ciertos botones en oscuro.
 
 ---
 
-# 2. ¿Dónde entra MVVM?
+# 1. Qué vamos a hacer y qué NO vamos a hacer
 
-Vamos a respetar la estructura que vimos en clase:
+## NO vamos a hacer esto
+
+```text
+LoginClaro.kt
+LoginOscuro.kt
+
+HomeClaro.kt
+HomeOscuro.kt
+```
+
+Ni tampoco esto dentro de cada pantalla:
+
+```kotlin
+if (darkMode) {
+    fondo = Color.Black
+} else {
+    fondo = Color.White
+}
+```
+
+Porque eso hace que cada quien resuelva el modo oscuro como quiera y luego todo queda inconsistente.
+
+---
+
+## SÍ vamos a hacer esto
+
+Vamos a tener:
+
+- una sola pantalla;
+- un tema global;
+- un `ViewModel` que guarde el modo seleccionado;
+- y todas las pantallas van a usar `MaterialTheme.colorScheme`.
+
+O sea:
+
+```text
+ThemeViewModel
+      |
+      v
+   AppTheme
+      |
+      +---- LoginScreen
+      +---- HomeScreen
+      +---- SettingsScreen
+      +---- etc
+```
+
+Entonces si el modo cambia, no cambiamos la pantalla, cambia el tema.
+
+---
+
+# 2. Cómo se ve nuestra identidad visual ahorita
+
+Con base en las pantallas que compartí, la app trae esta lógica visual:
+
+## En modo claro
+
+- fondo general blanco o casi blanco;
+- texto principal negro;
+- encabezados / líneas de acento en rosa-magenta;
+- botones principales en turquesa / teal;
+- detalles decorativos en rosa.
+
+## En modo oscuro
+
+- fondo general negro;
+- texto principal blanco;
+- el bloque superior sigue usando el degradado rosa;
+- los acentos rosa siguen apareciendo;
+- los botones principales se van a un tono muy claro tipo mint/cian;
+- algunos campos o botones secundarios se mantienen claros para contrastar.
+
+Entonces sí: el modo oscuro **no es solo invertir blanco por negro**.  
+Tenemos una identidad bastante marcada y hay que respetarla.
+
+---
+
+# 3. Los colores base que sí vamos a tomar como referencia
+
+No tengo el Figma exacto aquí, así que estos valores son **aproximados a lo que se ve en las pantallas**, pero ya van muchísimo más alineados al diseño real.
+
+## Paleta base de RETRI
+
+### Rosas / magentas
+```text
+BrandPinkStrong   ≈ #E61B72
+BrandPink         ≈ #F03586
+BrandPinkSoft     ≈ #F48BB4
+BrandPinkVerySoft ≈ #F9C3D8
+```
+
+### Teal / turquesa
+```text
+BrandTealDark     ≈ #2F9F95
+BrandTeal         ≈ #36B8AB
+BrandTealLight    ≈ #34C7B7
+BrandMint         ≈ #C9F7F4
+```
+
+### Neutros
+```text
+PureBlack         ≈ #000000
+DarkSurface       ≈ #0A0A0A
+White             ≈ #FFFFFF
+LightSurface      ≈ #FDFDFD
+LightGrayLine     ≈ #E8E8E8
+DarkGrayText      ≈ #1A1A1A
+```
+
+> Si después nos pasan los hex exactos, solo los cambiamos en `Color.kt` y listo.
+
+---
+
+# 4. Cómo lo aterrizamos a tema claro y oscuro
+
+## Modo claro
+
+La idea de claro es esta:
+
+- `background`: blanco
+- `surface`: blanco
+- `onBackground`: negro
+- `onSurface`: negro
+- `primary`: teal
+- `onPrimary`: blanco
+- `secondary`: rosa o rosa suave dependiendo del componente
+- `outline`: rosa suave o gris muy tenue según el caso
+
+## Modo oscuro
+
+La idea de oscuro es esta:
+
+- `background`: negro
+- `surface`: negro o casi negro
+- `onBackground`: blanco
+- `onSurface`: blanco
+- `primary`: mint/cian claro para CTA
+- `onPrimary`: negro o muy oscuro
+- `secondary`: rosa fuerte
+- `outline`: rosa o gris oscuro según componente
+
+---
+
+# 5. Dónde entra MVVM
+
+Vamos a usar la estructura que estamos viendo en clase:
 
 ```text
 MODEL <----> VIEWMODEL <----> VIEW
 ```
 
-Aplicado al tema quedaría así:
+Aplicado al tema sería así:
 
 ```mermaid
 flowchart LR
     M["MODEL\nThemeMode"] --> VM["VIEWMODEL\nThemeViewModel"]
-    VM --> V["VIEW\nMainActivity / Screens"]
+    VM --> V["VIEW\nMainActivity + Screens"]
     V --> VM
-    T["Theme.kt / Color.kt"] --> V
+    T["Theme.kt + Color.kt"] --> V
 ```
-
-La idea es sencilla:
-
-### Model
-
-Aquí definimos los posibles modos:
-
-```text
-SYSTEM
-LIGHT
-DARK
-```
-
-### ViewModel
-
-Aquí guardamos cuál de esos modos está seleccionado.
-
-Por ejemplo:
-
-```text
-DARK
-```
-
-### View
-
-La vista observa el estado del ViewModel.
-
-Si recibe:
-
-```text
-DARK
-```
-
-usa la paleta oscura.
-
-Si recibe:
-
-```text
-LIGHT
-```
-
-usa la paleta clara.
-
-Si recibe:
-
-```text
-SYSTEM
-```
-
-usa el tema que tenga configurado el celular.
 
 ---
 
-# 3. Estructura de carpetas
+# 6. Responsabilidad de cada capa
 
-Para que todos trabajemos igual, vamos a usar algo parecido a esto:
+## Model
+Aquí definimos qué modos existen.
+
+```text
+SYSTEM
+LIGHT
+DARK
+```
+
+## ViewModel
+Aquí guardamos qué modo está seleccionado y exponemos el estado.
+
+## View
+Aquí observamos el estado y dibujamos la UI.
+
+## Theme
+Aquí viven los colores reales y cómo se traducen a `MaterialTheme`.
+
+---
+
+# 7. Estructura recomendada
 
 ```text
 app/
@@ -136,13 +216,11 @@ app/
     │
     ├── view/
     │   ├── App.kt
-    │   │
     │   ├── screens/
-    │   │   ├── LoginScreen.kt
     │   │   ├── HomeScreen.kt
-    │   │   ├── ProfileScreen.kt
+    │   │   ├── LoginScreen.kt
+    │   │   ├── RegisterScreen.kt
     │   │   └── SettingsScreen.kt
-    │   │
     │   └── components/
     │
     ├── ui/
@@ -154,17 +232,9 @@ app/
     └── MainActivity.kt
 ```
 
-No importa si el nombre de alguna carpeta cambia un poco en nuestro proyecto, pero la separación sí debe mantenerse.
-
 ---
 
-# 4. Model: `ThemeMode.kt`
-
-Primero necesitamos representar las tres opciones de tema.
-
-```text
-model/ThemeMode.kt
-```
+# 8. Model: `ThemeMode.kt`
 
 ```kotlin
 package com.example.proyecto.model
@@ -176,29 +246,9 @@ enum class ThemeMode {
 }
 ```
 
-Con esto tenemos:
-
-```text
-SYSTEM -> sigue el tema del celular
-LIGHT  -> fuerza modo claro
-DARK   -> fuerza modo oscuro
-```
-
-La opción inicial puede ser:
-
-```kotlin
-ThemeMode.SYSTEM
-```
-
 ---
 
-# 5. Estado del tema
-
-Ahora necesitamos un estado que pueda observar la vista.
-
-```text
-viewmodel/ThemeUiState.kt
-```
+# 9. Estado del tema: `ThemeUiState.kt`
 
 ```kotlin
 package com.example.proyecto.viewmodel
@@ -210,25 +260,9 @@ data class ThemeUiState(
 )
 ```
 
-Esto es básicamente el estado actual del tema.
-
-Por ahora solo tiene una cosa:
-
-```text
-themeMode
-```
-
-pero después podría tener más opciones de apariencia si las necesitamos.
-
 ---
 
-# 6. ViewModel
-
-Ahora hacemos el ViewModel.
-
-```text
-viewmodel/ThemeViewModel.kt
-```
+# 10. ViewModel: `ThemeViewModel.kt`
 
 ```kotlin
 package com.example.proyecto.viewmodel
@@ -254,31 +288,9 @@ class ThemeViewModel : ViewModel() {
 }
 ```
 
-Aquí estamos usando el mismo concepto que vimos con `StateFlow`.
-
-Tenemos:
-
-```kotlin
-private val _uiState
-```
-
-que puede modificar el ViewModel.
-
-Y exponemos:
-
-```kotlin
-val uiState
-```
-
-para que la vista lo pueda observar.
-
-La vista no debería modificar `_uiState` directamente.
-
 ---
 
-# 7. Flujo del cambio de tema
-
-Cuando alguien cambie el tema va a pasar esto:
+# 11. Flujo del cambio de tema
 
 ```mermaid
 sequenceDiagram
@@ -288,102 +300,118 @@ sequenceDiagram
     participant M as MainActivity
     participant T as AppTheme
 
-    U->>S: Selecciona modo oscuro
-    S->>VM: setThemeMode(DARK)
-    VM->>VM: Cambia ThemeUiState
-    VM-->>M: StateFlow manda el nuevo estado
-    M->>T: darkTheme = true
-    T-->>U: La app se vuelve oscura
+    U->>S: Selecciona Claro / Oscuro / Sistema
+    S->>VM: setThemeMode(...)
+    VM->>VM: actualiza ThemeUiState
+    VM-->>M: StateFlow emite nuevo estado
+    M->>T: resuelve darkTheme
+    T-->>U: toda la app cambia
 ```
 
-Lo importante es que **SettingsScreen no cambia los colores**.
-
-Solo dice:
-
-```text
-quiero DARK
-```
-
-y el resto lo resuelve el sistema de tema.
+La pantalla de ajustes no se pone a cambiar colores.  
+Solo manda el evento.
 
 ---
 
-# 8. Colores globales
+# 12. `Color.kt` ya aterrizado a nuestro diseño
 
-Vamos a tener un solo archivo con la paleta.
-
-```text
-ui/theme/Color.kt
-```
-
-Ejemplo:
+Aquí sí dejo una propuesta mucho más pegada a las pantallas que compartí.
 
 ```kotlin
 package com.example.proyecto.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Modo claro
+// ========= BRAND / ACCENTS =========
+val BrandPinkStrong = Color(0xFFE61B72)
+val BrandPink = Color(0xFFF03586)
+val BrandPinkSoft = Color(0xFFF48BB4)
+val BrandPinkVerySoft = Color(0xFFF9C3D8)
 
-val LightPrimary = Color(0xFF415F91)
-val LightOnPrimary = Color(0xFFFFFFFF)
+val BrandTealDark = Color(0xFF2F9F95)
+val BrandTeal = Color(0xFF36B8AB)
+val BrandTealLight = Color(0xFF34C7B7)
+val BrandMint = Color(0xFFC9F7F4)
 
-val LightSecondary = Color(0xFF565F71)
-val LightOnSecondary = Color(0xFFFFFFFF)
+val PureBlack = Color(0xFF000000)
+val DarkSurfaceBase = Color(0xFF0A0A0A)
+val PureWhite = Color(0xFFFFFFFF)
+val LightSurfaceBase = Color(0xFFFDFDFD)
+val LightGrayLine = Color(0xFFE8E8E8)
+val DarkText = Color(0xFF1A1A1A)
 
-val LightBackground = Color(0xFFF9F9FF)
-val LightOnBackground = Color(0xFF191C20)
+// ========= LIGHT =========
+val LightPrimary = BrandTeal
+val LightOnPrimary = PureWhite
 
-val LightSurface = Color(0xFFFFFFFF)
-val LightOnSurface = Color(0xFF191C20)
+val LightSecondary = BrandPink
+val LightOnSecondary = PureWhite
 
-val LightSurfaceVariant = Color(0xFFE1E2EC)
-val LightOnSurfaceVariant = Color(0xFF44474E)
+val LightBackground = PureWhite
+val LightOnBackground = DarkText
 
-val LightOutline = Color(0xFF74777F)
+val LightSurface = LightSurfaceBase
+val LightOnSurface = DarkText
+
+val LightSurfaceVariant = Color(0xFFFCEAF1)
+val LightOnSurfaceVariant = BrandPinkStrong
+
+val LightOutline = BrandPinkSoft
 
 val LightError = Color(0xFFBA1A1A)
-val LightOnError = Color(0xFFFFFFFF)
+val LightOnError = PureWhite
 
+// ========= DARK =========
+val DarkPrimary = BrandMint
+val DarkOnPrimary = PureBlack
 
-// Modo oscuro
+val DarkSecondary = BrandPink
+val DarkOnSecondary = PureWhite
 
-val DarkPrimary = Color(0xFFA9C7FF)
-val DarkOnPrimary = Color(0xFF0A305F)
+val DarkBackground = PureBlack
+val DarkOnBackground = PureWhite
 
-val DarkSecondary = Color(0xFFBEC6DC)
-val DarkOnSecondary = Color(0xFF283141)
+val DarkSurface = DarkSurfaceBase
+val DarkOnSurface = PureWhite
 
-val DarkBackground = Color(0xFF111318)
-val DarkOnBackground = Color(0xFFE2E2E9)
+val DarkSurfaceVariant = Color(0xFF1A1A1A)
+val DarkOnSurfaceVariant = BrandPinkVerySoft
 
-val DarkSurface = Color(0xFF191C20)
-val DarkOnSurface = Color(0xFFE2E2E9)
-
-val DarkSurfaceVariant = Color(0xFF44474E)
-val DarkOnSurfaceVariant = Color(0xFFC4C6D0)
-
-val DarkOutline = Color(0xFF8E9099)
+val DarkOutline = BrandPink
 
 val DarkError = Color(0xFFFFB4AB)
 val DarkOnError = Color(0xFF690005)
 ```
 
-Los colores son de ejemplo.
+---
 
-Cuando ya tengamos el diseño final se cambian aquí y listo.
+# 13. Nota importante sobre el degradado rosa del encabezado
 
-Lo importante es que **las pantallas no tengan sus propios colores sueltos**.
+En las pantallas se ve clarísimo que el bloque superior trae un **degradado rosa**.
+
+Ese degradado no conviene tratarlo como `background` general de toda la app, sino como un recurso visual de secciones específicas.
+
+O sea, para el bloque superior de Inicio o Login podemos hacer algo así:
+
+```kotlin
+Brush.verticalGradient(
+    colors = listOf(
+        BrandPinkStrong,
+        BrandPinkSoft
+    )
+)
+```
+
+Entonces:
+
+- el fondo general de pantalla lo controla `background`;
+- y el bloque hero / encabezado usa su propio `Brush`.
+
+Eso lo hace mucho más fiel a lo que ya tenemos.
 
 ---
 
-# 9. `Theme.kt`
-
-Ahora conectamos esos colores con Material 3.
-
-```text
-ui/theme/Theme.kt
-```
+# 14. `Theme.kt`
 
 ```kotlin
 package com.example.proyecto.ui.theme
@@ -394,7 +422,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val LightColorScheme = lightColorScheme(
-
     primary = LightPrimary,
     onPrimary = LightOnPrimary,
 
@@ -417,7 +444,6 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-
     primary = DarkPrimary,
     onPrimary = DarkOnPrimary,
 
@@ -444,13 +470,9 @@ fun AppTheme(
     darkTheme: Boolean,
     content: @Composable () -> Unit
 ) {
-
     val colorScheme =
-        if (darkTheme) {
-            DarkColorScheme
-        } else {
-            LightColorScheme
-        }
+        if (darkTheme) DarkColorScheme
+        else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
@@ -460,48 +482,9 @@ fun AppTheme(
 }
 ```
 
-Aquí básicamente estamos diciendo:
-
-```text
-darkTheme = false
-        ↓
-LightColorScheme
-```
-
-o:
-
-```text
-darkTheme = true
-        ↓
-DarkColorScheme
-```
-
 ---
 
-# 10. Importante: no usar colores dinámicos
-
-Material 3 puede usar colores dinámicos del celular en Android 12 o superior.
-
-Para este proyecto mejor no.
-
-La razón es que queremos que todos veamos la misma app.
-
-Si usamos colores dinámicos, cada celular podría usar colores diferentes dependiendo del fondo o configuración del usuario.
-
-Entonces evitamos:
-
-```kotlin
-dynamicDarkColorScheme(...)
-dynamicLightColorScheme(...)
-```
-
-y usamos nuestra paleta.
-
----
-
-# 11. MainActivity
-
-Aquí conectamos el ViewModel con el tema.
+# 15. MainActivity
 
 ```kotlin
 package com.example.proyecto
@@ -526,34 +509,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-
             val themeState by
                 themeViewModel.uiState.collectAsState()
 
-            val systemDarkTheme =
-                isSystemInDarkTheme()
-
             val useDarkTheme =
                 when (themeState.themeMode) {
-
-                    ThemeMode.SYSTEM ->
-                        systemDarkTheme
-
-                    ThemeMode.LIGHT ->
-                        false
-
-                    ThemeMode.DARK ->
-                        true
+                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
                 }
 
             AppTheme(
                 darkTheme = useDarkTheme
             ) {
-
                 App(
                     themeMode = themeState.themeMode,
-                    onThemeModeChange =
-                        themeViewModel::setThemeMode
+                    onThemeModeChange = themeViewModel::setThemeMode
                 )
             }
         }
@@ -561,364 +532,185 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
-Aquí ya tenemos todo conectado.
-
-```text
-ThemeViewModel
-      |
-      v
-ThemeUiState
-      |
-      v
-MainActivity
-      |
-      v
-AppTheme
-      |
-      v
-Toda la aplicación
-```
-
 ---
 
-# 12. ¿Por qué `isSystemInDarkTheme()` está aquí?
+# 16. Regla más importante para todos
 
-Porque esto tiene que ver con Compose y con cómo está configurado visualmente el dispositivo.
-
-No necesitamos meterlo al ViewModel.
-
-El ViewModel solo tiene que saber:
-
-```text
-SYSTEM
-LIGHT
-DARK
-```
-
-Si es `SYSTEM`, la vista revisa el modo actual del celular usando:
-
-```kotlin
-isSystemInDarkTheme()
-```
-
----
-
-# 13. La regla más importante para todos
-
-No usar colores directos dentro de las pantallas.
+No meter colores duros en las pantallas.
 
 ## MAL
 
 ```kotlin
-Text(
-    text = "Hola",
-    color = Color.Black
-)
+.background(Color.White)
 ```
 
 ```kotlin
-Box(
-    modifier = Modifier
-        .background(Color.White)
-)
+.background(Color.Black)
 ```
 
 ```kotlin
-Modifier.border(
-    1.dp,
-    Color.LightGray
-)
+color = Color.Magenta
 ```
 
-Tampoco:
-
 ```kotlin
-Color(0xFFFFFFFF)
-Color(0xFF000000)
+border = BorderStroke(1.dp, Color.LightGray)
 ```
 
-metidos directamente dentro de una pantalla.
-
-Porque en cuanto cambiemos a modo oscuro, eso se queda igual.
-
----
-
-# 14. Cómo hacerlo bien
-
-Para los fondos:
+## BIEN
 
 ```kotlin
-MaterialTheme.colorScheme.background
+.background(MaterialTheme.colorScheme.background)
 ```
 
-Para texto sobre el fondo:
-
 ```kotlin
-MaterialTheme.colorScheme.onBackground
+color = MaterialTheme.colorScheme.onBackground
 ```
 
-Para tarjetas:
-
 ```kotlin
-MaterialTheme.colorScheme.surface
+containerColor = MaterialTheme.colorScheme.primary
 ```
 
-Para texto dentro de tarjetas:
-
 ```kotlin
-MaterialTheme.colorScheme.onSurface
-```
-
-Para elementos secundarios:
-
-```kotlin
-MaterialTheme.colorScheme.surfaceVariant
-```
-
-Para texto secundario:
-
-```kotlin
-MaterialTheme.colorScheme.onSurfaceVariant
-```
-
-Para botones principales:
-
-```kotlin
-MaterialTheme.colorScheme.primary
-```
-
-Para texto o iconos encima de esos botones:
-
-```kotlin
-MaterialTheme.colorScheme.onPrimary
-```
-
-Para bordes:
-
-```kotlin
-MaterialTheme.colorScheme.outline
+color = MaterialTheme.colorScheme.outline
 ```
 
 ---
 
-# 15. Tabla rápida
+# 17. Tabla rápida para el equipo
 
-| Si necesito... | Uso |
+| Si necesito... | Usar |
 |---|---|
-| Fondo de pantalla | `background` |
-| Texto sobre fondo | `onBackground` |
-| Tarjeta | `surface` |
-| Texto dentro de tarjeta | `onSurface` |
-| Área secundaria | `surfaceVariant` |
-| Texto secundario | `onSurfaceVariant` |
-| Botón principal | `primary` |
-| Texto/icono del botón | `onPrimary` |
-| Botón secundario | `secondary` |
-| Texto del botón secundario | `onSecondary` |
-| Borde | `outline` |
-| Error | `error` |
-| Texto sobre error | `onError` |
+| fondo de pantalla | `background` |
+| texto sobre fondo | `onBackground` |
+| tarjeta o contenedor | `surface` |
+| texto dentro de contenedor | `onSurface` |
+| botón principal | `primary` |
+| texto del botón principal | `onPrimary` |
+| acento secundario | `secondary` |
+| texto/acento secundario | `onSecondary` |
+| variante o bloque secundario | `surfaceVariant` |
+| texto secundario | `onSurfaceVariant` |
+| líneas o bordes | `outline` |
 
 ---
 
-# 16. Ejemplo de una pantalla bien hecha
+# 18. Cómo se traduce esto a nuestras pantallas
+
+## Inicio claro
+- fondo general blanco;
+- textos negros;
+- botones teal;
+- acentos rosa;
+- bloque superior con degradado rosa.
+
+## Inicio oscuro
+- fondo general negro;
+- textos blancos;
+- CTA principal en mint/cian claro;
+- botón secundario claro;
+- acentos rosa;
+- bloque superior con el mismo degradado rosa.
+
+## Login claro
+- fondo blanco;
+- labels en negro;
+- líneas y enlaces rosa;
+- inputs con acento teal;
+- botón principal teal.
+
+## Login oscuro
+- fondo negro;
+- labels en blanco;
+- inputs claros;
+- botón principal mint/cian claro;
+- acentos rosa;
+- enlaces rosa.
+
+---
+
+# 19. Ejemplo de pantalla bien hecha
 
 ```kotlin
 @Composable
-fun ProfileScreen() {
-
+fun LoginScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 MaterialTheme.colorScheme.background
             )
-            .padding(24.dp)
+            .padding(16.dp)
     ) {
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            BrandPinkStrong,
+                            BrandPinkSoft
+                        )
+                    )
+                )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
-            text = "Mi perfil",
-            color =
-                MaterialTheme.colorScheme.onBackground,
-            style =
-                MaterialTheme.typography.headlineMedium
+            text = "Correo",
+            color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(
-            modifier = Modifier.height(16.dp)
+        OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth()
         )
 
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor =
-                    MaterialTheme.colorScheme.surface
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = {},
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-
-                Text(
-                    text = "Nombre",
-                    color =
-                        MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = "Descripción",
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text("Iniciar Sesión")
         }
     }
 }
 ```
 
-Esta pantalla funciona igual en claro y oscuro.
+---
 
-No tiene que preguntar qué tema está activo.
+# 20. Ojo con el degradado y decoraciones circulares rosas
+
+En las pantallas también se ven formas tipo arcos / círculos rosas.
+
+Eso no tiene por qué vivir dentro del `colorScheme` como si fuera color funcional.
+
+Eso puede estar mejor como:
+
+- un componente decorativo;
+- un asset;
+- o un canvas / dibujo propio.
+
+O sea:
+
+- `background`, `primary`, `surface`, etc. = colores funcionales;
+- arcos rosas decorativos = recurso visual del diseño.
+
+No mezclar ambas cosas.
 
 ---
 
-# 17. Lo que realmente está pasando
+# 21. Selector de tema
 
-Por ejemplo, la pantalla usa esto:
-
-```kotlin
-MaterialTheme.colorScheme.background
-```
-
-En modo claro:
-
-```text
-background -> LightBackground
-```
-
-En modo oscuro:
-
-```text
-background -> DarkBackground
-```
-
-La pantalla sigue usando exactamente la misma línea de código.
-
-```mermaid
-flowchart TD
-    S["Pantalla"] --> C["colorScheme.background"]
-
-    C -->|Modo claro| L["LightBackground"]
-    C -->|Modo oscuro| D["DarkBackground"]
-```
-
----
-
-# 18. Botones, Cards, TextFields, iconos y bordes
-
-En muchos componentes Material 3 ya toma los colores del tema automáticamente.
-
-Por ejemplo un botón normal:
-
-```kotlin
-Button(
-    onClick = { }
-) {
-    Text("Continuar")
-}
-```
-
-Si necesitamos definirlo manualmente:
-
-```kotlin
-Button(
-    onClick = { },
-    colors = ButtonDefaults.buttonColors(
-        containerColor =
-            MaterialTheme.colorScheme.primary,
-        contentColor =
-            MaterialTheme.colorScheme.onPrimary
-    )
-) {
-    Text("Continuar")
-}
-```
-
-Card:
-
-```kotlin
-Card(
-    colors = CardDefaults.cardColors(
-        containerColor =
-            MaterialTheme.colorScheme.surface
-    )
-) {
-
-    Text(
-        text = "Contenido",
-        color =
-            MaterialTheme.colorScheme.onSurface
-    )
-}
-```
-
-TextField:
-
-```kotlin
-OutlinedTextField(
-    value = text,
-    onValueChange = { text = it },
-    label = {
-        Text("Correo")
-    }
-)
-```
-
-Icono:
-
-```kotlin
-Icon(
-    imageVector = Icons.Default.Home,
-    contentDescription = "Inicio",
-    tint =
-        MaterialTheme.colorScheme.onSurface
-)
-```
-
-Borde:
-
-```kotlin
-Modifier.border(
-    width = 1.dp,
-    color =
-        MaterialTheme.colorScheme.outline
-)
-```
-
----
-
-# 19. Imágenes
-
-Aquí sí hay que tener cuidado.
-
-Una fotografía normal no necesita cambiar con el modo oscuro.
-
-Pero cosas como logos, iconos PNG o ilustraciones sí pueden dar problemas si ya traen fondo blanco.
-
-Mejor usar cuando se pueda:
-
-```text
-SVG
-VectorDrawable
-PNG transparente
-Material Icons
-```
-
----
-
-# 20. Selector del tema
-
-En Configuración podemos poner algo así:
+En ajustes podemos usar esto:
 
 ```text
 Apariencia
@@ -936,46 +728,23 @@ fun ThemeSelector(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit
 ) {
-
     Column {
-
-        Text(
-            text = "Apariencia",
-            style =
-                MaterialTheme.typography.titleLarge
-        )
-
         ThemeOption(
-            text = "Usar configuración del dispositivo",
-            selected =
-                themeMode == ThemeMode.SYSTEM,
-            onClick = {
-                onThemeModeChange(
-                    ThemeMode.SYSTEM
-                )
-            }
+            text = "Sistema",
+            selected = themeMode == ThemeMode.SYSTEM,
+            onClick = { onThemeModeChange(ThemeMode.SYSTEM) }
         )
 
         ThemeOption(
             text = "Claro",
-            selected =
-                themeMode == ThemeMode.LIGHT,
-            onClick = {
-                onThemeModeChange(
-                    ThemeMode.LIGHT
-                )
-            }
+            selected = themeMode == ThemeMode.LIGHT,
+            onClick = { onThemeModeChange(ThemeMode.LIGHT) }
         )
 
         ThemeOption(
             text = "Oscuro",
-            selected =
-                themeMode == ThemeMode.DARK,
-            onClick = {
-                onThemeModeChange(
-                    ThemeMode.DARK
-                )
-            }
+            selected = themeMode == ThemeMode.DARK,
+            onClick = { onThemeModeChange(ThemeMode.DARK) }
         )
     }
 }
@@ -983,263 +752,109 @@ fun ThemeSelector(
 
 ---
 
-# 21. Estado y eventos
+# 22. Preview claro y oscuro
 
-Esto también sirve para entender mejor MVVM.
-
-El estado sería:
+Cada pantalla debería traer ambos previews.
 
 ```kotlin
-data class ThemeUiState(
-    val themeMode: ThemeMode
-)
-```
-
-El evento es cuando el usuario toca una opción.
-
-Por ejemplo:
-
-```text
-Usuario toca "Oscuro"
-```
-
-La vista manda:
-
-```kotlin
-themeViewModel.setThemeMode(
-    ThemeMode.DARK
-)
-```
-
-El ViewModel actualiza el estado y Compose lo observa con:
-
-```kotlin
-val themeState by
-    themeViewModel.uiState.collectAsState()
-```
-
-Ese es el flujo.
-
----
-
-# 22. Qué le toca a cada quien
-
-Para no hacernos conflictos innecesarios en Git, no todos deberíamos estar modificando los archivos del tema.
-
-Una persona puede encargarse de:
-
-```text
-ThemeMode.kt
-ThemeUiState.kt
-ThemeViewModel.kt
-Color.kt
-Theme.kt
-```
-
-Y cada quien trabaja principalmente en:
-
-```text
-view/screens/SuPantalla.kt
-```
-
-Si alguien necesita un color que no existe, primero lo comentamos y lo agregamos globalmente si hace falta.
-
-No meter colores nuevos directamente dentro de una pantalla porque sí.
-
----
-
-# 23. Preview claro y oscuro
-
-Cada pantalla debería tener un preview para los dos temas.
-
-Claro:
-
-```kotlin
-@Preview(
-    name = "Profile - Light",
-    showBackground = true
-)
+@Preview(name = "Login Light", showBackground = true)
 @Composable
-private fun ProfileLightPreview() {
-
-    AppTheme(
-        darkTheme = false
-    ) {
-        ProfileScreen()
+private fun LoginLightPreview() {
+    AppTheme(darkTheme = false) {
+        LoginScreen()
     }
 }
 ```
 
-Oscuro:
-
 ```kotlin
-@Preview(
-    name = "Profile - Dark",
-    showBackground = true
-)
+@Preview(name = "Login Dark", showBackground = true)
 @Composable
-private fun ProfileDarkPreview() {
-
-    AppTheme(
-        darkTheme = true
-    ) {
-        ProfileScreen()
+private fun LoginDarkPreview() {
+    AppTheme(darkTheme = true) {
+        LoginScreen()
     }
 }
 ```
 
-Así podemos revisar ambas versiones desde Android Studio sin cambiar toda la configuración.
+---
+
+# 23. Qué le toca a cada quien
+
+Para evitar conflictos:
+
+## Una persona se encarga de
+- `Color.kt`
+- `Theme.kt`
+- `ThemeMode.kt`
+- `ThemeUiState.kt`
+- `ThemeViewModel.kt`
+
+## Cada quien se encarga de
+- su pantalla;
+- sus componentes;
+- respetar `MaterialTheme.colorScheme`.
 
 ---
 
-# 24. Checklist antes de entregar una pantalla
+# 24. Qué NO quiero que pase
 
-Antes de decir que una pantalla ya quedó:
+No quiero que cuando juntemos todo pase esto:
 
-- [ ] Se ve bien en modo claro.
-- [ ] Se ve bien en modo oscuro.
-- [ ] No hay `Color.White` usado como fondo general.
-- [ ] No hay `Color.Black` usado como texto general.
-- [ ] No hay hexadecimales metidos directamente en la pantalla.
-- [ ] Los fondos usan `background` o `surface`.
-- [ ] Los textos usan `onBackground` o `onSurface`.
-- [ ] Los bordes usan `outline`.
-- [ ] Los botones respetan los colores del tema.
-- [ ] Los iconos se ven bien en ambos modos.
-- [ ] Los PNG no tienen fondos blancos raros.
-- [ ] Hay Preview claro.
-- [ ] Hay Preview oscuro.
-- [ ] La pantalla no detecta por su cuenta si está en oscuro.
-- [ ] La pantalla no crea su propio `Theme`.
+```text
+Pantalla 1 -> usa teal
+Pantalla 2 -> usa otro teal distinto
+Pantalla 3 -> usa rosa neón diferente
+Pantalla 4 -> usa gris genérico que nada que ver
+```
+
+Si ocupamos otro tono, se habla y se agrega al sistema global.
 
 ---
 
-# 25. Qué NO debe hacer el ViewModel
+# 25. Checklist antes de entregar una pantalla
 
-No meter colores en el ViewModel.
-
-Esto no:
-
-```kotlin
-class ThemeViewModel : ViewModel() {
-
-    val backgroundColor =
-        Color.White
-}
-```
-
-El ViewModel no necesita saber qué color exacto tiene el fondo.
-
-Solo necesita saber:
-
-```text
-SYSTEM
-LIGHT
-DARK
-```
-
-La View es la que convierte eso en la paleta correspondiente.
+- [ ] Se ve bien en claro.
+- [ ] Se ve bien en oscuro.
+- [ ] Respeta negro/blanco según el modo.
+- [ ] Mantiene los acentos rosa donde toca.
+- [ ] Usa teal/mint correcto para acciones.
+- [ ] No trae colores metidos directo en la pantalla.
+- [ ] El bloque superior usa el degradado rosa correcto si aplica.
+- [ ] Los textos tienen buen contraste.
+- [ ] Los botones se distinguen bien.
+- [ ] Tiene preview claro.
+- [ ] Tiene preview oscuro.
 
 ---
 
-# 26. ¿Qué pasa si cerramos la app?
+# 26. Mejora futura: guardar preferencia con DataStore
 
-Con el ejemplo de arriba el tema se mantiene mientras la app siga viva.
+Con lo de arriba el tema ya funciona.
 
-Si la cerramos completamente y la volvemos a abrir, regresa a:
+Después, si queremos que el usuario cierre la app y se guarde su preferencia, ya metemos `DataStore`.
 
-```kotlin
-ThemeMode.SYSTEM
+Pero primero hay que dejar bien esto:
+
+```text
+1. Tema global
+2. ViewModel del tema
+3. Pantallas usando colorScheme
+4. Claro y oscuro consistentes
 ```
-
-Para una primera versión está bien.
-
-Después podemos guardar la preferencia con **DataStore**.
-
-La idea sería:
-
-```mermaid
-flowchart LR
-    D["DataStore"] --> R["ThemeRepository"]
-    R --> VM["ThemeViewModel"]
-    VM --> V["View"]
-    V --> VM
-    VM --> R
-```
-
-Eso ya sería una mejora para que si alguien selecciona oscuro, cierre la app y la abra después, siga en oscuro.
 
 ---
 
-# 27. Orden para trabajar
+# 27. Resumen final
 
-Yo lo haría así:
-
-### Primero
-
-Dejar listos:
+La lógica correcta es esta:
 
 ```text
-ThemeMode.kt
-ThemeUiState.kt
-ThemeViewModel.kt
-Color.kt
-Theme.kt
-MainActivity.kt
-```
-
-y probar:
-
-```text
-LIGHT
-DARK
-SYSTEM
-```
-
-### Después
-
-Cada quien hace su pantalla usando:
-
-```kotlin
-MaterialTheme.colorScheme
-```
-
-### Después
-
-Juntamos todas las pantallas y probamos:
-
-```text
-LIGHT -> todas cambian
-DARK  -> todas cambian
-```
-
-### Al final
-
-Hacemos Configuración con:
-
-```text
-Sistema
-Claro
-Oscuro
-```
-
-y si da tiempo agregamos DataStore.
-
----
-
-# 28. Resumen rápido
-
 No hacemos:
+LoginClaro()
+LoginOscuro()
 
-```text
-HomeClaro()
-HomeOscuro()
-```
-
-Hacemos:
-
-```text
-HomeScreen()
+Sí hacemos:
+LoginScreen()
       |
       v
 MaterialTheme.colorScheme
@@ -1252,40 +867,32 @@ AppTheme
       +--> DarkColorScheme
 ```
 
-Y con MVVM:
+Y en cuanto a diseño, los colores base que vamos a respetar son:
+
+- **fondo blanco / negro**
+- **acento rosa-magenta**
+- **CTA teal / turquesa**
+- **CTA claro mint/cian en oscuro**
+- **degradado rosa en encabezados**
+- **decoraciones rosas como recurso visual**
+
+La regla clave es esta:
+
+> La pantalla no decide el color final.  
+> La pantalla solo decide el propósito del color.
+
+O sea, en vez de pensar:
 
 ```text
-Model
-  |
-  v
-ThemeMode
-
-ViewModel
-  |
-  v
-ThemeUiState
-  |
-  v
-StateFlow
-
-View
-  |
-  v
-MainActivity
-  |
-  v
-AppTheme
-  |
-  v
-Pantallas
+"aquí quiero blanco"
 ```
 
-La regla que hay que recordar es esta:
+pensamos:
 
-> No pensemos "este texto debe ser blanco en oscuro".
->
-> Pensemos "este texto está encima del fondo, entonces usa `onBackground`".
->
-> El tema se encarga de decidir qué color real corresponde.
+```text
+"aquí quiero onBackground"
+```
 
-Con eso todos podemos trabajar pantallas diferentes y cuando juntemos el proyecto no deberíamos tener que estar arreglando una por una para que soporten modo oscuro.
+y el tema decide si eso termina siendo blanco o negro según el modo.
+
+Con eso todos podemos trabajar por separado y luego integrar sin andar corrigiendo el modo oscuro pantalla por pantalla.
