@@ -908,7 +908,7 @@ private fun RietiTextField(
 private fun ReportScreenDarkPreview() {
 
     RIETITheme(
-        darkTheme = false
+        darkTheme = true
     ) {
 
         ReportScreen(

@@ -62,6 +62,7 @@ val DarkRIETIColors = RIETIColors(
 )
 
 private val LocalAppColors = staticCompositionLocalOf { LightRIETIColors }
+private val LocalIsDarkTheme = staticCompositionLocalOf { false }
 
 private val LightColorScheme = lightColorScheme(
     primary = LightPinkPrincipal,
@@ -86,7 +87,10 @@ fun RIETITheme(
 ) {
     val customColors = if (darkTheme) DarkRIETIColors else LightRIETIColors
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    CompositionLocalProvider(LocalAppColors provides customColors) {
+    CompositionLocalProvider(
+        LocalAppColors provides customColors,
+        LocalIsDarkTheme provides darkTheme
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
@@ -96,8 +100,14 @@ fun RIETITheme(
 }
 
 object AppTheme {
+
     val colors: RIETIColors
         @Composable
         @ReadOnlyComposable
         get() = LocalAppColors.current
+
+    val isDarkTheme: Boolean
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalIsDarkTheme.current
 }
