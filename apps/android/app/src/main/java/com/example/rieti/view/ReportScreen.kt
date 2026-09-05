@@ -1,7 +1,7 @@
 package com.example.rieti.view
 
 import android.content.res.Configuration
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,24 +16,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -56,11 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
+import com.example.rieti.view.components.BottomBar
+import com.example.rieti.view.components.TopBar
 
 
 @Composable
 fun ReportScreen(
     onHomeClick: () -> Unit,
+    onReportClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onMenuClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
@@ -68,54 +62,108 @@ fun ReportScreen(
     onSendReportClick: () -> Unit
 ) {
 
-    /*
-     * Por ahora guardamos el texto aquí solamente
-     * para poder probar visualmente los campos.
-     *
-     * Después estos estados pasarían al ViewModel.
-     */
+    // ---------------------------------------------------------
+    // ESTADOS TEMPORALES
+    //
+    // Por ahora están aquí porque solo estamos haciendo front.
+    // Después probablemente pasarán a un ReportViewModel.
+    // ---------------------------------------------------------
 
-    var numberOfChildren by rememberSaveable { mutableStateOf("") }
-    var childrenAges by rememberSaveable { mutableStateOf("") }
-    var workType by rememberSaveable { mutableStateOf("") }
-    var workSchedule by rememberSaveable { mutableStateOf("") }
-    var details by rememberSaveable { mutableStateOf("") }
+    var numberOfChildren by rememberSaveable {
+        mutableStateOf("")
+    }
 
-    var fullAddress by rememberSaveable { mutableStateOf("") }
-    var neighborhood by rememberSaveable { mutableStateOf("") }
-    var postalCode by rememberSaveable { mutableStateOf("") }
-    var municipality by rememberSaveable { mutableStateOf("") }
+    var childrenAges by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var workType by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var workSchedule by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var details by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var fullAddress by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var neighborhood by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var postalCode by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var municipality by rememberSaveable {
+        mutableStateOf("")
+    }
+
 
     val colors = AppTheme.colors
 
+
     Scaffold(
-        containerColor = colors.surface,
+
+        // -----------------------------------------------------
+        // BARRA SUPERIOR REUTILIZABLE
+        // -----------------------------------------------------
 
         topBar = {
-            ReportTopBar(
+
+            TopBar(
                 onMenuClick = onMenuClick
             )
         },
 
+
+        // -----------------------------------------------------
+        // BARRA INFERIOR REUTILIZABLE
+        // -----------------------------------------------------
+
         bottomBar = {
-            RietiBottomBar(
+
+            BottomBar(
                 onHomeClick = onHomeClick,
+                onReportClick = onReportClick,
                 onSettingsClick = onSettingsClick
             )
-        }
+        },
+
+
+        containerColor = colors.surface
 
     ) { innerPadding ->
+
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
+
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            /*
-             * DETALLES DEL CASO
-             */
+
+            // =================================================
+            // TÍTULO PRINCIPAL
+            // =================================================
+
+            item {
+
+                ReportMainTitle()
+            }
+
+
+            // =================================================
+            // DETALLES DEL CASO
+            // =================================================
 
             item {
 
@@ -127,12 +175,16 @@ fun ReportScreen(
                 ) {
 
                     SectionTitle(
-                        title = "Detalles del Caso"
+                        title = "Detalles del caso"
                     )
+
 
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
+
+
+                    // Primera fila
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -143,26 +195,35 @@ fun ReportScreen(
                             label = "Número de niños",
                             value = numberOfChildren,
                             placeholder = "1",
+
                             onValueChange = {
                                 numberOfChildren = it
                             },
+
                             modifier = Modifier.weight(1f)
                         )
+
 
                         ReportFieldWithLabel(
                             label = "Edades de los niños",
                             value = childrenAges,
                             placeholder = "Ej: 6, 12, 16 años",
+
                             onValueChange = {
                                 childrenAges = it
                             },
+
                             modifier = Modifier.weight(1f)
                         )
                     }
 
+
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
+
+
+                    // Segunda fila
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -173,51 +234,63 @@ fun ReportScreen(
                             label = "Tipo de Trabajo",
                             value = workType,
                             placeholder = "1",
+
                             onValueChange = {
                                 workType = it
                             },
+
                             modifier = Modifier.weight(1f)
                         )
+
 
                         ReportFieldWithLabel(
                             label = "Horario de Trabajo",
                             value = workSchedule,
                             placeholder = "Ej: 8:00 am - 6:00 pm",
+
                             onValueChange = {
                                 workSchedule = it
                             },
+
                             modifier = Modifier.weight(1f)
                         )
                     }
+
 
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
 
+
+                    // Campo grande de detalles
+
                     ReportFieldWithLabel(
                         label = "Detalles:",
                         value = details,
                         placeholder = "Describa detalladamente lo que observo ...",
+
                         onValueChange = {
                             details = it
                         },
+
                         minHeight = 125.dp,
                         singleLine = false,
+
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
 
 
-            /*
-             * UBICACIÓN DEL CASO
-             */
+            // =================================================
+            // UBICACIÓN DEL CASO
+            // =================================================
 
             item {
 
                 Column(
                     modifier = Modifier.padding(
-                        horizontal = 12.dp
+                        horizontal = 40.dp
                     )
                 ) {
 
@@ -225,13 +298,18 @@ fun ReportScreen(
                         modifier = Modifier.height(20.dp)
                     )
 
+
                     SectionTitle(
-                        title = "Ubicación del Caso"
+                        title = "Ubicación del caso"
                     )
+
 
                     Spacer(
                         modifier = Modifier.height(10.dp)
                     )
+
+
+                    // Botón ubicación actual
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -239,15 +317,21 @@ fun ReportScreen(
                     ) {
 
                         Button(
-                            onClick = onCurrentLocationClick,
+
+                            onClick = {
+                                onCurrentLocationClick()
+                            },
+
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = colors.surface,
                                 contentColor = colors.bluePrincipal
                             ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                colors.bluePrincipal
+
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = colors.bluePrincipal
                             ),
+
                             shape = RoundedCornerShape(6.dp)
                         ) {
 
@@ -258,29 +342,39 @@ fun ReportScreen(
                         }
                     }
 
+
                     Spacer(
-                        modifier = Modifier.height(4.dp)
+                        modifier = Modifier.height(5.dp)
                     )
 
+
+                    // Por ahora solamente placeholder
+
                     MapPlaceholder()
+
 
                     Spacer(
                         modifier = Modifier.height(16.dp)
                     )
 
+
                     ReportFieldWithLabel(
                         label = "Dirección completa",
                         value = fullAddress,
                         placeholder = "",
+
                         onValueChange = {
                             fullAddress = it
                         },
+
                         modifier = Modifier.fillMaxWidth()
                     )
+
 
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
+
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -291,44 +385,52 @@ fun ReportScreen(
                             label = "Colonia",
                             value = neighborhood,
                             placeholder = "",
+
                             onValueChange = {
                                 neighborhood = it
                             },
+
                             modifier = Modifier.weight(1.7f)
                         )
 
+
                         ReportFieldWithLabel(
-                            label = "Codigo Postal",
+                            label = "Código Postal",
                             value = postalCode,
                             placeholder = "",
+
                             onValueChange = {
                                 postalCode = it
                             },
+
                             modifier = Modifier.weight(1f)
                         )
                     }
+
 
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
 
+
                     ReportFieldWithLabel(
                         label = "Municipio",
                         value = municipality,
                         placeholder = "",
+
                         onValueChange = {
                             municipality = it
                         },
-                        modifier = Modifier
-                            .fillMaxWidth(0.58f)
+
+                        modifier = Modifier.fillMaxWidth(0.58f)
                     )
                 }
             }
 
 
-            /*
-             * EVIDENCIA FOTOGRÁFICA
-             */
+            // =================================================
+            // EVIDENCIA FOTOGRÁFICA
+            // =================================================
 
             item {
 
@@ -342,28 +444,34 @@ fun ReportScreen(
                         modifier = Modifier.height(25.dp)
                     )
 
+
                     SectionTitle(
-                        title = "Evidencia Fotografica"
+                        title = "Evidencia"
                     )
+
 
                     Spacer(
                         modifier = Modifier.height(20.dp)
                     )
 
+
                     EvidenceSelector(
                         onClick = onSelectFilesClick
                     )
+
 
                     Spacer(
                         modifier = Modifier.height(45.dp)
                     )
 
+
                     SendReportButton(
                         onClick = onSendReportClick
                     )
 
+
                     Spacer(
-                        modifier = Modifier.height(40.dp)
+                        modifier = Modifier.height(30.dp)
                     )
                 }
             }
@@ -371,6 +479,78 @@ fun ReportScreen(
     }
 }
 
+
+// =================================================================
+// TÍTULO "REALIZA TU REPORTE"
+// =================================================================
+
+@Composable
+private fun ReportMainTitle() {
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(55.dp)
+            .background(
+                AppTheme.colors.pinkPrincipal
+            ),
+
+        contentAlignment = Alignment.Center
+    ) {
+
+        Text(
+            text = "Realiza tu reporte",
+            color = AppTheme.colors.text,
+            fontSize = 30.sp,
+            fontFamily = FontFamily.Serif,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+
+// =================================================================
+// TÍTULOS DE SECCIÓN
+// =================================================================
+
+@Composable
+private fun SectionTitle(
+    title: String
+) {
+
+    Column(
+        modifier = Modifier.width(
+            IntrinsicSize.Max
+        )
+    ) {
+
+        Text(
+            text = title,
+            color = AppTheme.colors.titles,
+            fontFamily = FontFamily.Serif,
+            fontSize = 26.sp,
+            maxLines = 1
+
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(4.dp)
+        )
+
+
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            thickness = 2.dp,
+            color = AppTheme.colors.titles
+        )
+    }
+}
+
+
+// =================================================================
+// CAMPO CON LABEL
+// =================================================================
 
 @Composable
 private fun ReportFieldWithLabel(
@@ -393,9 +573,11 @@ private fun ReportFieldWithLabel(
             fontSize = 16.sp
         )
 
+
         Spacer(
             modifier = Modifier.height(8.dp)
         )
+
 
         RietiTextField(
             value = value,
@@ -408,41 +590,104 @@ private fun ReportFieldWithLabel(
     }
 }
 
+
+// =================================================================
+// TEXTFIELD PERSONALIZADO
+// =================================================================
+
 @Composable
-private fun SectionTitle(
-    title: String
+private fun RietiTextField(
+    value: String,
+    placeholder: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    minHeight: Dp = 42.dp,
+    singleLine: Boolean = true
 ) {
 
-    Column(
-        modifier = Modifier.width(
-            IntrinsicSize.Min
-        )
-    ) {
+    val colors = AppTheme.colors
 
-        Text(
-            text = title,
-            color = AppTheme.colors.titles,
-            fontFamily = FontFamily.Serif,
-            fontSize = 26.sp,
-            maxLines = 1
-        )
 
-        Spacer(
-            modifier = Modifier.height(4.dp)
-        )
+    BasicTextField(
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 2.dp,
-            color = AppTheme.colors.titles
-        )
-    }
+        value = value,
+
+        onValueChange = {
+            onValueChange(it)
+        },
+
+        singleLine = singleLine,
+
+
+        textStyle = TextStyle(
+            color = colors.textTyping,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold
+        ),
+
+
+        cursorBrush = SolidColor(
+            colors.textTyping
+        ),
+
+
+        modifier = modifier
+            .heightIn(
+                min = minHeight
+            )
+            .clip(
+                RoundedCornerShape(10.dp)
+            )
+            .background(
+                colors.blueBoxes
+            ),
+
+
+        decorationBox = { innerTextField ->
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 14.dp,
+                        vertical = 12.dp
+                    ),
+
+                contentAlignment =
+                    if (singleLine) {
+                        Alignment.CenterStart
+                    } else {
+                        Alignment.TopStart
+                    }
+            ) {
+
+                if (value.isEmpty()) {
+
+                    Text(
+                        text = placeholder,
+                        color = colors.textTyping,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+
+                innerTextField()
+            }
+        }
+    )
 }
+
+
+// =================================================================
+// PLACEHOLDER DEL MAPA
+// =================================================================
 
 @Composable
 private fun MapPlaceholder() {
 
     val colors = AppTheme.colors
+
 
     Box(
         modifier = Modifier
@@ -457,6 +702,7 @@ private fun MapPlaceholder() {
                     alpha = 0.12f
                 )
             ),
+
         contentAlignment = Alignment.Center
     ) {
 
@@ -467,18 +713,21 @@ private fun MapPlaceholder() {
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = null,
-                tint = colors.bluePrincipal,
-                modifier = Modifier.size(40.dp)
+                tint = colors.bluePrincipal
             )
+
 
             Spacer(
                 modifier = Modifier.height(8.dp)
             )
 
+
             Text(
                 text = "Mapa",
-                color = colors.text
+                color = colors.text,
+                fontSize = 18.sp
             )
+
 
             Text(
                 text = "Se conectará posteriormente",
@@ -491,12 +740,18 @@ private fun MapPlaceholder() {
     }
 }
 
+
+// =================================================================
+// SELECTOR DE ARCHIVOS
+// =================================================================
+
 @Composable
 private fun EvidenceSelector(
     onClick: () -> Unit
 ) {
 
     val colors = AppTheme.colors
+
 
     Row(
         modifier = Modifier
@@ -510,13 +765,20 @@ private fun EvidenceSelector(
             .clickable {
                 onClick()
             },
+
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+
+        // -------------------------
+        // Elegir archivos
+        // -------------------------
 
         Box(
             modifier = Modifier
                 .weight(0.9f)
                 .fillMaxSize(),
+
             contentAlignment = Alignment.Center
         ) {
 
@@ -527,6 +789,11 @@ private fun EvidenceSelector(
             )
         }
 
+
+        // -------------------------
+        // Línea divisoria
+        // -------------------------
+
         Box(
             modifier = Modifier
                 .width(1.dp)
@@ -536,15 +803,21 @@ private fun EvidenceSelector(
                 )
         )
 
+
+        // -------------------------
+        // Nombre de archivo
+        // -------------------------
+
         Box(
             modifier = Modifier
                 .weight(1.8f)
                 .fillMaxSize(),
+
             contentAlignment = Alignment.Center
         ) {
 
             Text(
-                text = "Ningun archivo seleccionado...",
+                text = "Ningún archivo seleccionado...",
                 color = colors.bluePrincipal,
                 fontFamily = FontFamily.Serif,
                 fontSize = 14.sp
@@ -553,13 +826,21 @@ private fun EvidenceSelector(
     }
 }
 
+
+// =================================================================
+// BOTÓN ENVIAR REPORTE
+// =================================================================
+
 @Composable
 private fun SendReportButton(
     onClick: () -> Unit
 ) {
 
     Button(
-        onClick = onClick,
+
+        onClick = {
+            onClick()
+        },
 
         modifier = Modifier
             .fillMaxWidth()
@@ -571,6 +852,7 @@ private fun SendReportButton(
             containerColor = AppTheme.colors.blueBoxes,
             contentColor = AppTheme.colors.textTyping
         )
+
     ) {
 
         Text(
@@ -582,322 +864,45 @@ private fun SendReportButton(
     }
 }
 
-//Esto borrarlo, es la parte superior de la pantalla, lo tenemos que cambiar por la imagen
 
+// =================================================================
+// PREVIEW LIGHT
+// =================================================================
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true
+)
 @Composable
-private fun ReportTopBar(
-    onMenuClick: () -> Unit
-) {
+private fun ReportScreenLightPreview() {
 
-    val colors = AppTheme.colors
-
-    Column {
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(105.dp)
-        ) {
-
-            Canvas(
-                modifier = Modifier.fillMaxSize()
-            ) {
-
-                // Fondo
-                drawRect(
-                    color = colors.surface
-                )
-
-                // Zona rosa derecha
-                drawRect(
-                    color = colors.pinkPrincipal,
-                    topLeft = androidx.compose.ui.geometry.Offset(
-                        size.width * 0.70f,
-                        0f
-                    ),
-                    size = androidx.compose.ui.geometry.Size(
-                        size.width * 0.30f,
-                        size.height
-                    )
-                )
-
-                // Franja diagonal clara
-                val path = Path().apply {
-
-                    moveTo(
-                        size.width * 0.56f,
-                        0f
-                    )
-
-                    lineTo(
-                        size.width * 0.64f,
-                        0f
-                    )
-
-                    lineTo(
-                        size.width * 0.73f,
-                        size.height
-                    )
-
-                    lineTo(
-                        size.width * 0.64f,
-                        size.height
-                    )
-
-                    close()
-                }
-
-                drawPath(
-                    path = path,
-                    color = colors.subTitles
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        horizontal = 18.dp
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                /*
-                 * Cuando tengan el logo real,
-                 * sustituimos este Text por Image(...)
-                 */
-
-                Text(
-                    text = "RIETI",
-                    color = colors.text,
-                    fontSize = 30.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(
-                    modifier = Modifier.weight(1f)
-                )
-
-                IconButton(
-                    onClick = onMenuClick
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Menú",
-                        tint = colors.text,
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp)
-                .background(
-                    colors.pinkPrincipal
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-
-            Text(
-                text = "Realiza tu reporte",
-                color = colors.text,
-                fontFamily = FontFamily.Serif,
-                fontSize = 31.sp
-            )
-        }
-    }
-}
-
-
-
-@Composable
-private fun RietiBottomBar(
-    onHomeClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
-
-    val colors = AppTheme.colors
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(90.dp)
+    RIETITheme(
+        darkTheme = false
     ) {
 
-        /*
-         * Barra rosa
-         */
+        ReportScreen(
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(70.dp)
-                .background(
-                    colors.pinkPrincipal
-                )
+            onHomeClick = {},
+
+            onReportClick = {},
+
+            onSettingsClick = {},
+
+            onMenuClick = {},
+
+            onCurrentLocationClick = {},
+
+            onSelectFilesClick = {},
+
+            onSendReportClick = {}
         )
-
-        /*
-         * Inicio
-         */
-
-        IconButton(
-            onClick = onHomeClick,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(
-                    start = 34.dp,
-                    bottom = 10.dp
-                )
-                .size(55.dp)
-        ) {
-
-            Icon(
-                imageVector = Icons.Default.Home,
-                contentDescription = "Inicio",
-                tint = colors.onPrimary,
-                modifier = Modifier.size(48.dp)
-            )
-        }
-
-        /*
-         * Reporte seleccionado
-         */
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .size(82.dp)
-                .clip(CircleShape)
-                .background(
-                    colors.subTitles
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Reporte",
-                tint = colors.titles,
-                modifier = Modifier.size(60.dp)
-            )
-        }
-
-        /*
-         * Ajustes
-         */
-
-        IconButton(
-            onClick = onSettingsClick,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = 34.dp,
-                    bottom = 10.dp
-                )
-                .size(55.dp)
-        ) {
-
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Ajustes",
-                tint = colors.onPrimary,
-                modifier = Modifier.size(48.dp)
-            )
-        }
     }
 }
 
-//eliminar TODO
 
-@Composable
-fun HomeScreen(
-    onReportClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
-    Text("Home")
-}
-
-@Composable
-fun SettingsScreen(
-    onHomeClick: () -> Unit,
-    onReportClick: () -> Unit
-) {
-    Text("Settings")
-}
-
-@Composable
-private fun RietiTextField(
-    value: String,
-    placeholder: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    minHeight: Dp = 42.dp,
-    singleLine: Boolean = true
-) {
-    val colors = AppTheme.colors
-
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = singleLine,
-
-        textStyle = TextStyle(
-            color = colors.textTyping,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold
-        ),
-
-        cursorBrush = SolidColor(
-            colors.textTyping
-        ),
-
-        modifier = modifier
-            .heightIn(min = minHeight)
-            .clip(
-                RoundedCornerShape(10.dp)
-            )
-            .background(
-                colors.blueBoxes
-            ),
-
-        decorationBox = { innerTextField ->
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 14.dp,
-                        vertical = 12.dp
-                    ),
-                contentAlignment =
-                    if (singleLine) {
-                        Alignment.CenterStart
-                    } else {
-                        Alignment.TopStart
-                    }
-            ) {
-
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        color = colors.textTyping,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                innerTextField()
-            }
-        }
-    )
-}
+// =================================================================
+// PREVIEW DARK
+// =================================================================
 
 @Preview(
     showBackground = true,
@@ -912,12 +917,44 @@ private fun ReportScreenDarkPreview() {
     ) {
 
         ReportScreen(
+
             onHomeClick = {},
+
+            onReportClick = {},
+
             onSettingsClick = {},
+
             onMenuClick = {},
+
             onCurrentLocationClick = {},
+
             onSelectFilesClick = {},
+
             onSendReportClick = {}
         )
     }
 }
+
+//Borrar lo que sigue despues de implementar esas pantallas :DDDD
+@Composable
+fun HomeScreen(
+    onReportClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
+
+    Text(
+        text = "Home"
+    )
+}
+
+@Composable
+fun SettingsScreen(
+    onHomeClick: () -> Unit,
+    onReportClick: () -> Unit
+) {
+
+    Text(
+        text = "Settings"
+    )
+}
+
