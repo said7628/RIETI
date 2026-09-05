@@ -290,7 +290,7 @@ fun ReportScreen(
 
                 Column(
                     modifier = Modifier.padding(
-                        horizontal = 40.dp
+                        horizontal = 12.dp
                     )
                 ) {
 

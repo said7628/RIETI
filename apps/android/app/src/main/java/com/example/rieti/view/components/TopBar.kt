@@ -124,18 +124,6 @@ fun TopBar(
                     modifier = Modifier.weight(1f)
                 )
 
-                IconButton(
-                    onClick = {
-                        onMenuClick()
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Abrir menú",
-                        tint = colors.text,
-                        modifier = Modifier.size(35.dp)
-                    )
-                }
             }
         }
     }
