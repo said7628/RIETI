@@ -1,6 +1,5 @@
 package com.example.rieti.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,28 +8,73 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+data class RIETIColors(
+    val pinkPrincipal: androidx.compose.ui.graphics.Color,
+    val onPrimary: androidx.compose.ui.graphics.Color,
+    val titles: androidx.compose.ui.graphics.Color,
+    val subTitles: androidx.compose.ui.graphics.Color,
+    val navVar: androidx.compose.ui.graphics.Color,
+    val bluePrincipal: androidx.compose.ui.graphics.Color,
+    val blueSecondary: androidx.compose.ui.graphics.Color,
+    val blueBoxes: androidx.compose.ui.graphics.Color,
+    val blueDetails: androidx.compose.ui.graphics.Color,
+    val surface: androidx.compose.ui.graphics.Color,
+    val text: androidx.compose.ui.graphics.Color,
+    val textPassword: androidx.compose.ui.graphics.Color,
+    val textTyping: androidx.compose.ui.graphics.Color
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+val LightRIETIColors = RIETIColors(
+    pinkPrincipal = LightPinkPrincipal,
+    onPrimary = LightOnPrimary,
+    titles = LightTitles,
+    subTitles = LightSubTitles,
+    navVar = LightNavVar,
+    bluePrincipal = LightBluePrincipal,
+    blueSecondary = LightBlueSecondary,
+    blueBoxes = LightBlueBoxes,
+    blueDetails = LightBlueDetails,
+    surface = LightSurface,
+    text = LightText,
+    textPassword = LightTextPassword,
+    textTyping = LightTextTyping
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+val DarkRIETIColors = RIETIColors(
+    pinkPrincipal = DarkPinkPrincipal,
+    onPrimary = DarkOnPrimary,
+    titles = DarkTitles,
+    subTitles = DarkSubTitles,
+    navVar = DarkNavVar,
+    bluePrincipal = DarkBluePrincipal,
+    blueSecondary = DarkBlueSecondary,
+    blueBoxes = DarkBlueBoxes,
+    blueDetails = DarkBlueDetails,
+    surface = DarkSurface,
+    text = DarkText,
+    textPassword = DarkTextPassword,
+    textTyping = DarkTextTyping
+)
+
+private val LocalAppColors = staticCompositionLocalOf { LightRIETIColors }
+
+private val LightColorScheme = lightColorScheme(
+    primary = LightPinkPrincipal,
+    onPrimary = LightOnPrimary,
+    surface = LightSurface,
+    onSurface = LightText
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = DarkPinkPrincipal,
+    onPrimary = DarkOnPrimary,
+    surface = DarkSurface,
+    onSurface = DarkText
 )
 
 @Composable
@@ -40,19 +84,19 @@ fun RIETITheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val customColors = if (darkTheme) DarkRIETIColors else LightRIETIColors
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    CompositionLocalProvider(LocalAppColors provides customColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            content = content
+        )
     }
+}
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+object AppTheme {
+    val colors: RIETIColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAppColors.current
 }
