@@ -89,6 +89,7 @@ fun RIETITheme(
     CompositionLocalProvider(LocalAppColors provides customColors) {
         MaterialTheme(
             colorScheme = colorScheme,
+            typography = Typography,
             content = content
         )
     }
