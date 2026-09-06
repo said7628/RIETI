@@ -1,16 +1,21 @@
 package com.example.rieti.ui.screens
 
+
+
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,130 +47,137 @@ fun InicioPantalla1(
     ) {
         val colors = AppTheme.colors
 
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = colors.surface
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+        Scaffold(
+            contentWindowInsets = WindowInsets.safeDrawing
+        ) { innerPadding ->
 
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = colors.titles
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                color = colors.surface
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = colors.titles
+                    ) {
+                        Text(
+                            text = "RIETI",
+                            modifier = Modifier.padding(vertical = 76.dp),
+                            fontSize = 55.sp,
+                            fontFamily = FontFamily.Serif,
+                            textAlign = TextAlign.Center,
+                            color = colors.text
+                        )
+                    }
+
+                    Spacer(
+                        modifier = Modifier.height(25.dp)
+                    )
+
                     Text(
-                        text = "RIETI",
-                        modifier = Modifier.padding(vertical = 76.dp),
-                        fontSize = 55.sp,
+                        text = "Reporta cualquier forma\nde trabajo infantil",
+                        fontSize = 30.sp,
                         fontFamily = FontFamily.Serif,
                         textAlign = TextAlign.Center,
                         color = colors.text
                     )
-                }
 
-                Spacer(
-                    modifier = Modifier.height(25.dp)
-                )
-
-                Text(
-                    text = "Reporta cualquier forma\nde trabajo infantil",
-                    fontSize = 30.sp,
-                    fontFamily = FontFamily.Serif,
-                    textAlign = TextAlign.Center,
-                    color = colors.text
-                )
-
-                Spacer(
-                    modifier = Modifier.height(25.dp)
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    thickness = 2.dp,
-                    color = colors.pinkPrincipal
-                )
-
-                Text(
-                    text = "Empieza ahora, tu reporte\nhace el cambio",
-                    modifier = Modifier.padding(vertical = 24.dp),
-                    fontSize = 16.sp,
-                    fontFamily = FontFamily.Serif,
-                    textAlign = TextAlign.Center,
-                    color = colors.text
-                )
-
-                Spacer(
-                    modifier = Modifier.height(35.dp)
-                )
-
-                Button(
-                    onClick = onIniciarSesion,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 25.dp)
-                        .height(70.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.blueBoxes,
-                        contentColor = colors.textTyping
+                    Spacer(
+                        modifier = Modifier.height(25.dp)
                     )
-                ) {
+
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        thickness = 2.dp,
+                        color = colors.pinkPrincipal
+                    )
+
                     Text(
-                        text = "INICIAR SESIÓN",
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily.Serif
+                        text = "Empieza ahora, tu reporte\nhace el cambio",
+                        modifier = Modifier.padding(vertical = 24.dp),
+                        fontSize = 16.sp,
+                        fontFamily = FontFamily.Serif,
+                        textAlign = TextAlign.Center,
+                        color = colors.text
                     )
-                }
 
-                Spacer(
-                    modifier = Modifier.height(50.dp)
-                )
-
-                Button(
-                    onClick = onCrearCuenta,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 25.dp)
-                        .height(70.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.blueDetails,
-                        contentColor = colors.textTyping
+                    Spacer(
+                        modifier = Modifier.height(35.dp)
                     )
-                ) {
+
+                    Button(
+                        onClick = onIniciarSesion,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp)
+                            .height(70.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.blueBoxes,
+                            contentColor = colors.textTyping
+                        )
+                    ) {
+                        Text(
+                            text = "INICIAR SESIÓN",
+                            fontSize = 22.sp,
+                            fontFamily = FontFamily.Serif
+                        )
+                    }
+
+                    Spacer(
+                        modifier = Modifier.height(50.dp)
+                    )
+
+                    Button(
+                        onClick = onCrearCuenta,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp)
+                            .height(70.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.blueDetails,
+                            contentColor = colors.textTyping
+                        )
+                    ) {
+                        Text(
+                            text = "CREAR CUENTA",
+                            fontSize = 22.sp,
+                            fontFamily = FontFamily.Serif
+                        )
+                    }
+
+                    Spacer(
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    HorizontalDivider(
+                        thickness = 4.dp,
+                        color = colors.pinkPrincipal
+                    )
+
                     Text(
-                        text = "CREAR CUENTA",
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily.Serif
+                        text = if (darkTheme) {
+                            "Modo claro"
+                        } else {
+                            "Modo obscuro"
+                        },
+                        modifier = Modifier
+                            .clickable {
+                                darkTheme = !darkTheme
+                            }
+                            .padding(vertical = 18.dp),
+                        fontSize = 20.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = colors.text
                     )
                 }
-
-                Spacer(
-                    modifier = Modifier.weight(1f)
-                )
-
-                HorizontalDivider(
-                    thickness = 4.dp,
-                    color = colors.pinkPrincipal
-                )
-
-                Text(
-                    text = if (darkTheme) {
-                        "Modo claro"
-                    } else {
-                        "Modo obscuro"
-                    },
-                    modifier = Modifier
-                        .clickable {
-                            darkTheme = !darkTheme
-                        }
-                        .padding(vertical = 18.dp),
-                    fontSize = 20.sp,
-                    fontFamily = FontFamily.Serif,
-                    color = colors.text
-                )
             }
         }
     }
