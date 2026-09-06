@@ -113,7 +113,7 @@ fun TopBar(
                 )
 
                 Text(
-                    text = "Retri",
+                    text = "RIETI",
                     color = colors.text,
                     fontSize = 24.sp,
                     fontFamily = FontFamily.Serif,
