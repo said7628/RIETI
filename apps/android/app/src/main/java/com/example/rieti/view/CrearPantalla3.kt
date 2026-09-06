@@ -36,9 +36,8 @@ import com.example.rieti.ui.theme.RIETITheme
 
 @Composable
 fun CrearPantalla3(
-    onIniciarSesion: () -> Unit,
-    onCrearCuenta: () -> Unit,
-    onRecuperarContrasena: () -> Unit
+    onLoginClick: () -> Unit,
+    onCreateAccountClick: () -> Unit,
 ) {
     var darkTheme by remember {
         mutableStateOf(false)
@@ -232,7 +231,7 @@ fun CrearPantalla3(
                     )
 
                     Button(
-                        onClick = onIniciarSesion,
+                        onClick = onLoginClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 25.dp)
@@ -254,7 +253,7 @@ fun CrearPantalla3(
                     )
 
                     Button(
-                        onClick = onCrearCuenta,
+                        onClick = onCreateAccountClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 50.dp)
@@ -307,37 +306,3 @@ fun CrearPantalla3(
     }
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-private fun CrearPantalla3LightPreview() {
-    RIETITheme(
-        darkTheme = false
-    ) {
-        CrearPantalla3(
-            onIniciarSesion = {},
-            onCrearCuenta = {},
-            onRecuperarContrasena = {}
-        )
-    }
-}
-
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
-)
-@Composable
-private fun CrearPantalla3DarkPreview() {
-    RIETITheme(
-        darkTheme = true
-    ) {
-        CrearPantalla3(
-            onIniciarSesion = {},
-            onCrearCuenta = {},
-            onRecuperarContrasena = {}
-        )
-    }
-}

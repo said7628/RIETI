@@ -1,10 +1,10 @@
 package com.example.rieti.view
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.rieti.ui.screens.InicioPantalla1
 
 
 // =================================================================
@@ -12,6 +12,23 @@ import androidx.navigation.compose.rememberNavController
 // =================================================================
 
 object Routes {
+
+    // =============================================================
+    // FLUJO DE INICIO / CUENTA
+    // =============================================================
+
+    const val START = "start"
+
+    const val LOGIN = "login"
+
+    const val REGISTER = "register"
+
+    const val RECOVER_PASSWORD = "recover_password"
+
+
+    // =============================================================
+    // APP PRINCIPAL
+    // =============================================================
 
     const val HOME = "home"
 
@@ -41,10 +58,295 @@ fun AppNavigation() {
 
         navController = navController,
 
-        // Por ahora iniciamos directamente en Home
-        startDestination = Routes.HOME
+        /*
+         * Para probar TODO el flujo empezamos desde
+         * la primera pantalla.
+         */
+        startDestination = Routes.START
 
     ) {
+
+
+        // =========================================================
+        // 1. PANTALLA INICIAL
+        // =========================================================
+
+        composable(
+            route = Routes.START
+        ) {
+
+            InicioPantalla1(
+
+
+                // -------------------------------------------------
+                // INICIAR SESIÓN
+                // -------------------------------------------------
+
+                onLoginClick = {
+
+                    navController.navigate(
+                        route = Routes.LOGIN
+                    ) {
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // CREAR CUENTA
+                // -------------------------------------------------
+
+                onRegisterClick = {
+
+                    navController.navigate(
+                        route = Routes.REGISTER
+                    ) {
+
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
+        // =========================================================
+        // 2. INICIAR SESIÓN
+        // =========================================================
+
+        composable(
+            route = Routes.LOGIN
+        ) {
+
+            IniciarsePantalla2(
+
+
+                // -------------------------------------------------
+                // INICIAR SESIÓN
+                // -------------------------------------------------
+
+                onLoginClick = {
+
+                    /*
+                     * AHORITA estamos simulando que cualquier
+                     * login es correcto.
+                     *
+                     * Después aquí entra el ViewModel.
+                     */
+
+                    navController.navigate(
+                        route = Routes.HOME
+                    ) {
+
+                        /*
+                         * Borramos TODO el flujo anterior:
+                         *
+                         * START
+                         * LOGIN
+                         * REGISTER
+                         * etc.
+                         *
+                         * Así al presionar atrás desde Home
+                         * no regresa al Login.
+                         */
+                        popUpTo(
+                            route = Routes.START
+                        ) {
+
+                            inclusive = true
+                        }
+
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // CREAR CUENTA
+                // -------------------------------------------------
+
+                onRegisterClick = {
+
+                    navController.navigate(
+                        route = Routes.REGISTER
+                    ) {
+
+                        /*
+                         * Evitamos acumular:
+                         *
+                         * LOGIN
+                         * REGISTER
+                         * LOGIN
+                         * REGISTER...
+                         */
+                        popUpTo(
+                            route = Routes.START
+                        ) {
+
+                            inclusive = false
+                        }
+
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // OLVIDÉ MI CONTRASEÑA
+                // -------------------------------------------------
+
+                onForgotPasswordClick = {
+
+                    navController.navigate(
+                        route = Routes.RECOVER_PASSWORD
+                    ) {
+
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
+        // =========================================================
+        // 3. CREAR CUENTA
+        // =========================================================
+
+        composable(
+            route = Routes.REGISTER
+        ) {
+
+            CrearPantalla3(
+
+
+                // -------------------------------------------------
+                // CREAR CUENTA
+                // -------------------------------------------------
+
+                onCreateAccountClick = {
+
+                    /*
+                     * Por ahora simulamos que la cuenta
+                     * fue creada correctamente.
+                     */
+
+                    navController.navigate(
+                        route = Routes.HOME
+                    ) {
+
+                        /*
+                         * Quitamos todo el flujo de autenticación.
+                         */
+                        popUpTo(
+                            route = Routes.START
+                        ) {
+
+                            inclusive = true
+                        }
+
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // YA TENGO CUENTA / INICIAR SESIÓN
+                // -------------------------------------------------
+
+                onLoginClick = {
+
+                    navController.navigate(
+                        route = Routes.LOGIN
+                    ) {
+
+                        popUpTo(
+                            route = Routes.START
+                        ) {
+
+                            inclusive = false
+                        }
+
+
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
+        // =========================================================
+        // 4. RECUPERAR CONTRASEÑA
+        // =========================================================
+
+        composable(
+            route = Routes.RECOVER_PASSWORD
+        ) {
+
+            RecuperarContraseñaPantalla4(
+
+
+                // -------------------------------------------------
+                // ENVIAR CÓDIGO
+                // -------------------------------------------------
+
+                onSendCodeClick = {
+
+                    /*
+                     * Por ahora vacío porque todavía no tenemos
+                     * la pantalla donde se introduce el código.
+                     */
+                },
+
+
+                // -------------------------------------------------
+                // INICIAR SESIÓN
+                // -------------------------------------------------
+
+                onLoginClick = {
+
+                    navController.navigate(
+                        route = Routes.LOGIN
+                    ) {
+
+                        popUpTo(
+                            route = Routes.START
+                        ) {
+
+                            inclusive = false
+                        }
+
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // CREAR CUENTA
+                // -------------------------------------------------
+
+                onRegisterClick = {
+
+                    navController.navigate(
+                        route = Routes.REGISTER
+                    ) {
+
+                        popUpTo(
+                            route = Routes.START
+                        ) {
+
+                            inclusive = false
+                        }
+
+
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
 
 
         // =========================================================
@@ -65,11 +367,12 @@ fun AppNavigation() {
                 onAnonymousReportClick = {
 
                     /*
-                     * Por ahora mandamos al mismo formulario.
+                     * Por ahora utiliza ReportScreen normal.
                      *
-                     * Después le pasaremos algo como:
+                     * Después le pasamos:
                      *
-                     * ReportMode.ANONYMOUS
+                     * ANONYMOUS
+                     * AUTHENTICATED
                      */
 
                     navController.navigate(
@@ -77,9 +380,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -94,7 +395,7 @@ fun AppNavigation() {
 
 
                 // -------------------------------------------------
-                // REPORTE
+                // REALIZAR REPORTE
                 // -------------------------------------------------
 
                 onReportClick = {
@@ -104,9 +405,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -127,10 +426,7 @@ fun AppNavigation() {
                 onAboutUsClick = {
 
                     /*
-                     * Todavía no veo una pantalla en inglés
-                     * para "Quiénes somos".
-                     *
-                     * La conectamos después.
+                     * Pendiente conectar pantalla.
                      */
                 },
 
@@ -142,8 +438,7 @@ fun AppNavigation() {
                 onTrackingClick = {
 
                     /*
-                     * Igual: la conectamos cuando esté
-                     * creada esa pantalla.
+                     * Pendiente conectar pantalla.
                      */
                 },
 
@@ -159,9 +454,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -199,9 +492,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -226,9 +517,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -253,9 +542,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -275,27 +562,27 @@ fun AppNavigation() {
 
                 onMenuClick = {
 
-                    // Descartado por ahora
+                    // Descartado
                 },
 
 
                 // -------------------------------------------------
-                // UBICACIÓN
+                // UBICACIÓN ACTUAL
                 // -------------------------------------------------
 
                 onCurrentLocationClick = {
 
-                    // Después se conecta funcionalidad real
+                    // Funcionalidad después
                 },
 
 
                 // -------------------------------------------------
-                // ARCHIVOS
+                // ELEGIR ARCHIVOS
                 // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    // Después selector real
+                    // Funcionalidad después
                 },
 
 
@@ -307,14 +594,17 @@ fun AppNavigation() {
 
                     navController.navigate(
                         route = Routes.REPORT_SUCCESS
-                    )
+                    ) {
+
+                        launchSingleTop = true
+                    }
                 }
             )
         }
 
 
         // =========================================================
-        // REPORTE ENVIADO CON ÉXITO
+        // REPORTE CREADO CON ÉXITO
         // =========================================================
 
         composable(
@@ -323,11 +613,11 @@ fun AppNavigation() {
 
             ReportSuccessScreen(
 
+
                 /*
-                 * Por ahora está quemado.
+                 * Temporal.
                  *
-                 * Luego lo pasaremos realmente mediante
-                 * ViewModel / backend / argumento.
+                 * Después este folio vendrá del ViewModel/backend.
                  */
                 folio = "261908-1017S",
 
@@ -343,8 +633,7 @@ fun AppNavigation() {
                     ) {
 
                         /*
-                         * Quitamos ReportSuccess para que al
-                         * regresar no aparezca otra vez.
+                         * Quitamos ReportSuccess.
                          */
                         popUpTo(
                             route = Routes.REPORT_SUCCESS
@@ -370,9 +659,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -397,9 +684,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -424,9 +709,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -451,9 +734,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -479,7 +760,11 @@ fun AppNavigation() {
 
             SettingsScreen(
 
-                // Por ahora simulamos correo
+
+                // -------------------------------------------------
+                // EMAIL TEMPORAL
+                // -------------------------------------------------
+
                 email = "correo@gmail.com",
 
 
@@ -491,7 +776,10 @@ fun AppNavigation() {
 
                     navController.navigate(
                         route = Routes.CHANGE_PASSWORD
-                    )
+                    ) {
+
+                        launchSingleTop = true
+                    }
                 },
 
 
@@ -502,8 +790,27 @@ fun AppNavigation() {
                 onLogoutClick = {
 
                     /*
-                     * Luego conectamos esto con el login.
+                     * Ahora que ya tenemos el login,
+                     * sí podemos conectarlo.
                      */
+
+                    navController.navigate(
+                        route = Routes.START
+                    ) {
+
+                        /*
+                         * Quitamos toda la parte autenticada.
+                         */
+                        popUpTo(
+                            route = Routes.HOME
+                        ) {
+
+                            inclusive = true
+                        }
+
+
+                        launchSingleTop = true
+                    }
                 },
 
 
@@ -514,25 +821,23 @@ fun AppNavigation() {
                 onDeleteAccountClick = {
 
                     /*
-                     * Este callback solamente ocurre DESPUÉS
-                     * de que el usuario presiona "Sí"
-                     * en el Dialog.
+                     * Esto se ejecuta solamente después
+                     * de confirmar "Sí" en el diálogo.
                      */
 
                     navController.navigate(
                         route = Routes.ACCOUNT_DELETED
                     ) {
 
-                        /*
-                         * Quitamos Settings para que no pueda
-                         * regresar a una cuenta que ya borró.
-                         */
                         popUpTo(
                             route = Routes.SETTINGS
                         ) {
 
                             inclusive = true
                         }
+
+
+                        launchSingleTop = true
                     }
                 },
 
@@ -544,8 +849,7 @@ fun AppNavigation() {
                 onToggleThemeClick = {
 
                     /*
-                     * Después esto irá con ViewModel / estado
-                     * global del tema.
+                     * Pendiente ViewModel / estado global.
                      */
                 },
 
@@ -561,9 +865,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -588,9 +890,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -616,6 +916,7 @@ fun AppNavigation() {
 
             ChangePasswordScreen(
 
+
                 email = "correo@gmail.com",
 
 
@@ -630,13 +931,15 @@ fun AppNavigation() {
 
 
                     /*
-                     * Por ahora no validamos nada.
+                     * Después:
                      *
-                     * Después estos valores se mandarán
-                     * al ViewModel.
+                     * ViewModel.changePassword(
+                     *     currentPassword,
+                     *     newPassword,
+                     *     confirmPassword
+                     * )
                      *
-                     * Cuando el cambio sea exitoso podemos
-                     * regresar a Settings.
+                     * Por ahora solamente regresamos.
                      */
 
                     navController.popBackStack()
@@ -654,9 +957,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -681,9 +982,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -704,8 +1003,8 @@ fun AppNavigation() {
                 onSettingsClick = {
 
                     /*
-                     * Como ChangePassword viene de Settings,
-                     * podríamos simplemente volver.
+                     * Como venimos de Settings,
+                     * solo regresamos.
                      */
 
                     navController.popBackStack()
@@ -736,9 +1035,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -763,9 +1060,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true
@@ -790,9 +1085,7 @@ fun AppNavigation() {
                     ) {
 
                         popUpTo(
-                            navController.graph
-                                .findStartDestination()
-                                .id
+                            route = Routes.HOME
                         ) {
 
                             saveState = true

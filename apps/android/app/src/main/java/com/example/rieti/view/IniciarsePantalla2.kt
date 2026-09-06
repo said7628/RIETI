@@ -37,9 +37,9 @@ import com.example.rieti.ui.theme.RIETITheme
 
 @Composable
 fun IniciarsePantalla2(
-    onIniciarSesion: () -> Unit,
-    onCrearCuenta: () -> Unit,
-    onRecuperarContrasena: () -> Unit
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit
 ) {
     var darkTheme by remember {
         mutableStateOf(false)
@@ -199,7 +199,7 @@ fun IniciarsePantalla2(
                                 end = 25.dp
                             )
                             .clickable {
-                                onRecuperarContrasena()
+                                onForgotPasswordClick()
                             },
                         fontSize = 14.sp,
                         fontFamily = FontFamily.Serif,
@@ -213,7 +213,7 @@ fun IniciarsePantalla2(
                     )
 
                     Button(
-                        onClick = onIniciarSesion,
+                        onClick = onLoginClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 25.dp)
@@ -235,7 +235,7 @@ fun IniciarsePantalla2(
                     )
 
                     Button(
-                        onClick = onCrearCuenta,
+                        onClick = onRegisterClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 35.dp)
@@ -298,9 +298,9 @@ private fun IniciarsePantalla2LightPreview() {
         darkTheme = false
     ) {
         IniciarsePantalla2(
-            onIniciarSesion = {},
-            onCrearCuenta = {},
-            onRecuperarContrasena = {}
+            onLoginClick = {},
+            onRegisterClick = {},
+            onForgotPasswordClick = {}
         )
     }
 }
@@ -316,9 +316,9 @@ private fun IniciarsePantalla2DarkPreview() {
         darkTheme = true
     ) {
         IniciarsePantalla2(
-            onIniciarSesion = {},
-            onCrearCuenta = {},
-            onRecuperarContrasena = {}
+            onLoginClick = {},
+            onRegisterClick = {},
+            onForgotPasswordClick = {}
         )
     }
 }

@@ -35,8 +35,8 @@ import com.example.rieti.ui.theme.RIETITheme
 
 @Composable
 fun InicioPantalla1(
-    onIniciarSesion: () -> Unit,
-    onCrearCuenta: () -> Unit
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
 ) {
     var darkTheme by remember {
         mutableStateOf(false)
@@ -114,7 +114,7 @@ fun InicioPantalla1(
                     )
 
                     Button(
-                        onClick = onIniciarSesion,
+                        onClick = onLoginClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 25.dp)
@@ -136,7 +136,7 @@ fun InicioPantalla1(
                     )
 
                     Button(
-                        onClick = onCrearCuenta,
+                        onClick = onRegisterClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 25.dp)
@@ -193,8 +193,8 @@ private fun InicioPantalla1LightPreview() {
         darkTheme = false
     ) {
         InicioPantalla1(
-            onIniciarSesion = {},
-            onCrearCuenta = {}
+            onLoginClick = {},
+            onRegisterClick = {}
         )
     }
 }
@@ -210,8 +210,8 @@ private fun InicioPantalla1DarkPreview() {
         darkTheme = true
     ) {
         InicioPantalla1(
-            onIniciarSesion = {},
-            onCrearCuenta = {}
+            onLoginClick = {},
+            onRegisterClick = {}
         )
     }
 }

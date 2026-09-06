@@ -1,6 +1,5 @@
 package com.example.rieti.view
 
-import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,9 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
@@ -36,9 +33,9 @@ import com.example.rieti.ui.theme.RIETITheme
 
 @Composable
 fun RecuperarContraseñaPantalla4(
-    onIniciarSesion: () -> Unit,
-    onCrearCuenta: () -> Unit,
-    onRecuperarContrasena: () -> Unit
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onSendCodeClick: () -> Unit
 ) {
     var darkTheme by remember {
         mutableStateOf(false)
@@ -160,7 +157,7 @@ fun RecuperarContraseñaPantalla4(
                     )
 
                     Button(
-                        onClick = onIniciarSesion,
+                        onClick = onLoginClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 25.dp)
@@ -182,7 +179,7 @@ fun RecuperarContraseñaPantalla4(
                     )
 
                     Button(
-                        onClick = onIniciarSesion,
+                        onClick = onLoginClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 50.dp)
@@ -204,7 +201,7 @@ fun RecuperarContraseñaPantalla4(
                     )
 
                     Button(
-                        onClick = onCrearCuenta,
+                        onClick = onRegisterClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 50.dp)
@@ -254,40 +251,5 @@ fun RecuperarContraseñaPantalla4(
                 }
             }
         }
-    }
-}
-
-@Preview(
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-private fun RecuperarContraseñaPantalla4LightPreview() {
-    RIETITheme(
-        darkTheme = false
-    ) {
-        RecuperarContraseñaPantalla4(
-            onIniciarSesion = {},
-            onCrearCuenta = {},
-            onRecuperarContrasena = {}
-        )
-    }
-}
-
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
-)
-@Composable
-private fun RecuperarContraseñaPantalla4DarkPreview() {
-    RIETITheme(
-        darkTheme = true
-    ) {
-        RecuperarContraseñaPantalla4(
-            onIniciarSesion = {},
-            onCrearCuenta = {},
-            onRecuperarContrasena = {}
-        )
     }
 }
