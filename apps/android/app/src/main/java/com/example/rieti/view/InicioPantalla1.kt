@@ -126,7 +126,7 @@ fun InicioPantalla1(
                     ) {
                         Text(
                             text = "INICIAR SESIÓN",
-                            fontSize = 22.sp,
+                            fontSize = 30.sp,
                             fontFamily = FontFamily.Serif
                         )
                     }
@@ -148,7 +148,7 @@ fun InicioPantalla1(
                     ) {
                         Text(
                             text = "CREAR CUENTA",
-                            fontSize = 22.sp,
+                            fontSize = 30.sp,
                             fontFamily = FontFamily.Serif
                         )
                     }

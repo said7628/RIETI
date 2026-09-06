@@ -98,7 +98,7 @@ fun CrearPantalla3(
                         color = colors.surface
                     ) {
                         Text(
-                            text = "Iniciar Sesión",
+                            text = "Crear Cuenta",
                             fontSize = 30.sp,
                             fontFamily = FontFamily.Serif,
                             textAlign = TextAlign.Center,
@@ -243,7 +243,7 @@ fun CrearPantalla3(
                         )
                     ) {
                         Text(
-                            text = "Crear Cuenta",
+                            text = "CREAR CUENTA",
                             fontSize = 30.sp,
                             fontFamily = FontFamily.Serif
                         )
@@ -265,7 +265,7 @@ fun CrearPantalla3(
                         )
                     ) {
                         Text(
-                            text = "Iniciar Sesión",
+                            text = "INICIAR SESIÓN",
                             fontSize = 24.sp,
                             fontFamily = FontFamily.Serif
                         )
