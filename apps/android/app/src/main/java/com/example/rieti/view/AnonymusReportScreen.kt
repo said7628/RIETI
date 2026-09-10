@@ -196,7 +196,7 @@ fun AnonymousReportScreen(
                     // -----------------------------------------
 
                     AnonymousReportFieldWithLabel(
-                        label = "Correo electrónico",
+                        label = "Correo electrónico ()",
                         value = email,
                         placeholder = "correo@ejemplo.com",
 

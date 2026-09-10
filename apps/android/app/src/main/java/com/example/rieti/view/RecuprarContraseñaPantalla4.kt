@@ -157,7 +157,7 @@ fun RecuperarContraseñaPantalla4(
                     )
 
                     Button(
-                        onClick = onLoginClick,
+                        onClick = onSendCodeClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 25.dp)
