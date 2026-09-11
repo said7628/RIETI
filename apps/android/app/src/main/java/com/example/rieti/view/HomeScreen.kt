@@ -267,7 +267,7 @@ fun HomeScreen(
 
                 title = "Seguimiento",
 
-                subtitle = "Numeros de contacto 55 3622 2700 / 55 3622 2800",
+                subtitle = "Números de contacto 55 3622 2700 / 55 3622 2800",
 
                 onClick = {
                     onTrackingClick()

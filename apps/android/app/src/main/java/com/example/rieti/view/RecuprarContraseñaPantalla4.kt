@@ -1,5 +1,6 @@
 package com.example.rieti.view
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
@@ -251,5 +253,23 @@ fun RecuperarContraseñaPantalla4(
                 }
             }
         }
+    }
+}
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun RecuprarContraseñaPantalla4DarkPreview() {
+    RIETITheme(
+        darkTheme = true
+    ) {
+        RecuperarContraseñaPantalla4(
+            onLoginClick = {},
+            onRegisterClick = {},
+            onSendCodeClick = {}
+        )
     }
 }

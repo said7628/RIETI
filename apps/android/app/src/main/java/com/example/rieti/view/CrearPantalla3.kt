@@ -306,3 +306,19 @@ fun CrearPantalla3(
     }
 }
 
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun CrearPantalla3DarkPreview() {
+    RIETITheme(
+        darkTheme = true
+    ) {
+        CrearPantalla3(
+            onLoginClick = {},
+            onCreateAccountClick = {}
+        )
+    }
+}

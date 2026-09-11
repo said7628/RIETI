@@ -267,7 +267,7 @@ fun ReportScreen(
                     ReportFieldWithLabel(
                         label = "Detalles:",
                         value = details,
-                        placeholder = "Describa detalladamente lo que observo ...",
+                        placeholder = "Describa detalladamente lo que observó ...",
 
                         onValueChange = {
                             details = it
@@ -785,7 +785,8 @@ private fun EvidenceSelector(
             Text(
                 text = "Elegir archivos",
                 color = colors.bluePrincipal,
-                fontFamily = FontFamily.Serif
+                fontFamily = FontFamily.Serif,
+                fontSize = 14.sp
             )
         }
 
@@ -935,7 +936,7 @@ private fun ReportScreenDarkPreview() {
     }
 }
 
-//Borrar lo que sigue despues de implementar esas pantallas :DDDD
+//Borrar lo que sigue después de implementar esas pantallas :DDDD
 @Composable
 fun HomeScreen(
     onReportClick: () -> Unit,

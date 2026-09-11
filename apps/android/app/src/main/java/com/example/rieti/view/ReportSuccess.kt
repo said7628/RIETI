@@ -128,7 +128,7 @@ fun ReportSuccessScreen(
             // ========================================
 
             SuccessTitleBox(
-                text = "Reporte creado\ncon exito"
+                text = "Reporte creado\ncon éxito"
             )
 
 
@@ -206,7 +206,7 @@ fun ReportSuccessScreen(
 
             ReportSuccessButton(
 
-                title = "Menu Principal",
+                title = "Menú Principal",
 
                 subtitle = "",
 
