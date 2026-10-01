@@ -1,0 +1,1011 @@
+/* =========================
+   ESTILOS GENERALES
+   ========================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: #f8fcfa;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000000;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-lalo {
+  min-height: 100vh;
+  background-color: #f8fcfa;
+}
+
+/* =========================
+   TOP BAR
+   ========================= */
+
+.topbar {
+  /* Yo mantengo la barra arriba para que el administrador siempre tenga acceso al menú. */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  width: 100%;
+  height: 95px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 4%;
+
+  background-color: #000000;
+}
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  flex-shrink: 0;
+}
+
+.topbar-logo img {
+  width: 92px;
+  height: auto;
+  display: block;
+}
+
+.topbar-logo span {
+  color: #ffffff;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 31px;
+  font-weight: 400;
+
+  letter-spacing: 1px;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+
+  gap: clamp(45px, 5vw, 95px);
+
+  margin-left: clamp(65px, 6vw, 120px);
+}
+
+.topbar-nav a {
+  position: relative;
+
+  color: #ffffff;
+
+  font-size: clamp(14px, 0.85vw, 17px);
+  font-weight: 400;
+
+  padding: 10px 0;
+
+  transition: color 0.2s ease;
+}
+
+.topbar-nav a::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  bottom: 3px;
+
+  width: 0;
+  height: 2px;
+
+  background-color: #1fc5b4;
+
+  transition: width 0.2s ease;
+}
+
+.topbar-nav a:hover {
+  color: #95e3ea;
+}
+
+.topbar-nav a:hover::after {
+  width: 100%;
+}
+
+.user-button {
+  margin-left: auto;
+
+  min-width: 145px;
+
+  padding: 11px 25px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 2px solid #95e3ea;
+  border-radius: 18px;
+
+  color: #ffffff;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(15px, 0.9vw, 18px);
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.user-button:hover {
+  background-color: #1fc5b4;
+  color: #000000;
+
+  transform: translateY(-2px);
+}
+
+
+/* =========================
+   HERO
+   ========================= */
+
+.admin-hero {
+  width: 100%;
+
+  min-height: 280px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 35px 20px 35px;
+
+  background-color: #000000;
+  color: #ffffff;
+
+  text-align: center;
+}
+
+.admin-hero-content {
+  transform: translateY(-5px);
+}
+
+.admin-hero h1 {
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: clamp(32px, 2.3vw, 44px);
+  font-weight: 400;
+
+  line-height: 1.18;
+
+  margin-bottom: 34px;
+}
+
+.admin-hero p {
+  font-size: clamp(15px, 0.95vw, 18px);
+  font-weight: 500;
+
+  letter-spacing: 0.5px;
+}
+
+
+/* =========================
+   ONDAS
+   ========================= */
+
+.waves-container {
+  width: 100%;
+  height: 250px;
+
+  margin-top: -1px;
+
+  overflow: hidden;
+
+  /*
+    Yo uso negro aquí para que el espacio entre el hero
+    y la primera onda forme parte del encabezado.
+  */
+  background-color: #000000;
+}
+
+.waves {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+}
+
+.wave-back {
+  fill: #d10073;
+}
+
+.wave-middle {
+  fill: #ff008c;
+}
+
+.wave-front {
+  fill: #ff8aca;
+}
+
+/* =========================
+   DASHBOARD
+   ========================= */
+
+.dashboard-section {
+  width: 100%;
+
+  padding: 22px 4% 45px;
+
+  background-color: #f8fcfa;
+}
+
+.dashboard-container {
+  width: 100%;
+  max-width: 1450px;
+
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* =========================
+   ETIQUETA DASHBOARD
+   ========================= */
+
+.dashboard-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 8px 18px;
+
+  border-radius: 14px;
+
+  background-color: #1fc5b4;
+  color: #ffffff;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+}
+
+.dashboard-label img {
+  width: 31px;
+  height: 31px;
+
+  object-fit: contain;
+}
+
+
+/* =========================
+   TÍTULO DE LA BANDEJA
+   ========================= */
+
+.dashboard-title {
+  margin-top: 30px;
+  margin-bottom: 28px;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: clamp(25px, 1.65vw, 32px);
+  font-weight: 400;
+
+  text-align: center;
+}
+
+
+/* =========================
+   TARJETAS DE ESTADO
+   ========================= */
+
+.status-cards {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: clamp(25px, 3vw, 55px);
+}
+
+.status-card {
+  /*
+    Yo hago toda la tarjeta presionable porque cada una
+    llevará al administrador a una vista diferente.
+  */
+  min-height: 125px;
+
+  padding: 22px 25px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 22px;
+
+  background-color: #95e3ea;
+  color: #000000;
+
+  text-align: center;
+
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.status-card:hover {
+  /*
+    Yo uso un turquesa más fuerte en lugar de bajar la opacidad
+    para que la tarjeta siga pareciendo activa.
+  */
+  background-color: #1fc5b4;
+
+  transform: translateY(-3px);
+
+  box-shadow: 0 9px 20px rgba(0, 0, 0, 0.12);
+}
+
+.status-card-title {
+  font-size: clamp(16px, 1vw, 19px);
+  font-weight: 500;
+
+  line-height: 1.3;
+}
+
+.status-card-value {
+  margin-top: 9px;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: clamp(29px, 1.8vw, 36px);
+  font-weight: 600;
+}
+
+/* =========================
+   REPORTES RECIENTES
+   ========================= */
+
+.reports-section {
+  width: 100%;
+
+  padding: 0 4% 80px;
+
+  background-color: #f8fcfa;
+}
+
+.reports-container {
+  width: 100%;
+  max-width: 1550px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1.9fr) minmax(330px, 1fr);
+
+  gap: 28px;
+
+  align-items: stretch;
+}
+
+
+/* =========================
+   TABLA DE REPORTES
+   ========================= */
+
+.recent-reports-card {
+  width: 100%;
+
+  overflow: hidden;
+
+  background-color: #ffffff;
+
+  border: 1px solid #bff8f2;
+  border-radius: 18px;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+}
+
+.recent-reports-card h3 {
+  padding: 16px 20px;
+
+  border-bottom: 2px solid #ff2ea1;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 20px;
+  font-weight: 400;
+
+  text-align: center;
+}
+
+.reports-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.reports-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  table-layout: fixed;
+}
+
+.reports-table th {
+  padding: 12px 10px;
+
+  background-color: #f8fcfa;
+
+  border-bottom: 1px solid #ff8aca;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  text-align: center;
+}
+
+.reports-table td {
+  padding: 11px 9px;
+
+  border-bottom: 1px solid #bff8f2;
+
+  font-size: 12px;
+
+  text-align: center;
+  vertical-align: middle;
+}
+
+.reports-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================
+   ESTADOS
+   ========================= */
+
+.report-status {
+  display: inline-flex;
+
+  min-width: 105px;
+
+  justify-content: center;
+  align-items: center;
+
+  padding: 6px 9px;
+
+  border-radius: 20px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.status-unassigned {
+  background-color: #ff000d;
+  color: #ffffff;
+}
+
+.status-attention {
+  background-color: #fff200;
+  color: #000000;
+}
+
+.status-completed {
+  background-color: #8cff00;
+  color: #000000;
+}
+
+
+/* =========================
+   DETALLE DEL REPORTE
+   ========================= */
+
+.report-detail-card {
+  width: 100%;
+
+  padding: 0 18px 18px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #bff8f2;
+  border-radius: 18px;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+}
+
+.report-detail-card h3 {
+  margin: 0 -18px 16px;
+
+  padding: 16px 14px;
+
+  border-bottom: 2px solid #ff2ea1;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 16px;
+  font-weight: 400;
+
+  text-align: center;
+}
+
+.report-map-placeholder {
+  width: 100%;
+  min-height: 165px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  margin-bottom: 18px;
+
+  border: 1px dashed #95e3ea;
+  border-radius: 10px;
+
+  background-color: #f8fcfa;
+
+  color: #555555;
+
+  font-size: 13px;
+}
+
+.report-information {
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+.report-information > p {
+  margin-bottom: 14px;
+}
+
+.report-information-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 14px 16px;
+
+  margin-bottom: 14px;
+}
+
+.report-information strong {
+  font-weight: 700;
+}
+
+.case-holder strong {
+  color: #d10073;
+}
+
+.report-detail-card h4 {
+  margin-top: 18px;
+  margin-bottom: 10px;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+/* =========================
+   EVIDENCIA
+   ========================= */
+
+.evidence-container {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 10px;
+}
+
+.evidence-placeholder {
+  min-height: 120px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 8px;
+
+  background-color: #ffdce6;
+
+  color: #666666;
+
+  font-size: 12px;
+}
+
+/* =========================
+   ENCABEZADOS DE SECCIÓN
+   ========================= */
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 8px 18px;
+
+  border-radius: 14px;
+
+  background-color: #1fc5b4;
+  color: #ffffff;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+}
+
+.section-label img {
+  width: 31px;
+  height: 31px;
+
+  object-fit: contain;
+}
+
+
+/* =========================
+   MAPA DE CALOR
+   ========================= */
+
+.heatmap-section {
+  width: 100%;
+  max-width: 1550px;
+
+  margin: 0 auto;
+
+  padding: 15px 4% 70px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heatmap-placeholder {
+  /*
+    Yo dejo este espacio preparado para colocar
+    el mapa de calor cuando definamos su implementación.
+  */
+  width: 100%;
+  height: 480px;
+
+  margin-top: 28px;
+
+  border: 2px dashed #95e3ea;
+  border-radius: 18px;
+
+  background-color: #ffffff;
+}
+
+
+/* =========================
+   ESTADÍSTICAS
+   ========================= */
+
+.statistics-section {
+  width: 100%;
+
+  padding: 10px 4% 100px;
+
+  display: flex;
+  justify-content: center;
+
+  background-color: #f8fcfa;
+}
+
+/* =========================
+   ADAPTACIÓN PARA LAPTOPS
+   ========================= */
+
+@media (max-width: 1600px) {
+  .topbar {
+    height: 88px;
+    padding: 0 3%;
+  }
+
+  .topbar-logo img {
+    width: 82px;
+  }
+
+  .topbar-logo span {
+    font-size: 28px;
+  }
+
+  .topbar-nav {
+    margin-left: 55px;
+    gap: 55px;
+  }
+
+  .admin-hero {
+    min-height: 260px;
+  }
+
+  .waves-container {
+    height: 230px;
+  }
+
+  .dashboard-section {
+  padding-top: 30px;
+}
+
+.dashboard-container {
+  max-width: 1350px;
+}
+
+.status-card {
+  min-height: 115px;
+}
+
+.reports-container {
+  max-width: 1350px;
+}
+
+.reports-table td {
+  padding: 10px 7px;
+}
+
+.report-map-placeholder {
+  min-height: 150px;
+}
+
+.heatmap-section {
+    max-width: 1350px;
+  }
+
+  .heatmap-placeholder {
+    height: 430px;
+  }
+
+}
+
+
+@media (max-width: 1440px) {
+  .topbar {
+    height: 82px;
+  }
+
+  .topbar-logo img {
+    width: 74px;
+  }
+
+  .topbar-logo span {
+    font-size: 25px;
+  }
+
+  .topbar-nav {
+    margin-left: 40px;
+    gap: 42px;
+  }
+
+  .user-button {
+    min-width: 125px;
+    padding: 9px 20px;
+  }
+
+  .admin-hero {
+    min-height: 235px;
+  }
+
+  .waves-container {
+    height: 215px;
+  }
+
+  .dashboard-section {
+  padding-left: 5%;
+  padding-right: 5%;
+}
+
+.dashboard-label {
+  font-size: 19px;
+}
+
+.dashboard-label img {
+  width: 28px;
+  height: 28px;
+}
+
+.dashboard-title {
+  margin-top: 26px;
+  margin-bottom: 24px;
+}
+
+.status-cards {
+  gap: 28px;
+}
+
+.status-card {
+  min-height: 105px;
+  border-radius: 18px;
+}
+
+.reports-section {
+  padding-left: 5%;
+  padding-right: 5%;
+}
+
+.reports-container {
+  grid-template-columns: minmax(0, 1.8fr) minmax(310px, 1fr);
+
+  gap: 22px;
+}
+
+.reports-table th {
+  font-size: 12px;
+}
+
+.reports-table td {
+  font-size: 11px;
+}
+
+.report-status {
+  min-width: 92px;
+
+  font-size: 9px;
+}
+
+.section-label {
+    font-size: 19px;
+  }
+
+  .section-label img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .heatmap-placeholder {
+    height: 390px;
+  }
+
+}
+
+
+@media (max-width: 1366px) {
+  .topbar {
+    padding: 0 2.5%;
+  }
+
+  .topbar-logo img {
+    width: 68px;
+  }
+
+  .topbar-logo span {
+    font-size: 23px;
+  }
+
+  .topbar-nav {
+    margin-left: 32px;
+    gap: 34px;
+  }
+
+  .admin-hero {
+    min-height: 215px;
+
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+
+  .admin-hero h1 {
+    margin-bottom: 26px;
+  }
+
+  .waves-container {
+    height: 195px;
+  }
+
+  .dashboard-section {
+  padding-top: 27px;
+  padding-bottom: 55px;
+}
+
+.dashboard-container {
+  max-width: 1180px;
+}
+
+.dashboard-label {
+  padding: 7px 16px;
+}
+
+.status-card {
+  min-height: 100px;
+  padding: 18px 20px;
+}
+
+.reports-container {
+  max-width: 1180px;
+
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
+
+  gap: 18px;
+}
+
+.recent-reports-card h3 {
+  font-size: 18px;
+}
+
+.report-detail-card h3 {
+  font-size: 14px;
+}
+
+.report-information {
+  font-size: 11px;
+}
+
+.evidence-placeholder {
+  min-height: 100px;
+}
+
+.heatmap-section {
+    max-width: 1180px;
+  }
+
+  .heatmap-placeholder {
+    height: 350px;
+  }
+  
+}
+
+
+@media (max-width: 1280px) {
+  .topbar-nav {
+    gap: 25px;
+    margin-left: 25px;
+  }
+
+  .user-button {
+    min-width: 110px;
+  }
+
+  .topbar-logo span {
+    font-size: 21px;
+  }
+
+  .waves-container {
+    height: 185px;
+  }
+
+  .status-cards {
+  gap: 22px;
+}
+
+.status-card {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+.reports-container {
+  grid-template-columns: minmax(0, 1.7fr) minmax(285px, 1fr);
+
+  gap: 16px;
+}
+
+.reports-table th,
+.reports-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.report-information-grid {
+  gap: 10px;
+}
+
+}
