@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import './index.css'
 
-function App() {
+function AppMarco() {
 
   return (
     <>
-    console.log('holaaaa')
+    <text> Papulinces </text>
+    
     </>
   )
 }
 
-export default App
+export default AppMarco
