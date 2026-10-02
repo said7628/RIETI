@@ -53,7 +53,10 @@ object Routes {
 // =================================================================
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    darkTheme: Boolean,
+    onThemeChange: () -> Unit
+) {
 
     val navController = rememberNavController()
 
@@ -71,6 +74,10 @@ fun AppNavigation() {
         // 1. PANTALLA INICIAL
         // =========================================================
 
+        // =========================================================
+// 1. PANTALLA INICIAL
+// =========================================================
+
         composable(
             route = Routes.START
         ) {
@@ -87,7 +94,6 @@ fun AppNavigation() {
                     }
                 },
 
-
                 onRegisterClick = {
 
                     navController.navigate(
@@ -96,14 +102,17 @@ fun AppNavigation() {
 
                         launchSingleTop = true
                     }
-                }
+                },
+
+                darkTheme = darkTheme,
+                onThemeChange = onThemeChange
             )
         }
 
 
         // =========================================================
-        // 2. INICIAR SESIÓN
-        // =========================================================
+// 2. INICIAR SESIÓN
+// =========================================================
 
         composable(
             route = Routes.LOGIN
@@ -124,11 +133,9 @@ fun AppNavigation() {
                             inclusive = true
                         }
 
-
                         launchSingleTop = true
                     }
                 },
-
 
                 onRegisterClick = {
 
@@ -143,11 +150,9 @@ fun AppNavigation() {
                             inclusive = false
                         }
 
-
                         launchSingleTop = true
                     }
                 },
-
 
                 onForgotPasswordClick = {
 
@@ -157,14 +162,16 @@ fun AppNavigation() {
 
                         launchSingleTop = true
                     }
-                }
+                },
+
+                darkTheme = darkTheme,
+                onThemeChange = onThemeChange
             )
         }
 
-
         // =========================================================
-        // 3. CREAR CUENTA
-        // =========================================================
+// 3. CREAR CUENTA
+// =========================================================
 
         composable(
             route = Routes.REGISTER
@@ -185,11 +192,9 @@ fun AppNavigation() {
                             inclusive = true
                         }
 
-
                         launchSingleTop = true
                     }
                 },
-
 
                 // INICIAR SESIÓN DESDE CREAR CUENTA
                 onLoginClick = {
@@ -205,17 +210,19 @@ fun AppNavigation() {
                             inclusive = false
                         }
 
-
                         launchSingleTop = true
                     }
-                }
+                },
+
+                darkTheme = darkTheme,
+                onThemeChange = onThemeChange
             )
         }
 
 
-        // =========================================================
-        // 4. RECUPERAR CONTRASEÑA
-        // =========================================================
+// =========================================================
+// 4. RECUPERAR CONTRASEÑA
+// =========================================================
 
         composable(
             route = Routes.RECOVER_PASSWORD
@@ -223,14 +230,12 @@ fun AppNavigation() {
 
             RecuperarContraseñaPantalla4(
 
-
                 // -------------------------------------------------
                 // ENVIAR CÓDIGO
                 // -------------------------------------------------
 
                 onSendCodeClick = {
 
-                    // NUEVO:
                     // abre la pantalla para introducir código
                     // y nueva contraseña
 
@@ -241,7 +246,6 @@ fun AppNavigation() {
                         launchSingleTop = true
                     }
                 },
-
 
                 // -------------------------------------------------
                 // INICIAR SESIÓN
@@ -260,11 +264,9 @@ fun AppNavigation() {
                             inclusive = false
                         }
 
-
                         launchSingleTop = true
                     }
                 },
-
 
                 // -------------------------------------------------
                 // CREAR CUENTA
@@ -283,13 +285,14 @@ fun AppNavigation() {
                             inclusive = false
                         }
 
-
                         launchSingleTop = true
                     }
-                }
+                },
+
+                darkTheme = darkTheme,
+                onThemeChange = onThemeChange
             )
         }
-
 
         // =========================================================
         // HOME
@@ -874,10 +877,7 @@ fun AppNavigation() {
                 // CAMBIAR TEMA
                 // -------------------------------------------------
 
-                onToggleThemeClick = {
-
-                    // Pendiente
-                },
+                onToggleThemeClick = onThemeChange,
 
 
                 // -------------------------------------------------

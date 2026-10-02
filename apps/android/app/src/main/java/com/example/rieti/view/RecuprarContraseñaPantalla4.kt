@@ -37,11 +37,10 @@ import com.example.rieti.ui.theme.RIETITheme
 fun RecuperarContraseñaPantalla4(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onSendCodeClick: () -> Unit
+    onSendCodeClick: () -> Unit,
+    darkTheme: Boolean,
+    onThemeChange: () -> Unit
 ) {
-    var darkTheme by remember {
-        mutableStateOf(false)
-    }
 
     var correo by remember {
         mutableStateOf("")
@@ -55,206 +54,203 @@ fun RecuperarContraseñaPantalla4(
         mutableStateOf("")
     }
 
-    RIETITheme(
-        darkTheme = darkTheme
-    ) {
-        val colors = AppTheme.colors
+    val colors = AppTheme.colors
 
-        Scaffold(
-            contentWindowInsets = WindowInsets.safeDrawing
-        ) { innerPadding ->
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing
+    ) { innerPadding ->
 
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                color = colors.surface
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            color = colors.surface
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colors.titles
                 ) {
-
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = colors.titles
-                    ) {
-                        Text(
-                            text = "RIETI",
-                            modifier = Modifier.padding(vertical = 50.dp),
-                            fontSize = 55.sp,
-                            fontFamily = FontFamily.Serif,
-                            textAlign = TextAlign.Center,
-                            color = colors.text
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier.height(14.dp)
-                    )
-
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = colors.surface
-                    ) {
-                        Text(
-                            text = "Recuperar \nContraseña",
-                            fontSize = 30.sp,
-                            fontFamily = FontFamily.Serif,
-                            textAlign = TextAlign.Center,
-                            color = colors.titles
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 80.dp),
-                        thickness = 2.dp,
-                        color = colors.pinkPrincipal
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
-
                     Text(
-                        text = "Correo",
-                        modifier = Modifier.padding(
-                            vertical = 8.dp,
-                            horizontal = 14.dp
-                        ),
-                        fontSize = 16.sp,
+                        text = "RIETI",
+                        modifier = Modifier.padding(vertical = 50.dp),
+                        fontSize = 55.sp,
                         fontFamily = FontFamily.Serif,
-                        textAlign = TextAlign.Left,
+                        textAlign = TextAlign.Center,
                         color = colors.text
                     )
+                }
 
-                    OutlinedTextField(
-                        value = correo,
-                        onValueChange = {
-                            correo = it
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colors.surface
+                ) {
+                    Text(
+                        text = "Recuperar \nContraseña",
+                        fontSize = 30.sp,
+                        fontFamily = FontFamily.Serif,
+                        textAlign = TextAlign.Center,
+                        color = colors.titles
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 80.dp),
+                    thickness = 2.dp,
+                    color = colors.pinkPrincipal
+                )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                Text(
+                    text = "Correo",
+                    modifier = Modifier.padding(
+                        vertical = 8.dp,
+                        horizontal = 14.dp
+                    ),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif,
+                    textAlign = TextAlign.Left,
+                    color = colors.text
+                )
+
+                OutlinedTextField(
+                    value = correo,
+                    onValueChange = {
+                        correo = it
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = colors.text,
+                        unfocusedTextColor = colors.text,
+                        cursorColor = colors.pinkPrincipal,
+                        focusedBorderColor = colors.pinkPrincipal,
+                        unfocusedBorderColor = colors.blueSecondary
+                    )
+                )
+
+                Spacer(
+                    modifier = Modifier.height(50.dp)
+                )
+
+                Button(
+                    onClick = onSendCodeClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp)
+                        .height(100.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.blueDetails,
+                        contentColor = colors.textTyping
+                    )
+                ) {
+                    Text(
+                        text = "Enviar Código",
+                        fontSize = 40.sp,
+                        fontFamily = FontFamily.Serif
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(50.dp)
+                )
+
+                Button(
+                    onClick = onLoginClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 50.dp)
+                        .height(70.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.blueBoxes,
+                        contentColor = colors.textTyping
+                    )
+                ) {
+                    Text(
+                        text = "INICIAR SESIÓN",
+                        fontSize = 24.sp,
+                        fontFamily = FontFamily.Serif
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+                Button(
+                    onClick = onRegisterClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 50.dp)
+                        .height(60.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.blueDetails,
+                        contentColor = colors.textTyping
+                    )
+                ) {
+                    Text(
+                        text = "CREAR CUENTA",
+                        fontSize = 24.sp,
+                        fontFamily = FontFamily.Serif
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+                HorizontalDivider(
+                    thickness = 4.dp,
+                    color = colors.pinkPrincipal
+                )
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colors.surface
+                ) {
+                    Text(
+                        text = if (darkTheme) {
+                            "Modo claro"
+                        } else {
+                            "Modo obscuro"
                         },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 25.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email
-                        ),
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = colors.text,
-                            unfocusedTextColor = colors.text,
-                            cursorColor = colors.pinkPrincipal,
-                            focusedBorderColor = colors.pinkPrincipal,
-                            unfocusedBorderColor = colors.blueSecondary
-                        )
+                            .clickable {
+                                onThemeChange()
+                            }
+                            .padding(vertical = 18.dp),
+                        fontSize = 20.sp,
+                        fontFamily = FontFamily.Serif,
+                        color = colors.text,
+                        textAlign = TextAlign.Center
                     )
-
-                    Spacer(
-                        modifier = Modifier.height(50.dp)
-                    )
-
-                    Button(
-                        onClick = onSendCodeClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 25.dp)
-                            .height(100.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueDetails,
-                            contentColor = colors.textTyping
-                        )
-                    ) {
-                        Text(
-                            text = "Enviar Código",
-                            fontSize = 40.sp,
-                            fontFamily = FontFamily.Serif
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier.height(50.dp)
-                    )
-
-                    Button(
-                        onClick = onLoginClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 50.dp)
-                            .height(70.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueBoxes,
-                            contentColor = colors.textTyping
-                        )
-                    ) {
-                        Text(
-                            text = "INICIAR SESIÓN",
-                            fontSize = 24.sp,
-                            fontFamily = FontFamily.Serif
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-
-                    Button(
-                        onClick = onRegisterClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 50.dp)
-                            .height(60.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueDetails,
-                            contentColor = colors.textTyping
-                        )
-                    ) {
-                        Text(
-                            text = "CREAR CUENTA",
-                            fontSize = 24.sp,
-                            fontFamily = FontFamily.Serif
-                        )
-                    }
-
-                    Spacer(
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    HorizontalDivider(
-                        thickness = 4.dp,
-                        color = colors.pinkPrincipal
-                    )
-
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = colors.surface
-                    ) {
-                        Text(
-                            text = if (darkTheme) {
-                                "Modo claro"
-                            } else {
-                                "Modo obscuro"
-                            },
-                            modifier = Modifier
-                                .clickable {
-                                    darkTheme = !darkTheme
-                                }
-                                .padding(vertical = 18.dp),
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily.Serif,
-                            color = colors.text,
-                            textAlign = TextAlign.Center
-                        )
-                    }
                 }
             }
         }
     }
 }
+
 
 @Preview(
     showBackground = true,
@@ -263,13 +259,16 @@ fun RecuperarContraseñaPantalla4(
 )
 @Composable
 private fun RecuprarContraseñaPantalla4DarkPreview() {
+
     RIETITheme(
         darkTheme = true
     ) {
         RecuperarContraseñaPantalla4(
             onLoginClick = {},
             onRegisterClick = {},
-            onSendCodeClick = {}
+            onSendCodeClick = {},
+            darkTheme = true,
+            onThemeChange = {}
         )
     }
 }
