@@ -13,8 +13,6 @@ html {
 }
 
 body {
-  margin: 0;
-  background-color: #1fc5b4;
   font-family: Arial, Helvetica, sans-serif;
   color: #000000;
 }
@@ -28,6 +26,7 @@ a {
   min-height: 100vh;
   background-color: #f8fcfa;
 }
+
 
 /* =========================
    TOP BAR
@@ -160,13 +159,7 @@ a {
 .admin-hero {
   width: 100%;
 
-  height: 200px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 110px 20px 35px;
+  padding: 60px 20px 0;
 
   background-color: #000000;
   color: #ffffff;
@@ -175,11 +168,8 @@ a {
 }
 
 .admin-hero-content {
-  transform: translateY(40px);
-
+  display: inline-block;
 }
-
-
 
 .admin-hero h1 {
   font-family: Georgia, "Times New Roman", serif;
@@ -208,7 +198,6 @@ a {
 
 .waves-container {
   width: 100%;
-  min-height: 485px;
 
   margin-top: -1px;
 
@@ -225,7 +214,7 @@ a {
   display: block;
 
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .wave-back {
@@ -240,6 +229,7 @@ a {
   fill: #ff8aca;
 }
 
+
 /* =========================
    DASHBOARD
    ========================= */
@@ -247,7 +237,7 @@ a {
 .dashboard-section {
   width: 100%;
 
-  padding: 22px 4% 0px;
+  padding: 22px 4% 0;
 
   background-color: #ff8aca;
 }
@@ -256,7 +246,7 @@ a {
   width: 100%;
   max-width: 1450px;
 
-  padding: 50px ;
+  padding: 50px;
 
   margin: 0 auto;
 
@@ -264,11 +254,6 @@ a {
   flex-direction: column;
   align-items: center;
 }
-
-
-/* =========================
-   ETIQUETA DASHBOARD
-   ========================= */
 
 .dashboard-label {
   display: inline-flex;
@@ -282,7 +267,7 @@ a {
   border-radius: 14px;
 
   background-color: #1fc5b4;
-  color: #ffffff;
+  color: #000000;
 
   font-family: Georgia, "Times New Roman", serif;
   font-size: 35px;
@@ -294,11 +279,6 @@ a {
 
   object-fit: contain;
 }
-
-
-/* =========================
-   TÍTULO DE LA BANDEJA
-   ========================= */
 
 .dashboard-title {
   margin-top: 30px;
@@ -384,6 +364,7 @@ a {
   font-weight: 600;
 }
 
+
 /* =========================
    REPORTES RECIENTES
    ========================= */
@@ -410,11 +391,6 @@ a {
 
   align-items: stretch;
 }
-
-
-/* =========================
-   TABLA DE REPORTES
-   ========================= */
 
 .recent-reports-card {
   width: 100%;
@@ -486,7 +462,7 @@ a {
 
 
 /* =========================
-   ESTADOS
+   SEMÁFORO DE ESTADOS
    ========================= */
 
 .report-status {
@@ -507,18 +483,23 @@ a {
   white-space: nowrap;
 }
 
-.status-unassigned {
-  background-color: #ff000d;
+.status-sin-atender {
+  background-color: #d0000b;
   color: #ffffff;
 }
 
-.status-attention {
+.status-atendiendo {
   background-color: #fff200;
   color: #000000;
 }
 
-.status-completed {
+.status-atendido {
   background-color: #8cff00;
+  color: #000000;
+}
+
+.status-inactivo {
+  background-color: #d9d9d9;
   color: #000000;
 }
 
@@ -613,11 +594,6 @@ a {
   font-weight: 600;
 }
 
-
-/* =========================
-   EVIDENCIA
-   ========================= */
-
 .evidence-container {
   display: grid;
 
@@ -642,6 +618,7 @@ a {
   font-size: 12px;
 }
 
+
 /* =========================
    ENCABEZADOS DE SECCIÓN
    ========================= */
@@ -658,7 +635,7 @@ a {
   border-radius: 14px;
 
   background-color: #1fc5b4;
-  color: #ffffff;
+  color: #000000;
 
   font-family: Georgia, "Times New Roman", serif;
   font-size: 21px;
@@ -684,6 +661,7 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
+
   background-color: #ff8aca;
 }
 
@@ -719,11 +697,36 @@ a {
   background-color: #ff8aca;
 }
 
+
+/* =========================
+   PÁGINAS EN CONSTRUCCIÓN
+   ========================= */
+
+.pending-page {
+  padding: 80px 4%;
+
+  text-align: center;
+}
+
+.pending-page h1 {
+  margin-bottom: 16px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 40px;
+  font-weight: 400;
+}
+
+.pending-page p {
+  font-size: 18px;
+}
+
+
 /* =========================
    ADAPTACIÓN PARA LAPTOPS
    ========================= */
 
 @media (max-width: 1600px) {
+  /* Top bar */
   .topbar {
     height: 88px;
     padding: 0 3%;
@@ -742,47 +745,41 @@ a {
     gap: 55px;
   }
 
-  .admin-hero {
-    min-height: 260px;
-  }
-
-  .waves-container {
-    height: 230px;
-  }
-
+  /* Dashboard */
   .dashboard-section {
-  padding-top: 30px;
-}
+    padding-top: 30px;
+  }
 
-.dashboard-container {
-  max-width: 1350px;
-}
+  .dashboard-container {
+    max-width: 1350px;
+  }
 
-.status-card {
-  min-height: 115px;
-}
+  .status-card {
+    min-height: 115px;
+  }
 
-.reports-container {
-  max-width: 1350px;
-}
+  /* Reportes */
+  .reports-container {
+    max-width: 1350px;
+  }
 
-.reports-table td {
-  padding: 10px 7px;
-}
+  .reports-table td {
+    padding: 10px 7px;
+  }
 
-.report-map-placeholder {
-  min-height: 150px;
-}
+  .report-map-placeholder {
+    min-height: 150px;
+  }
 
-
+  /* Mapa de calor */
   .heatmap-placeholder {
     height: 430px;
   }
-
 }
 
 
 @media (max-width: 1440px) {
+  /* Top bar */
   .topbar {
     height: 82px;
   }
@@ -805,68 +802,61 @@ a {
     padding: 9px 20px;
   }
 
-  .admin-hero {
-    min-height: 235px;
-  }
-
-  .waves-container {
-    height: 215px;
-  }
-
+  /* Dashboard */
   .dashboard-section {
-  padding-left: 5%;
-  padding-right: 5%;
-}
+    padding-left: 5%;
+    padding-right: 5%;
+  }
 
-.dashboard-label {
-  font-size: 19px;
-}
+  .dashboard-label {
+    font-size: 19px;
+  }
 
-.dashboard-label img {
-  width: 28px;
-  height: 28px;
-}
+  .dashboard-label img {
+    width: 28px;
+    height: 28px;
+  }
 
-.dashboard-title {
-  margin-top: 26px;
-  margin-bottom: 24px;
-}
+  .dashboard-title {
+    margin-top: 26px;
+    margin-bottom: 24px;
+  }
 
-.status-cards {
-  gap: 28px;
-}
+  .status-cards {
+    gap: 28px;
+  }
 
-.status-card {
-  min-height: 105px;
-  border-radius: 18px;
-}
+  .status-card {
+    min-height: 105px;
+    border-radius: 18px;
+  }
 
-.reports-section {
-  padding-left: 5%;
-  padding-right: 5%;
-}
+  /* Reportes */
+  .reports-section {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
 
-.reports-container {
-  grid-template-columns: minmax(0, 1.8fr) minmax(310px, 1fr);
+  .reports-container {
+    grid-template-columns: minmax(0, 1.8fr) minmax(310px, 1fr);
+    gap: 22px;
+  }
 
-  gap: 22px;
-}
+  .reports-table th {
+    font-size: 12px;
+  }
 
-.reports-table th {
-  font-size: 12px;
-}
+  .reports-table td {
+    font-size: 11px;
+  }
 
-.reports-table td {
-  font-size: 11px;
-}
+  .report-status {
+    min-width: 92px;
+    font-size: 9px;
+  }
 
-.report-status {
-  min-width: 92px;
-
-  font-size: 9px;
-}
-
-.section-label {
+  /* Encabezados de sección */
+  .section-label {
     font-size: 19px;
   }
 
@@ -875,14 +865,15 @@ a {
     height: 28px;
   }
 
+  /* Mapa de calor */
   .heatmap-placeholder {
     height: 390px;
   }
-
 }
 
 
 @media (max-width: 1366px) {
+  /* Top bar */
   .topbar {
     padding: 0 2.5%;
   }
@@ -900,75 +891,62 @@ a {
     gap: 34px;
   }
 
+  /* Hero */
   .admin-hero {
-    min-height: 215px;
-
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 40px;
   }
 
-  .admin-hero h1 {
-    margin-bottom: 26px;
-  }
-
-  .waves-container {
-    height: 195px;
-  }
-
+  /* Dashboard */
   .dashboard-section {
-  padding-top: 27px;
-  padding-bottom: 55px;
-}
+    padding-top: 27px;
+    padding-bottom: 55px;
+  }
 
-.dashboard-container {
-  max-width: 1180px;
-}
-
-.dashboard-label {
-  padding: 7px 16px;
-}
-
-.status-card {
-  min-height: 100px;
-  padding: 18px 20px;
-}
-
-.reports-container {
-  max-width: 1180px;
-
-  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
-
-  gap: 18px;
-}
-
-.recent-reports-card h3 {
-  font-size: 18px;
-}
-
-.report-detail-card h3 {
-  font-size: 14px;
-}
-
-.report-information {
-  font-size: 11px;
-}
-
-.evidence-placeholder {
-  min-height: 100px;
-}
-
-.heatmap-section {
+  .dashboard-container {
     max-width: 1180px;
   }
 
+  .dashboard-label {
+    padding: 7px 16px;
+  }
+
+  .status-card {
+    min-height: 100px;
+    padding: 18px 20px;
+  }
+
+  /* Reportes */
+  .reports-container {
+    max-width: 1180px;
+    grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
+    gap: 18px;
+  }
+
+  .recent-reports-card h3 {
+    font-size: 18px;
+  }
+
+  .report-detail-card h3 {
+    font-size: 14px;
+  }
+
+  .report-information {
+    font-size: 11px;
+  }
+
+  .evidence-placeholder {
+    min-height: 100px;
+  }
+
+  /* Mapa de calor */
   .heatmap-placeholder {
     height: 350px;
   }
-  
 }
 
 
 @media (max-width: 1280px) {
+  /* Top bar */
   .topbar-nav {
     gap: 25px;
     margin-left: 25px;
@@ -982,32 +960,29 @@ a {
     font-size: 21px;
   }
 
-  .waves-container {
-    height: 185px;
+  /* Dashboard */
+  .status-cards {
+    gap: 22px;
   }
 
-  .status-cards {
-  gap: 22px;
-}
+  .status-card {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
 
-.status-card {
-  padding-left: 15px;
-  padding-right: 15px;
-}
-.reports-container {
-  grid-template-columns: minmax(0, 1.7fr) minmax(285px, 1fr);
+  /* Reportes */
+  .reports-container {
+    grid-template-columns: minmax(0, 1.7fr) minmax(285px, 1fr);
+    gap: 16px;
+  }
 
-  gap: 16px;
-}
+  .reports-table th,
+  .reports-table td {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
 
-.reports-table th,
-.reports-table td {
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-.report-information-grid {
-  gap: 10px;
-}
-
+  .report-information-grid {
+    gap: 10px;
+  }
 }

@@ -1,24 +1,26 @@
+import { Link } from 'react-router-dom'
 import rietiLogo from '../assets/rieti-logo.png'
+import { currentUser } from '../data/currentUser'
 
 function TopBar() {
   return (
     <header className="topbar">
-      <a href="/" className="topbar-logo">
+      <Link to="/" className="topbar-logo">
         <img src={rietiLogo} alt="Logo RIETI" />
 
         {/* Yo agrego el nombre porque la imagen solo contiene el símbolo. */}
         <span>RIETI</span>
-      </a>
+      </Link>
 
       <nav className="topbar-nav">
-        <a href="/crear-reporte">Crear reporte</a>
-        <a href="/seguimiento">Seguimiento</a>
-        <a href="/casos-cerrados">Casos cerrados</a>
+        <Link to="/crear-reporte">Crear reporte</Link>
+        <Link to="/seguimiento">Seguimiento</Link>
+        <Link to="/casos-cerrados">Casos cerrados</Link>
       </nav>
 
-      <a href="/perfil" className="user-button">
-        Usuario
-      </a>
+      <Link to="/perfil" className="user-button">
+        {currentUser.name}
+      </Link>
     </header>
   )
 }

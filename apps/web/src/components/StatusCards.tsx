@@ -1,21 +1,30 @@
+import { Link } from 'react-router-dom'
 import dashboardIcon from '../assets/dashboard-icon.png'
+import { semaforoByStatus, type Semaforo } from '../data/catalogs'
+import { reportsData } from '../data/reportsData'
+
+function countBySemaforo(semaforo: Semaforo) {
+  return reportsData.filter(
+    (report) => semaforoByStatus[report.status] === semaforo,
+  ).length
+}
 
 function StatusCards() {
   // Por ahora uso datos de prueba. Después estos números van a venir del backend.
   const statusData = [
     {
-      title: 'Reportes sin asignar',
-      value: 15,
-      path: '/seguimiento?estado=sin-asignar',
+      title: 'Reportes sin atender',
+      value: countBySemaforo('SIN_ATENDER'),
+      path: '/seguimiento?semaforo=sin-atender',
     },
     {
-      title: 'Reportes en fase de atención',
-      value: 121,
-      path: '/seguimiento?estado=en-atencion',
+      title: 'Reportes atendiendo',
+      value: countBySemaforo('ATENDIENDO'),
+      path: '/seguimiento?semaforo=atendiendo',
     },
     {
       title: 'Casos cerrados',
-      value: 115,
+      value: countBySemaforo('ATENDIDO'),
       path: '/casos-cerrados',
     },
   ]
@@ -34,9 +43,9 @@ function StatusCards() {
 
         <div className="status-cards">
           {statusData.map((status) => (
-            <a
+            <Link
               key={status.title}
-              href={status.path}
+              to={status.path}
               className="status-card"
             >
               <span className="status-card-title">
@@ -46,7 +55,7 @@ function StatusCards() {
               <strong className="status-card-value">
                 {status.value}
               </strong>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

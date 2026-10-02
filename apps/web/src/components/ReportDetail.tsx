@@ -20,15 +20,15 @@ function ReportDetail() {
 
         <div className="report-information-grid">
           <p>
-            <strong>Número de niños:</strong>
+            <strong>NNA estimados:</strong>
             <br />
-            {latestReport.children}
+            {latestReport.nnaEstimate}
           </p>
 
           <p>
-            <strong>Edades de los niños:</strong>
+            <strong>Rango de edad:</strong>
             <br />
-            {latestReport.ages}
+            {latestReport.ageRange} años
           </p>
 
           <p>

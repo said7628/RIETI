@@ -1,6 +1,7 @@
+import { currentUser } from '../data/currentUser'
+
 function AdminHero() {
   return (
-    
     <section className="admin-hero">
       <div className="admin-hero-content">
         <h1>
@@ -9,7 +10,7 @@ function AdminHero() {
           administración de RIETI
         </h1>
         <hr className="linea"></hr>
-        <p>“Usuario”</p>
+        <p>“{currentUser.name}”</p>
       </div>
     </section>
   )

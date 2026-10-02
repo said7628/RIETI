@@ -1,33 +1,21 @@
+import { Route, Routes } from 'react-router-dom'
 import TopBar from './components/TopBar'
-import AdminHero from './components/AdminHero'
-import Waves from './components/Waves'
-import StatusCards from './components/StatusCards'
-import RecentReports from './components/RecentReports'
-import ReportDetail from './components/ReportDetail'
-import HeatMapSection from './components/HeatMapSection'
-import StatisticsSection from './components/StatisticsSection'
+import DashboardPage from './pages/DashboardPage'
+import PendingPage from './pages/PendingPage'
 
 function AppLalo() {
   return (
     <div className="app-lalo">
       <TopBar />
 
-      <AdminHero />
-
-      <Waves />
-
-      <StatusCards />
-
-      <section className="reports-section">
-        <div className="reports-container">
-          <RecentReports />
-          <ReportDetail />
-        </div>
-      </section>
-
-      <HeatMapSection />
-
-      <StatisticsSection />
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/crear-reporte" element={<PendingPage title="Crear reporte" />} />
+        <Route path="/seguimiento" element={<PendingPage title="Seguimiento" />} />
+        <Route path="/casos-cerrados" element={<PendingPage title="Casos cerrados" />} />
+        <Route path="/perfil" element={<PendingPage title="Perfil" />} />
+        <Route path="*" element={<PendingPage title="Página no encontrada" />} />
+      </Routes>
     </div>
   )
 }

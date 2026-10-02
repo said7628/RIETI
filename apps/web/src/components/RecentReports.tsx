@@ -1,4 +1,12 @@
+import { semaforoByStatus, type Semaforo } from '../data/catalogs'
 import { reportsData } from '../data/reportsData'
+
+const semaforoClassNames: Record<Semaforo, string> = {
+  SIN_ATENDER: 'status-sin-atender',
+  ATENDIENDO: 'status-atendiendo',
+  ATENDIDO: 'status-atendido',
+  INACTIVO: 'status-inactivo',
+}
 
 function RecentReports() {
   return (
@@ -29,11 +37,7 @@ function RecentReports() {
                 <td>
                   <span
                     className={`report-status ${
-                      report.status === 'SIN ASIGNAR'
-                        ? 'status-unassigned'
-                        : report.status === 'EN ATENCIÓN'
-                          ? 'status-attention'
-                          : 'status-completed'
+                      semaforoClassNames[semaforoByStatus[report.status]]
                     }`}
                   >
                     {report.status}
