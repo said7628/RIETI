@@ -54,9 +54,8 @@ fun ReportSuccessScreen(
 
         containerColor = colors.surface,
 
-        // ===================================================
+        // ==========================================
         // TOP BAR
-        // ===================================================
 
         topBar = {
 
@@ -66,9 +65,8 @@ fun ReportSuccessScreen(
         },
 
 
-        // ==============================================
+        // =======================================
         // BOTTOM BAR
-        // =========================================
 
         bottomBar = {
 
@@ -99,9 +97,8 @@ fun ReportSuccessScreen(
         ) {
 
 
-            // ============================================
-            // FRANJA ROSA DEGRADADA
             // ========================================
+            // RAYA ROSA DEGRADADA (no sé si se escriba así xd)
 
             Box(
                 modifier = Modifier
@@ -123,9 +120,9 @@ fun ReportSuccessScreen(
             )
 
 
-            // ==========================================
+            // ====================================
             // REPORTE CREADO CON ÉXITO
-            // ========================================
+
 
             SuccessTitleBox(
                 text = "Reporte creado\ncon éxito"
@@ -139,7 +136,6 @@ fun ReportSuccessScreen(
 
             // =========================================
             // FOLIO
-            // ====================================
 
             Box(
                 modifier = Modifier
@@ -181,9 +177,8 @@ fun ReportSuccessScreen(
             )
 
 
-            // ==========================================
+            // *****************************
             // NUEVO REPORTE
-            // ==========================================
 
             ReportSuccessButton(
 
@@ -200,9 +195,8 @@ fun ReportSuccessScreen(
             Separator()
 
 
-            // =================================================
+            // **************************************
             // MENÚ PRINCIPAL
-            // =================================================
 
             ReportSuccessButton(
 
@@ -216,10 +210,7 @@ fun ReportSuccessScreen(
             )
 
 
-            /*
-             * Absorbe el espacio sobrante para mantener
-             * la BottomBar abajo.
-             */
+          //esto ocupa el espacio que resta
             Spacer(
                 modifier = Modifier.weight(1f)
             )
@@ -229,8 +220,7 @@ fun ReportSuccessScreen(
 
 
 // =================================================
-// CUADRO CON BORDE PUNTEADO
-// =====================================================
+// CUADRO CON BORDE
 
 @Composable
 private fun SuccessTitleBox(
@@ -296,7 +286,7 @@ private fun SuccessTitleBox(
 
 // ==========================================================
 // BOTONES
-// ====================================================
+
 
 @Composable
 private fun ReportSuccessButton(
@@ -356,9 +346,9 @@ private fun ReportSuccessButton(
 }
 
 
-// ============================================================
+// ===================================================
 // SEPARADOR NEGRO
-// =======================================================
+
 
 @Composable
 private fun Separator() {
@@ -374,7 +364,7 @@ private fun Separator() {
 
 //======================================================
 // PRUEBAS PARA BORRAR DESPUES DE IMPLEMENTAR NAVEGACION
-//=======================================================
+
 
 @Preview(
     name = "Report Success - Light",

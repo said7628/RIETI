@@ -78,17 +78,18 @@ fun ResetPasswordScreen(
     ) {
 
 
-        // =====================================================
+        // ***********************************
         // ENCABEZADO
-        // =====================================================
+
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
 
                 /*
-                 * El fondo rosa sí puede llegar hasta arriba,
-                 * pero el contenido respeta la barra del sistema.
+                 *El color rosa del fondo si toca la barra donde está la hora
+                 * sin embargo el contenido de la app respeta el limite
+                 * para que no se corra el contenido afuera de los bordes normales
                  */
                 .background(
                     brush = Brush.verticalGradient(
@@ -120,9 +121,9 @@ fun ResetPasswordScreen(
         }
 
 
-        // =====================================================
+        // **************************************
         // CONTENIDO
-        // =====================================================
+
 
         Column(
             modifier = Modifier
@@ -133,20 +134,15 @@ fun ResetPasswordScreen(
         ) {
 
 
-            /*
-             * Antes todo comenzaba inmediatamente
-             * después del encabezado.
-             *
-             * Ahora le damos más aire.
-             */
+
             Spacer(
                 modifier = Modifier.height(30.dp)
             )
 
 
-            // =================================================
+            //***********************************
             // TÍTULO
-            // =================================================
+
 
             Column(
                 modifier = Modifier
@@ -183,9 +179,9 @@ fun ResetPasswordScreen(
             )
 
 
-            // =================================================
-            // CÓDIGO
-            // =================================================
+            // **************************************
+            // CODIGO
+
 
             ResetPasswordField(
                 label = "Código de recuperación",
@@ -202,9 +198,8 @@ fun ResetPasswordScreen(
             )
 
 
-            // =================================================
+            // *******************************
             // NUEVA CONTRASEÑA
-            // =================================================
 
             ResetPasswordField(
                 label = "Nueva contraseña",
@@ -222,9 +217,9 @@ fun ResetPasswordScreen(
             )
 
 
-            // =================================================
+            // ***************************************
             // CONFIRMAR CONTRASEÑA
-            // =================================================
+
 
             ResetPasswordField(
                 label = "Confirmar contraseña",
@@ -237,9 +232,9 @@ fun ResetPasswordScreen(
             )
 
 
-            // =================================================
+            //***********************
             // ERROR
-            // =================================================
+
 
             if (
                 confirmPassword.isNotEmpty() &&
@@ -263,9 +258,9 @@ fun ResetPasswordScreen(
             )
 
 
-            // =================================================
+            //****************************
             // RESTABLECER CONTRASEÑA
-            // =================================================
+
 
             Box(
                 modifier = Modifier
@@ -307,18 +302,16 @@ fun ResetPasswordScreen(
             }
 
 
-            /*
-             * Empuja el botón de login un poco más abajo
-             * para que la pantalla no se vea amontonada.
-             */
+
+             //Esto empuja el botón de login un poco más abajo
+
             Spacer(
                 modifier = Modifier.height(36.dp)
             )
 
 
-            // =================================================
-            // INICIAR SESIÓN
-            // =================================================
+            // *******************************
+            // INICIAR SESION
 
             Box(
                 modifier = Modifier
@@ -352,9 +345,9 @@ fun ResetPasswordScreen(
 }
 
 
-// =================================================================
+// *************************************************************************
 // CAMPO
-// =================================================================
+
 
 @Composable
 private fun ResetPasswordField(
@@ -429,9 +422,7 @@ private fun ResetPasswordField(
 }
 
 
-// =================================================================
-// PREVIEW LIGHT
-// =================================================================
+
 
 @Preview(
     name = "Reset Password - Light",
@@ -453,9 +444,7 @@ private fun ResetPasswordLightPreview() {
 }
 
 
-// =================================================================
-// PREVIEW DARK
-// =================================================================
+
 
 @Preview(
     name = "Reset Password - Dark",

@@ -62,12 +62,11 @@ fun ReportScreen(
     onSendReportClick: () -> Unit
 ) {
 
-    // ---------------------------------------------------------
+    // ****************************************
     // ESTADOS TEMPORALES
     //
-    // Por ahora están aquí porque solo estamos haciendo front.
+    // Por ahora estan aquí porque solo estamos haciendo front.
     // Después probablemente pasarán a un ReportViewModel.
-    // ---------------------------------------------------------
 
     var numberOfChildren by rememberSaveable {
         mutableStateOf("")
@@ -111,9 +110,8 @@ fun ReportScreen(
 
     Scaffold(
 
-        // -----------------------------------------------------
+        // ********************************************
         // BARRA SUPERIOR REUTILIZABLE
-        // -----------------------------------------------------
 
         topBar = {
 
@@ -123,9 +121,9 @@ fun ReportScreen(
         },
 
 
-        // -----------------------------------------------------
+        //************************************
         // BARRA INFERIOR REUTILIZABLE
-        // -----------------------------------------------------
+
 
         bottomBar = {
 
@@ -151,9 +149,9 @@ fun ReportScreen(
         ) {
 
 
-            // =================================================
+            // ********************************
             // TÍTULO PRINCIPAL
-            // =================================================
+            
 
             item {
 
@@ -163,7 +161,6 @@ fun ReportScreen(
 
             // =================================================
             // DETALLES DEL CASO
-            // =================================================
 
             item {
 
@@ -262,7 +259,7 @@ fun ReportScreen(
                     )
 
 
-                    // Campo grande de detalles
+                    // Espacio grande de detalles
 
                     ReportFieldWithLabel(
                         label = "Detalles:",
@@ -284,7 +281,7 @@ fun ReportScreen(
 
             // =================================================
             // UBICACIÓN DEL CASO
-            // =================================================
+
 
             item {
 
@@ -430,7 +427,7 @@ fun ReportScreen(
 
             // =================================================
             // EVIDENCIA FOTOGRÁFICA
-            // =================================================
+
 
             item {
 
@@ -482,7 +479,7 @@ fun ReportScreen(
 
 // =================================================================
 // TÍTULO "REALIZA TU REPORTE"
-// =================================================================
+
 
 @Composable
 private fun ReportMainTitle() {
@@ -509,9 +506,9 @@ private fun ReportMainTitle() {
 }
 
 
-// =================================================================
+// ======================================
 // TÍTULOS DE SECCIÓN
-// =================================================================
+
 
 @Composable
 private fun SectionTitle(
@@ -548,9 +545,6 @@ private fun SectionTitle(
 }
 
 
-// =================================================================
-// CAMPO CON LABEL
-// =================================================================
 
 @Composable
 private fun ReportFieldWithLabel(
@@ -591,9 +585,7 @@ private fun ReportFieldWithLabel(
 }
 
 
-// =================================================================
-// TEXTFIELD PERSONALIZADO
-// =================================================================
+
 
 @Composable
 private fun RietiTextField(
@@ -679,9 +671,7 @@ private fun RietiTextField(
 }
 
 
-// =================================================================
-// PLACEHOLDER DEL MAPA
-// =================================================================
+
 
 @Composable
 private fun MapPlaceholder() {
@@ -743,7 +733,7 @@ private fun MapPlaceholder() {
 
 // =================================================================
 // SELECTOR DE ARCHIVOS
-// =================================================================
+
 
 @Composable
 private fun EvidenceSelector(
@@ -770,9 +760,9 @@ private fun EvidenceSelector(
     ) {
 
 
-        // -------------------------
+        // **********************
         // Elegir archivos
-        // -------------------------
+
 
         Box(
             modifier = Modifier
@@ -791,9 +781,9 @@ private fun EvidenceSelector(
         }
 
 
-        // -------------------------
+        //*************************
         // Línea divisoria
-        // -------------------------
+
 
         Box(
             modifier = Modifier
@@ -805,9 +795,9 @@ private fun EvidenceSelector(
         )
 
 
-        // -------------------------
+        //***********************
         // Nombre de archivo
-        // -------------------------
+
 
         Box(
             modifier = Modifier
@@ -828,9 +818,9 @@ private fun EvidenceSelector(
 }
 
 
-// =================================================================
+// *********************************
 // BOTÓN ENVIAR REPORTE
-// =================================================================
+
 
 @Composable
 private fun SendReportButton(
@@ -866,9 +856,6 @@ private fun SendReportButton(
 }
 
 
-// =================================================================
-// PREVIEW LIGHT
-// =================================================================
 
 @Preview(
     showBackground = true,
@@ -900,10 +887,6 @@ private fun ReportScreenLightPreview() {
     }
 }
 
-
-// =================================================================
-// PREVIEW DARK
-// =================================================================
 
 @Preview(
     showBackground = true,
