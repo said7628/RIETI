@@ -192,10 +192,10 @@ fun InicioPantalla1(
                              */
                             val rotaciones = listOf(
                                 -10f,
-                                -5f,
+                                -7f,
                                 0f,
-                                5f,
-                                10f
+                                7f,
+                                12f
                             )
 
                             Row(
@@ -207,7 +207,7 @@ fun InicioPantalla1(
 
                                     Text(
                                         text = letra.toString(),
-                                        fontSize = 50.sp,
+                                        fontSize = 60.sp,
                                         fontFamily = FontFamily.Serif,
                                         color = colors.text,
                                         modifier = Modifier
@@ -268,7 +268,7 @@ fun InicioPantalla1(
                             modifier = Modifier.padding(
                                 vertical = 27.dp
                             ),
-                            fontSize = 16.sp,
+                            fontSize = 20.sp,
                             fontFamily = FontFamily.Serif,
                             textAlign = TextAlign.Center,
                             color = colors.text
@@ -289,8 +289,8 @@ fun InicioPantalla1(
                                 .padding(horizontal = 20.dp)
                                 .height(80.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.blueBoxes,
-                                contentColor = colors.textTyping
+                                containerColor = colors.blueSecondary,
+                                contentColor = colors.text
                             )
                         ) {
 
@@ -316,8 +316,8 @@ fun InicioPantalla1(
                                 .padding(horizontal = 20.dp)
                                 .height(80.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.blueDetails,
-                                contentColor = colors.textTyping
+                                containerColor = colors.blueSecondary,
+                                contentColor = colors.text
                             )
                         ) {
 
@@ -402,7 +402,7 @@ fun CirculosDecorativos(
 
         // Círculo intermedio
         drawCircle(
-            color = Color(0xFFE91E83),
+            color = Color(0xFFE31178),
             radius = 57.dp.toPx(),
             center = centro,
             style = Stroke(
