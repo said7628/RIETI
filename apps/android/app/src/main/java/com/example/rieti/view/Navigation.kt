@@ -69,14 +69,9 @@ fun AppNavigation(
 
     ) {
 
-
         // =========================================================
         // 1. PANTALLA INICIAL
         // =========================================================
-
-        // =========================================================
-// 1. PANTALLA INICIAL
-// =========================================================
 
         composable(
             route = Routes.START
@@ -118,7 +113,7 @@ fun AppNavigation(
             route = Routes.LOGIN
         ) {
 
-            IniciarsePantalla2(
+            LoginScreen(
 
                 onLoginClick = {
 
