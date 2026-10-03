@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -47,7 +48,7 @@ import com.example.rieti.ui.theme.RIETITheme
 
 
 @Composable
-fun InicioPantalla1(
+fun WelcomeScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     darkTheme: Boolean,
@@ -715,7 +716,7 @@ private fun InicioPantalla1LightPreview() {
         darkTheme = false
     ) {
 
-        InicioPantalla1(
+        WelcomeScreen (
             onLoginClick = {},
             onRegisterClick = {},
             darkTheme = false,
@@ -737,13 +738,13 @@ private fun InicioPantalla1LightPreview() {
         Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
-private fun InicioPantalla1DarkPreview() {
+private fun WelcomeScreenDarkPreview() {
 
     RIETITheme(
         darkTheme = true
     ) {
 
-        InicioPantalla1(
+        WelcomeScreen (
             onLoginClick = {},
             onRegisterClick = {},
             darkTheme = true,

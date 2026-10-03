@@ -82,7 +82,7 @@ fun AppNavigation(
             route = Routes.START
         ) {
 
-            InicioPantalla1(
+            WelcomeScreen (
 
                 onLoginClick = {
 
