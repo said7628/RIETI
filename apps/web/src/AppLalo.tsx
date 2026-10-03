@@ -1,21 +1,43 @@
-import { Route, Routes } from 'react-router-dom'
-import TopBar from './components/TopBar'
-import DashboardPage from './pages/DashboardPage'
+import { useState } from 'react'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import Footer from './components/shared/Footer'
+import TopBar from './components/shared/TopBar'
+import Sidebar from './components/tracking/Sidebar'
+import HomePage from './pages/HomePage'
 import PendingPage from './pages/PendingPage'
+import TrackingPage from './pages/TrackingPage'
 
 function AppLalo() {
-  return (
-    <div className="app-lalo">
-      <TopBar />
+  const location = useLocation()
+  const isTracking = location.pathname === '/seguimiento'
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/crear-reporte" element={<PendingPage title="Crear reporte" />} />
-        <Route path="/seguimiento" element={<PendingPage title="Seguimiento" />} />
-        <Route path="/casos-cerrados" element={<PendingPage title="Casos cerrados" />} />
-        <Route path="/perfil" element={<PendingPage title="Perfil" />} />
-        <Route path="*" element={<PendingPage title="Página no encontrada" />} />
-      </Routes>
+  return (
+    <div
+      className={`app-lalo${isTracking ? ' app-tracking' : ''}${
+        isTracking && isSidebarOpen ? ' sidebar-open' : ''
+      }`}
+    >
+      {isTracking && (
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+      )}
+
+      <div className="app-column">
+        <TopBar showLogo={!isTracking} />
+
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/crear-reporte" element={<PendingPage title="Crear reporte" />} />
+          <Route path="/seguimiento" element={<TrackingPage />} />
+          <Route path="/perfil" element={<PendingPage title="Perfil" />} />
+          <Route path="*" element={<PendingPage title="Página no encontrada" />} />
+        </Routes>
+      </div>
+
+      {isTracking && <Footer />}
     </div>
   )
 }

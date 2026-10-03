@@ -1,4 +1,4 @@
-import { currentUser } from '../data/currentUser'
+import { currentUser } from '../../data/shared/currentUser'
 
 function AdminHero() {
   return (

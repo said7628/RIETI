@@ -18,6 +18,20 @@ export type Priority = 'MEDIA' | 'ALTA' | 'URGENTE'
 
 export type UserRole = 'ADMINISTRADOR' | 'GESTOR_MUNICIPAL' | 'PROCURADOR'
 
+export const reportStatuses: ReportStatus[] = [
+  'Registrado',
+  'En revisión',
+  'En seguimiento',
+  'Canalizado',
+  'Concluido',
+  'Archivado',
+  'Cancelado',
+  'Reincidente',
+]
+
+// Ordenadas de mayor a menor urgencia.
+export const priorities: Priority[] = ['URGENTE', 'ALTA', 'MEDIA']
+
 export const semaforoByStatus: Record<ReportStatus, Semaforo> = {
   Registrado: 'SIN_ATENDER',
   Reincidente: 'SIN_ATENDER',

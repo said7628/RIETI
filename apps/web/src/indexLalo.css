@@ -27,6 +27,38 @@ a {
   background-color: #f8fcfa;
 }
 
+.app-column {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-tracking {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+
+  box-sizing: border-box;
+  width: 100vw;
+  min-width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  background-color: #000000;
+}
+
+.app-tracking .app-column {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+
+  /* Espacio para el pie fijo, para que no tape la tabla. */
+  padding-bottom: 78px;
+}
+
 
 /* =========================
    TOP BAR
@@ -87,7 +119,8 @@ a {
 
   color: #ffffff;
 
-  font-size: clamp(14px, 0.85vw, 17px);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(16px, 0.95vw, 20px);
   font-weight: 400;
 
   padding: 10px 0;
@@ -115,8 +148,17 @@ a {
   color: #95e3ea;
 }
 
-.topbar-nav a:hover::after {
+.topbar-nav a:hover::after,
+.topbar-nav a.active::after {
   width: 100%;
+}
+
+.topbar-nav a.active {
+  color: #95e3ea;
+}
+
+.topbar-compact .topbar-nav {
+  margin-left: 0;
 }
 
 .user-button {
@@ -582,6 +624,28 @@ a {
 
 .case-holder strong {
   color: #d10073;
+}
+
+.report-description {
+  margin-top: 4px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+
+  border: 1px solid #bff8f2;
+  border-radius: 10px;
+
+  background-color: #f8fcfa;
+}
+
+.report-description strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.report-description p {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .report-detail-card h4 {

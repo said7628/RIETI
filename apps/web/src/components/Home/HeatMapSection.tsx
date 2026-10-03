@@ -1,4 +1,4 @@
-import heatmapIcon from '../assets/heatmap.png'
+import heatmapIcon from '../../assets/heatmap.png'
 
 function HeatMapSection() {
   return (

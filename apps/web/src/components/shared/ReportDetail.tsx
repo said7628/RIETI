@@ -1,13 +1,15 @@
-import { reportsData } from '../data/reportsData'
+import type { ReactNode } from 'react'
+import type { Report } from '../../data/shared/reportsData'
 
-function ReportDetail() {
-  // Yo tomo el primer elemento porque representa el reporte más reciente.
-  // Después este reporte vendrá directamente desde el backend.
-  const latestReport = reportsData[0]
+interface ReportDetailProps {
+  report: Report
+  actions?: ReactNode
+}
 
+function ReportDetail({ report, actions }: ReportDetailProps) {
   return (
     <aside className="report-detail-card">
-      <h3>DETALLES DEL REPORTE: {latestReport.folio}</h3>
+      <h3>DETALLES DEL REPORTE: {report.folio}</h3>
 
       <div className="report-map-placeholder">
         <span>Ubicación del reporte</span>
@@ -15,40 +17,53 @@ function ReportDetail() {
 
       <div className="report-information">
         <p>
-          <strong>Dirección:</strong> {latestReport.address}
+          <strong>Dirección:</strong> {report.address}
         </p>
 
         <div className="report-information-grid">
           <p>
             <strong>NNA estimados:</strong>
             <br />
-            {latestReport.nnaEstimate}
+            {report.nnaEstimate}
           </p>
 
           <p>
             <strong>Rango de edad:</strong>
             <br />
-            {latestReport.ageRange} años
+            {report.ageRange} años
           </p>
 
           <p>
             <strong>Tipo de trabajo:</strong>
             <br />
-            {latestReport.workType}
+            {report.workType}
           </p>
 
           <p>
             <strong>Horario de trabajo:</strong>
             <br />
-            {latestReport.schedule}
+            {report.schedule}
           </p>
         </div>
 
         <p className="case-holder">
           <strong>Titular del caso:</strong>{' '}
-          {latestReport.caseHolder}
+          {report.caseHolder ?? 'Sin asignar'}
         </p>
+
+        <div className="report-description">
+          <strong>Detalles del reportante:</strong>
+          <p>{report.description}</p>
+        </div>
+
+        {report.solution && (
+          <p>
+            <strong>Solución:</strong> {report.solution}
+          </p>
+        )}
       </div>
+
+      {actions && <div className="report-actions">{actions}</div>}
 
       <h4>EVIDENCIA FOTOGRÁFICA:</h4>
 
