@@ -182,8 +182,7 @@ fun LoginScreen(
             Color(0xFF16BFAF)
         }
 
-    val loginContent =
-        Color.White
+    val loginContent = Color.White
 
     val registerBackground =
         if (darkTheme) {
@@ -247,7 +246,6 @@ fun LoginScreen(
                     "El correo electrónico es obligatorio."
                 }
 
-
                 !Patterns.EMAIL_ADDRESS
                     .matcher(correo.trim())
                     .matches() -> {
@@ -257,9 +255,7 @@ fun LoginScreen(
                     "Ingresa un correo electrónico válido."
                 }
 
-
                 else -> {
-
                     null
                 }
             }
@@ -409,7 +405,8 @@ fun LoginScreen(
 
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
+                        .padding(horizontal = 32.dp)
+                        .height(58.dp),
 
                     singleLine = true,
 
@@ -423,18 +420,6 @@ fun LoginScreen(
 
                     isError =
                         errorCorreo != null,
-
-                    supportingText = {
-
-                        errorCorreo?.let { mensaje ->
-
-                            Text(
-                                text = mensaje,
-                                fontFamily = FontFamily.Serif,
-                                color = errorColor
-                            )
-                        }
-                    },
 
                     colors =
                         OutlinedTextFieldDefaults.colors(
@@ -472,9 +457,32 @@ fun LoginScreen(
                 )
 
 
-                Spacer(
-                    modifier = Modifier.height(10.dp)
-                )
+                // =====================================================
+                // ESPACIO FIJO PARA ERROR DEL CORREO
+                //
+                // Este espacio existe incluso cuando no hay error.
+                // De esta forma los elementos inferiores no se mueven.
+                // =====================================================
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+
+                    if (errorCorreo != null) {
+
+                        Text(
+                            text = errorCorreo!!,
+                            color = errorColor,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
 
 
                 // =====================================================
@@ -521,7 +529,8 @@ fun LoginScreen(
 
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
+                        .padding(horizontal = 32.dp)
+                        .height(58.dp),
 
                     singleLine = true,
 
@@ -538,18 +547,6 @@ fun LoginScreen(
 
                     isError =
                         errorContrasena != null,
-
-                    supportingText = {
-
-                        errorContrasena?.let { mensaje ->
-
-                            Text(
-                                text = mensaje,
-                                fontFamily = FontFamily.Serif,
-                                color = errorColor
-                            )
-                        }
-                    },
 
                     colors =
                         OutlinedTextFieldDefaults.colors(
@@ -585,6 +582,31 @@ fun LoginScreen(
                                 Color.Transparent
                         )
                 )
+
+
+                // =====================================================
+                // ESPACIO FIJO PARA ERROR DE CONTRASEÑA
+                // =====================================================
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+
+                    if (errorContrasena != null) {
+
+                        Text(
+                            text = errorContrasena!!,
+                            color = errorColor,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
 
 
                 // =====================================================
@@ -636,12 +658,14 @@ fun LoginScreen(
                 //     )
                 // }
                 //
-                // Esto permitiría mostrar mensajes como:
+                // Esto permitirá mostrar mensajes como:
                 //
                 // "Correo o contraseña incorrectos."
                 //
-                // sin convertirlos incorrectamente en una validación
-                // local del campo.
+                // IMPORTANTE:
+                // Cuando se implemente, conviene reservar también
+                // un espacio fijo para este mensaje para evitar que
+                // los botones se desplacen.
                 // =====================================================
 
 
@@ -719,6 +743,7 @@ fun LoginScreen(
                             // =========================================
 
                             onLoginClick()
+
                             // TODO(BACKEND):
                             // Reemplazar navegación provisional.
                         }

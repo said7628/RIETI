@@ -172,7 +172,7 @@ fun AppNavigation(
             route = Routes.REGISTER
         ) {
 
-            CrearPantalla3(
+            RegisterScreen (
 
                 onCreateAccountClick = {
 

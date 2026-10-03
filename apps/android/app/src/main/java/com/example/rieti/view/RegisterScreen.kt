@@ -1,6 +1,7 @@
 package com.example.rieti.view
 
 import android.content.res.Configuration
+import android.util.Patterns
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -52,7 +53,7 @@ import com.example.rieti.ui.theme.RIETITheme
 
 
 @Composable
-fun CrearPantalla3(
+fun RegisterScreen(
     onLoginClick: () -> Unit,
     onCreateAccountClick: () -> Unit,
     darkTheme: Boolean,
@@ -60,7 +61,7 @@ fun CrearPantalla3(
 ) {
 
     // =========================================================
-    // ESTADOS
+    // ESTADOS DE LOS CAMPOS
     // =========================================================
 
     var correo by remember {
@@ -74,6 +75,24 @@ fun CrearPantalla3(
     var confirmarContrasena by remember {
         mutableStateOf("")
     }
+
+
+    // =========================================================
+    // ESTADOS DE ERROR
+    // =========================================================
+
+    var errorCorreo by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var errorContrasena by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var errorConfirmarContrasena by remember {
+        mutableStateOf<String?>(null)
+    }
+
 
     val colors = AppTheme.colors
 
@@ -104,8 +123,7 @@ fun CrearPantalla3(
             Color(0xFF16BFAF)
         }
 
-    val createAccountContent =
-        Color.White
+    val createAccountContent = Color.White
 
 
     // =========================================================
@@ -183,10 +201,6 @@ fun CrearPantalla3(
                 )
 
 
-                // =====================================================
-                // LÍNEA DEBAJO DE CREAR CUENTA
-                // =====================================================
-
                 HorizontalDivider(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -225,43 +239,73 @@ fun CrearPantalla3(
 
                 OutlinedTextField(
                     value = correo,
+
                     onValueChange = {
                         correo = it
+                        errorCorreo = null
                     },
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                         .height(58.dp),
+
                     singleLine = true,
+
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email
                     ),
+
                     shape = RoundedCornerShape(14.dp),
 
-                    colors = OutlinedTextFieldDefaults.colors(
+                    isError = errorCorreo != null,
 
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = colors.text,
                         unfocusedTextColor = colors.text,
 
-                        // CURSOR ROSA
                         cursorColor = Color(0xFFFF0060),
 
-                        // SELECCIONADO = ROSA
                         focusedBorderColor = Color(0xFFFF0060),
-
-                        // CLARO = TURQUESA
-                        // OSCURO = BLANCO
                         unfocusedBorderColor = unfocusedFieldColor,
 
+                        errorBorderColor = Color(0xFFFF0060),
+                        errorCursorColor = Color(0xFFFF0060),
+
                         focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent
+                        unfocusedContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent
                     )
                 )
 
 
-                Spacer(
-                    modifier = Modifier.height(6.dp)
-                )
+                // =====================================================
+                // ESPACIO FIJO PARA ALERTA DEL CORREO
+                //
+                // IMPORTANTE:
+                // Este Box siempre existe.
+                // Por eso la pantalla NO cambia de tamaño.
+                // =====================================================
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+
+                    if (errorCorreo != null) {
+
+                        Text(
+                            text = errorCorreo!!,
+                            color = Color(0xFFFF0060),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
 
 
                 // =====================================================
@@ -288,45 +332,74 @@ fun CrearPantalla3(
 
                 OutlinedTextField(
                     value = contrasena,
+
                     onValueChange = {
                         contrasena = it
+
+                        errorContrasena = null
+                        errorConfirmarContrasena = null
                     },
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                         .height(58.dp),
+
                     singleLine = true,
+
                     visualTransformation =
                         PasswordVisualTransformation(),
+
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
                     ),
+
                     shape = RoundedCornerShape(14.dp),
 
-                    colors = OutlinedTextFieldDefaults.colors(
+                    isError = errorContrasena != null,
 
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = colors.text,
                         unfocusedTextColor = colors.text,
 
-                        // CURSOR ROSA
                         cursorColor = Color(0xFFFF0060),
 
-                        // SELECCIONADO = ROSA
                         focusedBorderColor = Color(0xFFFF0060),
-
-                        // CLARO = TURQUESA
-                        // OSCURO = BLANCO
                         unfocusedBorderColor = unfocusedFieldColor,
 
+                        errorBorderColor = Color(0xFFFF0060),
+                        errorCursorColor = Color(0xFFFF0060),
+
                         focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent
+                        unfocusedContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent
                     )
                 )
 
 
-                Spacer(
-                    modifier = Modifier.height(6.dp)
-                )
+                // =====================================================
+                // ESPACIO FIJO PARA ALERTA DE CONTRASEÑA
+                // =====================================================
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+
+                    if (errorContrasena != null) {
+
+                        Text(
+                            text = errorContrasena!!,
+                            color = Color(0xFFFF0060),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
 
 
                 // =====================================================
@@ -353,40 +426,72 @@ fun CrearPantalla3(
 
                 OutlinedTextField(
                     value = confirmarContrasena,
+
                     onValueChange = {
                         confirmarContrasena = it
+                        errorConfirmarContrasena = null
                     },
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                         .height(58.dp),
+
                     singleLine = true,
+
                     visualTransformation =
                         PasswordVisualTransformation(),
+
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
                     ),
+
                     shape = RoundedCornerShape(14.dp),
 
-                    colors = OutlinedTextFieldDefaults.colors(
+                    isError = errorConfirmarContrasena != null,
 
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = colors.text,
                         unfocusedTextColor = colors.text,
 
-                        // CURSOR ROSA
                         cursorColor = Color(0xFFFF0060),
 
-                        // SELECCIONADO = ROSA
                         focusedBorderColor = Color(0xFFFF0060),
-
-                        // CLARO = TURQUESA
-                        // OSCURO = BLANCO
                         unfocusedBorderColor = unfocusedFieldColor,
 
+                        errorBorderColor = Color(0xFFFF0060),
+                        errorCursorColor = Color(0xFFFF0060),
+
                         focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent
+                        unfocusedContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent
                     )
                 )
+
+
+                // =====================================================
+                // ESPACIO FIJO PARA ALERTA DE CONFIRMACIÓN
+                // =====================================================
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+
+                    if (errorConfirmarContrasena != null) {
+
+                        Text(
+                            text = errorConfirmarContrasena!!,
+                            color = Color(0xFFFF0060),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
 
 
                 // =====================================================
@@ -394,22 +499,114 @@ fun CrearPantalla3(
                 // =====================================================
 
                 Spacer(
-                    modifier = Modifier.height(16.dp)
+                    modifier = Modifier.height(10.dp)
                 )
 
 
                 // =====================================================
                 // BOTÓN CREAR CUENTA
-                // MISMO ESTILO PRINCIPAL DE PANTALLA 2
                 // =====================================================
 
                 Button(
-                    onClick = onLoginClick,
+                    onClick = {
+
+                        // =============================================
+                        // LIMPIAR ERRORES ANTERIORES
+                        // =============================================
+
+                        errorCorreo = null
+                        errorContrasena = null
+                        errorConfirmarContrasena = null
+
+                        var formularioValido = true
+
+
+                        // =============================================
+                        // VALIDACIÓN DEL CORREO
+                        // =============================================
+
+                        if (correo.isBlank()) {
+
+                            errorCorreo =
+                                "Ingresa tu correo electrónico."
+
+                            formularioValido = false
+
+                        } else if (
+                            !Patterns.EMAIL_ADDRESS
+                                .matcher(correo)
+                                .matches()
+                        ) {
+
+                            errorCorreo =
+                                "Ingresa un correo electrónico válido."
+
+                            formularioValido = false
+                        }
+
+
+                        // =============================================
+                        // VALIDACIÓN DE CONTRASEÑA
+                        // =============================================
+
+                        if (contrasena.isBlank()) {
+
+                            errorContrasena =
+                                "Ingresa una contraseña."
+
+                            formularioValido = false
+                        }
+
+
+                        // =============================================
+                        // VALIDACIÓN DE CONFIRMACIÓN
+                        // =============================================
+
+                        if (confirmarContrasena.isBlank()) {
+
+                            errorConfirmarContrasena =
+                                "Confirma tu contraseña."
+
+                            formularioValido = false
+
+                        } else if (
+                            contrasena != confirmarContrasena
+                        ) {
+
+                            errorConfirmarContrasena =
+                                "Las contraseñas no coinciden."
+
+                            formularioValido = false
+                        }
+
+
+                        // =============================================
+                        // TODO(BACKEND)
+                        // =============================================
+                        //
+                        // Cuando se conecte el backend:
+                        //
+                        // 1. Enviar correo y contraseña al ViewModel.
+                        // 2. El ViewModel realizará la petición a la API.
+                        // 3. Mostrar estado de carga durante el registro.
+                        // 4. Procesar los errores del servidor.
+                        // 5. Navegar solamente si el registro fue exitoso.
+                        //
+                        // Por ahora mantenemos la navegación temporal.
+                        // =============================================
+
+                        if (formularioValido) {
+                            onCreateAccountClick()
+                        }
+                    },
+
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                         .height(70.dp),
+
                     shape = RoundedCornerShape(15.dp),
+
                     colors = ButtonDefaults.buttonColors(
                         containerColor = createAccountBackground,
                         contentColor = createAccountContent
@@ -433,7 +630,6 @@ fun CrearPantalla3(
 
                 // =====================================================
                 // BOTÓN INICIAR SESIÓN
-                // MISMO ESTILO SECUNDARIO DE PANTALLA 2
                 // =====================================================
 
                 Surface(
@@ -442,8 +638,9 @@ fun CrearPantalla3(
                         .padding(horizontal = 32.dp)
                         .height(65.dp)
                         .clickable {
-                            onCreateAccountClick()
+                            onLoginClick()
                         },
+
                     shape = RoundedCornerShape(15.dp),
                     color = loginBackground,
                     shadowElevation = 4.dp
@@ -519,6 +716,7 @@ fun CrearPantalla3(
                                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = null,
                             modifier = Modifier.size(25.dp),
+
                             tint =
                                 if (darkTheme) {
                                     loginContent
@@ -561,7 +759,6 @@ fun CrearPantalla3(
 
 // =====================================================================
 // CABECERA RIETI
-// MISMA CONFIGURACIÓN DE PANTALLA 2
 // =====================================================================
 
 @Composable
@@ -573,10 +770,6 @@ private fun CabeceraCrearCuenta(
     val coloresCabecera =
         if (darkTheme) {
 
-            // =========================================================
-            // MODO OSCURO
-            // =========================================================
-
             listOf(
                 Color(0xFFFF0060),
                 Color(0xFFD71964),
@@ -584,10 +777,6 @@ private fun CabeceraCrearCuenta(
             )
 
         } else {
-
-            // =========================================================
-            // MODO CLARO
-            // =========================================================
 
             listOf(
                 Color(0xFFE4007C),
@@ -612,11 +801,6 @@ private fun CabeceraCrearCuenta(
                 Alignment.CenterHorizontally
         ) {
 
-
-            // =========================================================
-            // RIETI
-            // =========================================================
-
             Text(
                 text = "RIETI",
                 fontSize = 55.sp,
@@ -629,11 +813,6 @@ private fun CabeceraCrearCuenta(
                 modifier = Modifier.height(14.dp)
             )
 
-
-            // =========================================================
-            // LÍNEA DEBAJO DE RIETI
-            // TU NUEVA CONFIGURACIÓN
-            // =========================================================
 
             Surface(
                 modifier = Modifier.size(
@@ -669,11 +848,6 @@ private fun SelectorTemaCrearCuenta(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-
-        // =============================================================
-        // LÍNEA IZQUIERDA
-        // =============================================================
-
         HorizontalDivider(
             modifier = Modifier.weight(1f),
             thickness = 1.dp,
@@ -686,10 +860,6 @@ private fun SelectorTemaCrearCuenta(
             modifier = Modifier.size(10.dp)
         )
 
-
-        // =============================================================
-        // ICONO
-        // =============================================================
 
         Icon(
             imageVector =
@@ -709,10 +879,6 @@ private fun SelectorTemaCrearCuenta(
         )
 
 
-        // =============================================================
-        // TEXTO
-        // =============================================================
-
         Text(
             text =
                 if (darkTheme) {
@@ -730,10 +896,6 @@ private fun SelectorTemaCrearCuenta(
             modifier = Modifier.size(10.dp)
         )
 
-
-        // =============================================================
-        // LÍNEA DERECHA
-        // =============================================================
 
         HorizontalDivider(
             modifier = Modifier.weight(1f),
@@ -755,13 +917,13 @@ private fun SelectorTemaCrearCuenta(
     showSystemUi = true
 )
 @Composable
-private fun CrearPantalla3LightPreview() {
+private fun RegisterScreenLightPreview() {
 
     RIETITheme(
         darkTheme = false
     ) {
 
-        CrearPantalla3(
+        RegisterScreen(
             onLoginClick = {},
             onCreateAccountClick = {},
             darkTheme = false,
@@ -782,13 +944,13 @@ private fun CrearPantalla3LightPreview() {
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
-private fun CrearPantalla3DarkPreview() {
+private fun RegisterScreenDarkPreview() {
 
     RIETITheme(
         darkTheme = true
     ) {
 
-        CrearPantalla3(
+        RegisterScreen(
             onLoginClick = {},
             onCreateAccountClick = {},
             darkTheme = true,
