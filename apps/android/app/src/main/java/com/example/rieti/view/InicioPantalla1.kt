@@ -1,8 +1,6 @@
-
 package com.example.rieti.view
 
 import android.content.res.Configuration
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,46 +18,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.Login
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 
-/**
- * Pantalla inicial de la aplicación RIETI.
- *
- * Presenta las opciones principales para iniciar sesión,
- * crear una cuenta y cambiar entre el modo claro y oscuro.
- *
- * @param onLoginClick Acción que se ejecuta al seleccionar
- * el botón "INICIAR SESIÓN".
- *
- * @param onRegisterClick Acción que se ejecuta al seleccionar
- * el botón "CREAR CUENTA".
- *
- * @param darkTheme Indica el tema actual de la aplicación.
- * false = modo claro.
- * true = modo oscuro.
- *
- * @param onThemeChange Acción que solicita cambiar el tema.
- */
+
 @Composable
 fun InicioPantalla1(
     onLoginClick: () -> Unit,
@@ -69,348 +56,652 @@ fun InicioPantalla1(
 
     val colors = AppTheme.colors
 
-    Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing
-    ) { innerPadding ->
 
-        // =================================================
-        // SUPERFICIE PRINCIPAL
-        // =================================================
+    // =========================================================
+    // COLORES DE LOS BOTONES
+    // =========================================================
 
-        Surface(
+    val loginBackground =
+        if (darkTheme) {
+            Color(0xFF24A194)
+        } else {
+            Color(0xFF16BFAF)
+        }
+
+
+    val registerBackground =
+        if (darkTheme) {
+            Color(0xFFFFEEF4)
+        } else {
+            Color(0xFFFFF3F7)
+        }
+
+
+    val loginContent =
+        if (darkTheme) {
+            Color(0xFFFFFFFF)
+        } else {
+            Color.White
+        }
+
+
+    val registerContent =
+        if (darkTheme) {
+            Color(0xFF160A10)
+        } else {
+            Color(0xFF131026)
+        }
+
+
+    // =========================================================
+    // PANTALLA
+    // =========================================================
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = colors.surface
+    ) {
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            color = colors.surface
+                .padding(
+                    WindowInsets.safeDrawing.asPaddingValues()
+                )
         ) {
 
-            /*
-             * Este Box permite colocar los círculos
-             * decorativos detrás del contenido.
-             */
-            Box(
-                modifier = Modifier.fillMaxSize()
+
+            // =====================================================
+            // CABECERA RIETI
+            // =====================================================
+
+            CabeceraRieti(
+                darkTheme = darkTheme,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+            )
+
+
+            // =====================================================
+            // CONTENIDO PRINCIPAL
+            // =====================================================
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .offset(y = (-30).dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
+
                 // =================================================
-                // CÍRCULOS DECORATIVOS - DERECHA
-                // Detrás del botón INICIAR SESIÓN.
+                // ESPACIO PARA LA CABECERA
                 // =================================================
 
-                CirculosDecorativos(
-                    modifier = Modifier
-                        .size(165.dp)
-                        .align(Alignment.CenterEnd)
-                        .offset(
-                            x = 90.dp,
-                            y = 40.dp
-                        )
+                Spacer(
+                    modifier = Modifier.height(260.dp)
                 )
 
-                // =================================================
-                // CÍRCULOS DECORATIVOS - IZQUIERDA
-                // Detrás del botón CREAR CUENTA.
-                // =================================================
-
-                CirculosDecorativos(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .align(Alignment.CenterStart)
-                        .offset(
-                            x = (-90).dp,
-                            y = 200.dp
-                        )
-                )
 
                 // =================================================
-                // CONTENIDO PRINCIPAL
+                // MENSAJE PRINCIPAL
                 // =================================================
 
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Text(
+                    text = buildAnnotatedString {
 
-                    // =================================================
-                    // CABECERA
-                    // Degradado vertical del color principal.
-                    // =================================================
+                        append("Reporta una posible\n")
+                        append("situación de\n")
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(182.dp)
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        colors.titles,
-                                        colors.titles.copy(alpha = 0.50f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-
-                        // =============================================
-                        // TÍTULO RIETI
-                        // =============================================
-
-                        val titulo = "RIETI"
-
-                        /*
-                         * Desplazamiento vertical de cada letra
-                         * para generar la curvatura.
-                         */
-                        val desplazamientos = listOf(
-                            8.dp,
-                            3.dp,
-                            0.dp,
-                            3.dp,
-                            8.dp
-                        )
-
-                        /*
-                         * Rotación individual de cada letra
-                         * para acompañar el arco.
-                         */
-                        val rotaciones = listOf(
-                            -10f,
-                            -7f,
-                            0f,
-                            7f,
-                            12f
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                        withStyle(
+                            SpanStyle(
+                                color = Color(0xFFE84485),
+                                fontWeight = FontWeight.Bold
+                            )
                         ) {
 
-                            titulo.forEachIndexed { index, letra ->
-
-                                Text(
-                                    text = letra.toString(),
-                                    fontSize = 60.sp,
-                                    fontFamily = FontFamily.Serif,
-                                    color = colors.text,
-                                    modifier = Modifier
-                                        .padding(horizontal = 1.dp)
-                                        .offset(
-                                            y = desplazamientos[index]
-                                        )
-                                        .graphicsLayer {
-                                            rotationZ = rotaciones[index]
-                                        }
-                                )
-                            }
+                            append("trabajo infantil.")
                         }
-                    }
+                    },
 
-                    // =================================================
-                    // ESPACIO ENTRE CABECERA Y MENSAJE
-                    // =================================================
+                    fontSize = 27.sp,
+                    lineHeight = 29.sp,
+                    fontFamily = FontFamily.Serif,
+                    textAlign = TextAlign.Center,
+                    color = colors.text
+                )
 
-                    Spacer(
-                        modifier = Modifier.height(25.dp)
-                    )
 
-                    // =================================================
-                    // MENSAJE PRINCIPAL
-                    // =================================================
+                // =================================================
+                // ESPACIO ANTES DE LA LÍNEA
+                // =================================================
 
-                    Text(
-                        text = "Reporta cualquier forma\nde trabajo infantil",
-                        fontSize = 30.sp,
-                        fontFamily = FontFamily.Serif,
-                        lineHeight = 34.sp,
-                        textAlign = TextAlign.Center,
-                        color = colors.text
-                    )
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
 
-                    Spacer(
-                        modifier = Modifier.height(25.dp)
-                    )
 
-                    // =================================================
-                    // DIVISOR
-                    // =================================================
+                // =================================================
+                // LÍNEA DEBAJO DEL MENSAJE
+                // =================================================
 
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        thickness = 2.dp,
-                        color = colors.pinkPrincipal
-                    )
-
-                    // =================================================
-                    // MENSAJE SECUNDARIO
-                    // =================================================
-
-                    Text(
-                        text = "Empieza ahora, \n tu reporte hace el cambio",
-                        modifier = Modifier.padding(
-                            vertical = 27.dp
+                Surface(
+                    modifier = Modifier
+                        .size(
+                            width = 290.dp,
+                            height = 1.dp
                         ),
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily.Serif,
-                        textAlign = TextAlign.Center,
-                        color = colors.text
+                    shape = RoundedCornerShape(50),
+                    color = Color(0xFFFF0060)
+                ) {}
+
+
+                // =================================================
+                // ESPACIO DESPUÉS DE LA LÍNEA
+                // =================================================
+
+                Spacer(
+                    modifier = Modifier.height(17.dp)
+                )
+
+
+                // =================================================
+                // SUBTÍTULO
+                // =================================================
+
+                Text(
+                    text = "La información que compartas\ncontribuirá a su detención y atención.",
+                    fontSize = 15.sp,
+                    lineHeight = 17.sp,
+                    fontFamily = FontFamily.Serif,
+                    textAlign = TextAlign.Center,
+                    color = colors.text.copy(
+                        alpha = 0.78f
                     )
+                )
 
-                    Spacer(
-                        modifier = Modifier.height(35.dp)
-                    )
 
-                    // =================================================
-                    // BOTÓN INICIAR SESIÓN
-                    // =================================================
+                Spacer(
+                    modifier = Modifier.height(40.dp)
+                )
 
-                    Button(
-                        onClick = onLoginClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .height(90.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueBoxes,
-                            contentColor = colors.textTyping
+
+                // =================================================
+                // INICIAR SESIÓN
+                // =================================================
+
+                BotonPrincipalInicio(
+                    text = "INICIAR SESIÓN",
+                    backgroundColor = loginBackground,
+                    contentColor = loginContent,
+
+                    icon = {
+
+                        Icon(
+                            imageVector =
+                                Icons.AutoMirrored.Outlined.Login,
+
+                            contentDescription = null,
+
+                            modifier =
+                                Modifier.size(27.dp),
+
+                            tint = loginContent
                         )
-                    ) {
+                    },
 
-                        Text(
-                            text = "INICIAR SESIÓN",
-                            fontSize = 30.sp,
-                            fontFamily = FontFamily.Serif
+                    onClick = onLoginClick
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(18.dp)
+                )
+
+
+                // =================================================
+                // CREAR CUENTA
+                // =================================================
+
+                BotonPrincipalInicio(
+                    text = "CREAR CUENTA",
+                    backgroundColor = registerBackground,
+                    contentColor = registerContent,
+
+                    icon = {
+
+                        Icon(
+                            imageVector =
+                                Icons.Outlined.PersonOutline,
+
+                            contentDescription = null,
+
+                            modifier =
+                                Modifier.size(27.dp),
+
+                            tint =
+                                if (darkTheme) {
+                                    Color(0xFFE4007C)
+                                } else {
+                                    Color(0xFFFF0060)
+                                }
                         )
-                    }
+                    },
 
-                    Spacer(
-                        modifier = Modifier.height(50.dp)
-                    )
-
-                    // =================================================
-                    // BOTÓN CREAR CUENTA
-                    // =================================================
-
-                    Button(
-                        onClick = onRegisterClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .height(90.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueDetails,
-                            contentColor = colors.textTyping
-                        )
-                    ) {
-
-                        Text(
-                            text = "CREAR CUENTA",
-                            fontSize = 30.sp,
-                            fontFamily = FontFamily.Serif
-                        )
-                    }
-
-                    /*
-                     * Ocupa el espacio restante para mantener
-                     * el selector de tema en la parte inferior.
-                     */
-                    Spacer(
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // =================================================
-                    // DIVISOR INFERIOR
-                    // =================================================
-
-                    HorizontalDivider(
-                        thickness = 4.dp,
-                        color = colors.pinkPrincipal
-                    )
-
-                    // =================================================
-                    // SELECTOR LIGHT / DARK
-                    // =================================================
-
-                    Text(
-                        text = if (darkTheme) {
-                            "Modo claro"
+                    arrowColor =
+                        if (darkTheme) {
+                            registerContent
                         } else {
-                            "Modo oscuro"
+                            Color(0xFFFF0060)
                         },
-                        modifier = Modifier
-                            .clickable {
-                                onThemeChange()
-                            }
-                            .padding(vertical = 18.dp),
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily.Serif,
-                        color = colors.text
-                    )
-                }
+
+                    dividerColor =
+                        Color(0xFFFF0060),
+
+                    onClick =
+                        onRegisterClick
+                )
+
+
+                // =================================================
+                // ESPACIO FLEXIBLE
+                // =================================================
+
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+
+                // =================================================
+                // CAMBIO DE TEMA
+                // =================================================
+
+                SelectorTema(
+                    darkTheme = darkTheme,
+                    onThemeChange = onThemeChange,
+                    textColor = colors.text
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(72.dp)
+                )
             }
         }
     }
 }
 
 
-// =============================================================
-// CÍRCULOS DECORATIVOS
-// =============================================================
+// =====================================================================
+// CABECERA RIETI
+// =====================================================================
 
 @Composable
-fun CirculosDecorativos(
+private fun CabeceraRieti(
+    darkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
 
-    Canvas(
+    val coloresCabecera =
+        if (darkTheme) {
+
+            // MODO OSCURO
+            // Rosa intenso -> vino/frambuesa profundo
+            listOf(
+                Color(0xFFFF0060),
+                Color(0xFFD71964),
+                Color(0xFF85113F)
+            )
+
+        } else {
+
+            // MODO CLARO
+            // Rosa intenso -> rosa suave -> casi blanco
+            listOf(
+                Color(0xFFE4007C),
+                Color(0xFFFF62A0),
+                Color(0xFFECABBE)
+            )
+        }
+
+
+    Box(
         modifier = modifier
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = coloresCabecera
+                )
+            ),
+
+        contentAlignment =
+            Alignment.Center
     ) {
 
-        val centro = Offset(
-            x = size.width / 2,
-            y = size.height / 2
+
+        Column(
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+
+            // =====================================================
+            // RIETI
+            // =====================================================
+
+            Text(
+                text = "RIETI",
+                fontSize = 55.sp,
+                fontFamily = FontFamily.Serif,
+                color = Color.White
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+
+            // =====================================================
+            // LÍNEA DEBAJO DE RIETI
+            // =====================================================
+
+            Surface(
+                modifier = Modifier
+                    .size(
+                        width = 90.dp,
+                        height = 3.dp
+                    ),
+
+                shape =
+                    RoundedCornerShape(50),
+
+                color =
+                    Color(0xFFE770A0)
+            ) {}
+        }
+    }
+}
+
+
+// =====================================================================
+// BOTÓN PRINCIPAL
+// =====================================================================
+
+@Composable
+private fun BotonPrincipalInicio(
+    text: String,
+    backgroundColor: Color,
+    contentColor: Color,
+    arrowColor: Color = contentColor,
+    dividerColor: Color = contentColor,
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit
+) {
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .height(90.dp)
+            .clickable {
+                onClick()
+            },
+
+        shape =
+            RoundedCornerShape(15.dp),
+
+        color =
+            backgroundColor,
+
+        shadowElevation =
+            9.dp
+    ) {
+
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = 17.dp,
+                    end = 12.dp
+                ),
+
+            verticalAlignment =
+                Alignment.CenterVertically
+        ) {
+
+
+            // =====================================================
+            // ICONO
+            // =====================================================
+
+            Box(
+                modifier =
+                    Modifier.size(30.dp),
+
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                icon()
+            }
+
+
+            // =====================================================
+            // DIVISOR
+            // =====================================================
+
+            Box(
+                modifier = Modifier
+                    .padding(
+                        start = 11.dp,
+                        end = 13.dp
+                    )
+                    .size(
+                        width = 1.dp,
+                        height = 34.dp
+                    )
+                    .background(
+                        dividerColor.copy(
+                            alpha = 0.35f
+                        )
+                    )
+            )
+
+
+            // =====================================================
+            // TEXTO
+            // =====================================================
+
+            Text(
+                text = text,
+
+                modifier =
+                    Modifier.weight(1f),
+
+                fontSize =
+                    20.sp,
+
+                fontFamily =
+                    FontFamily.Serif,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                textAlign =
+                    TextAlign.Center,
+
+                color =
+                    contentColor
+            )
+
+
+            // =====================================================
+            // FLECHA
+            // =====================================================
+
+            Icon(
+                imageVector =
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+
+                contentDescription =
+                    null,
+
+                modifier =
+                    Modifier.size(25.dp),
+
+                tint =
+                    arrowColor
+            )
+        }
+    }
+}
+
+
+// =====================================================================
+// SELECTOR DE TEMA
+// =====================================================================
+
+@Composable
+private fun SelectorTema(
+    darkTheme: Boolean,
+    onThemeChange: () -> Unit,
+    textColor: Color
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 45.dp
+            )
+            .clickable {
+                onThemeChange()
+            },
+
+        verticalAlignment =
+            Alignment.CenterVertically,
+
+        horizontalArrangement =
+            Arrangement.Center
+    ) {
+
+
+        // =========================================================
+        // LÍNEA IZQUIERDA
+        // =========================================================
+
+        HorizontalDivider(
+            modifier =
+                Modifier.weight(1f),
+
+            thickness =
+                1.dp,
+
+            color =
+                Color(0xFFE4007C)
+                    .copy(
+                        alpha = 0.35f
+                    )
         )
 
-        // Círculo exterior
-        drawCircle(
-            color = Color(0xFFFF1493),
-            radius = 72.dp.toPx(),
-            center = centro,
-            style = Stroke(
-                width = 4.dp.toPx()
-            )
+
+        Spacer(
+            modifier =
+                Modifier.size(10.dp)
         )
 
-        // Círculo intermedio
-        drawCircle(
-            color = Color(0xFFE31178),
-            radius = 57.dp.toPx(),
-            center = centro,
-            style = Stroke(
-                width = 4.dp.toPx()
-            )
+
+        // =========================================================
+        // ICONO
+        // =========================================================
+
+        Icon(
+            imageVector =
+                if (darkTheme) {
+
+                    Icons.Outlined.DarkMode
+
+                } else {
+
+                    Icons.Outlined.LightMode
+                },
+
+            contentDescription =
+                null,
+
+            modifier =
+                Modifier.size(21.dp),
+
+            tint =
+                Color(0xFFE4007C)
         )
 
-        // Círculo interior
-        drawCircle(
-            color = Color(0xFFB5165B),
-            radius = 42.dp.toPx(),
-            center = centro,
-            style = Stroke(
-                width = 4.dp.toPx()
-            )
+
+        Spacer(
+            modifier =
+                Modifier.size(7.dp)
+        )
+
+
+        // =========================================================
+        // TEXTO
+        // =========================================================
+
+        Text(
+            text =
+                if (darkTheme) {
+
+                    "Modo oscuro"
+
+                } else {
+
+                    "Modo claro"
+                },
+
+            fontSize =
+                12.sp,
+
+            fontFamily =
+                FontFamily.Serif,
+
+            color =
+                textColor
+        )
+
+
+        Spacer(
+            modifier =
+                Modifier.size(10.dp)
+        )
+
+
+        // =========================================================
+        // LÍNEA DERECHA
+        // =========================================================
+
+        HorizontalDivider(
+            modifier =
+                Modifier.weight(1f),
+
+            thickness =
+                1.dp,
+
+            color =
+                Color(0xFFE4007C)
+                    .copy(
+                        alpha = 0.35f
+                    )
         )
     }
 }
 
 
-// =============================================================
-// PREVIEW - LIGHT MODE
-// =============================================================
+// =====================================================================
+// PREVIEW LIGHT
+// =====================================================================
 
 @Preview(
     name = "RIETI - Light Mode",
@@ -423,6 +714,7 @@ private fun InicioPantalla1LightPreview() {
     RIETITheme(
         darkTheme = false
     ) {
+
         InicioPantalla1(
             onLoginClick = {},
             onRegisterClick = {},
@@ -433,15 +725,16 @@ private fun InicioPantalla1LightPreview() {
 }
 
 
-// =============================================================
-// PREVIEW - DARK MODE
-// =============================================================
+// =====================================================================
+// PREVIEW DARK
+// =====================================================================
 
 @Preview(
     name = "RIETI - Dark Mode",
     showBackground = true,
     showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode =
+        Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 private fun InicioPantalla1DarkPreview() {
@@ -449,6 +742,7 @@ private fun InicioPantalla1DarkPreview() {
     RIETITheme(
         darkTheme = true
     ) {
+
         InicioPantalla1(
             onLoginClick = {},
             onRegisterClick = {},
