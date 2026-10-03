@@ -20,7 +20,6 @@ val BranTealBaby = Color(0xFFE8FCFA)
 
 val PureBlack = Color(0xFF000000)
 val PureWhite = Color(0xFFFFFFFF)
-val LightGrey = Color(0xFF808080)
 val LightDark = Color(0xFF2B121A)
 
 // ========= LIGHT =========
@@ -45,6 +44,8 @@ val LightTextTyping = PureWhite
 
 // ========= DARK =========
 
+// ========= DARK =========
+
 val DarkPinkPrincipal = BrandPinkVerySoft
 val DarkOnPrimary = PureBlack
 
@@ -55,10 +56,10 @@ val DarkNavVar = BrandPinkStrong
 val DarkBluePrincipal = BrandTealVerySoft
 val DarkBlueSecondary = BrandTealSoft
 
-val DarkBlueBoxes = BranTealBaby
-val DarkBlueDetails = BrandTealVerySoft
+val DarkBlueBoxes = BrandTealSoft
+val DarkBlueDetails = BranTealBaby
 
 val DarkSurface = PureBlack
-val DarkText  = PureWhite
+val DarkText = PureWhite
 val DarkTextPassword = BrandPinkVerySoft
-val DarkTextTyping = LightGrey
+val DarkTextTyping = PureBlack

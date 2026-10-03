@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -221,6 +222,7 @@ fun InicioPantalla1(
                         text = "Reporta cualquier forma\nde trabajo infantil",
                         fontSize = 30.sp,
                         fontFamily = FontFamily.Serif,
+                        lineHeight = 34.sp,
                         textAlign = TextAlign.Center,
                         color = colors.text
                     )
@@ -269,10 +271,11 @@ fun InicioPantalla1(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
-                            .height(80.dp),
+                            .height(90.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueSecondary,
-                            contentColor = colors.text
+                            containerColor = colors.blueBoxes,
+                            contentColor = colors.textTyping
                         )
                     ) {
 
@@ -296,10 +299,11 @@ fun InicioPantalla1(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
-                            .height(80.dp),
+                            .height(90.dp),
+                        shape = RoundedCornerShape(18.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.blueSecondary,
-                            contentColor = colors.text
+                            containerColor = colors.blueDetails,
+                            contentColor = colors.textTyping
                         )
                     ) {
 
