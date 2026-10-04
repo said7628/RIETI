@@ -590,6 +590,15 @@ private fun TrackingSearchField(
 
     val colors = AppTheme.colors
 
+    /*
+     * IMPORTANTE:
+     *
+     * Antes utilizábamos colors.textTyping para el texto escrito.
+     * Para asegurar contraste tanto en Light como en Dark,
+     * utilizamos colors.titles, que ya funciona correctamente
+     * en ambos temas dentro de esta misma pantalla.
+     */
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -597,7 +606,7 @@ private fun TrackingSearchField(
 
         color =
             colors.text.copy(
-                alpha = 0.035f
+                alpha = 0.055f
             ),
 
         shape = RoundedCornerShape(8.dp),
@@ -607,7 +616,7 @@ private fun TrackingSearchField(
 
             color =
                 colors.text.copy(
-                    alpha = 0.14f
+                    alpha = 0.18f
                 )
         )
     ) {
@@ -646,11 +655,19 @@ private fun TrackingSearchField(
 
                 singleLine = true,
 
+                // =================================================
+                // TEXTO ESCRITO POR EL USUARIO
+                // =================================================
+
                 textStyle = TextStyle(
-                    color = colors.textTyping,
+                    color = colors.titles,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 ),
+
+                // =================================================
+                // CURSOR
+                // =================================================
 
                 cursorBrush =
                     SolidColor(
@@ -662,9 +679,15 @@ private fun TrackingSearchField(
                 decorationBox = { innerTextField ->
 
                     Box(
+                        modifier = Modifier.fillMaxWidth(),
+
                         contentAlignment =
                             Alignment.CenterStart
                     ) {
+
+                        // =========================================
+                        // PLACEHOLDER
+                        // =========================================
 
                         if (value.isEmpty()) {
 
@@ -673,12 +696,17 @@ private fun TrackingSearchField(
 
                                 color =
                                     colors.text.copy(
-                                        alpha = 0.45f
+                                        alpha = 0.55f
                                     ),
 
                                 fontSize = 12.sp
                             )
                         }
+
+
+                        // =========================================
+                        // CAMPO REAL
+                        // =========================================
 
                         innerTextField()
                     }
