@@ -48,10 +48,14 @@ import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
+// =================================================================
+// REPORTE ANÓNIMO
+// =================================================================
+
 @Composable
 fun AnonymousReportScreen(
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
     onSelectFilesClick: () -> Unit,
@@ -61,9 +65,9 @@ fun AnonymousReportScreen(
     val colors = AppTheme.colors
 
 
-    // =========================================================
+    // =============================================================
     // DATOS DE CONTACTO
-    // =========================================================
+    // =============================================================
 
     var email by rememberSaveable {
         mutableStateOf("")
@@ -74,9 +78,9 @@ fun AnonymousReportScreen(
     }
 
 
-    // =========================================================
+    // =============================================================
     // DATOS DEL REPORTE
-    // =========================================================
+    // =============================================================
 
     var numberOfChildren by rememberSaveable {
         mutableStateOf("")
@@ -122,6 +126,10 @@ fun AnonymousReportScreen(
         )
 
 
+    // =============================================================
+    // PANTALLA
+    // =============================================================
+
     Scaffold(
 
         containerColor = colors.surface,
@@ -136,9 +144,18 @@ fun AnonymousReportScreen(
         bottomBar = {
 
             BottomBar(
-                onHomeClick = onHomeClick,
-                onReportClick = onReportClick,
-                onSettingsClick = onSettingsClick
+
+                onHomeClick = {
+                    onHomeClick()
+                },
+
+                onAboutUsClick = {
+                    onAboutUsClick()
+                },
+
+                onSettingsClick = {
+                    onSettingsClick()
+                }
             )
         }
 
@@ -155,9 +172,9 @@ fun AnonymousReportScreen(
         ) {
 
 
-            // =================================================
+            // =====================================================
             // TÍTULO PRINCIPAL
-            // =================================================
+            // =====================================================
 
             item {
 
@@ -165,9 +182,9 @@ fun AnonymousReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // REPORTE ANÓNIMO
-            // =================================================
+            // =====================================================
 
             item {
 
@@ -188,9 +205,9 @@ fun AnonymousReportScreen(
                     )
 
 
-                    // -----------------------------------------
+                    // -------------------------------------------------
                     // CORREO
-                    // -----------------------------------------
+                    // -------------------------------------------------
 
                     AnonymousReportFieldWithLabel(
                         label = "Correo electrónico ()",
@@ -210,9 +227,9 @@ fun AnonymousReportScreen(
                     )
 
 
-                    // -----------------------------------------
+                    // -------------------------------------------------
                     // CONFIRMAR CORREO
-                    // -----------------------------------------
+                    // -------------------------------------------------
 
                     AnonymousReportFieldWithLabel(
                         label = "Confirmar correo electrónico",
@@ -251,9 +268,9 @@ fun AnonymousReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // DETALLES DEL CASO
-            // =================================================
+            // =====================================================
 
             item {
 
@@ -370,9 +387,9 @@ fun AnonymousReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // UBICACIÓN DEL CASO
-            // =================================================
+            // =====================================================
 
             item {
 
@@ -527,9 +544,9 @@ fun AnonymousReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // EVIDENCIA
-            // =================================================
+            // =====================================================
 
             item {
 
@@ -573,8 +590,11 @@ fun AnonymousReportScreen(
                              * enviar si el usuario escribió
                              * confirmación y no coincide.
                              *
-                             * La validación real luego
-                             * puede ir en ViewModel.
+                             * TODO(BACKEND):
+                             *
+                             * La validación definitiva y el envío
+                             * del reporte se conectarán después
+                             * mediante ViewModel/API.
                              */
 
                             if (

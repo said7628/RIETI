@@ -12,44 +12,31 @@ import androidx.navigation.compose.rememberNavController
 
 object Routes {
 
-    // =============================================================
-    // FLUJO DE INICIO / CUENTA
-    // =============================================================
-
+    // CUENTA
     const val START = "start"
-
     const val LOGIN = "login"
-
     const val REGISTER = "register"
-
     const val RECOVER_PASSWORD = "recover_password"
-
-
-    // =============================================================
-    // APP PRINCIPAL
-    // =============================================================
-
-    const val HOME = "home"
-
-    const val REPORT = "report"
-
-    const val REPORT_SUCCESS = "report_success"
-
-    const val SETTINGS = "settings"
-
-    const val CHANGE_PASSWORD = "change_password"
-
-    const val ACCOUNT_DELETED = "account_deleted"
-
     const val RESET_PASSWORD = "reset_password"
 
-    // NUEVO
+    // APP PRINCIPAL
+    const val HOME = "home"
+    const val ABOUT_US = "about_us"
+    const val SETTINGS = "settings"
+
+    // REPORTES
+    const val REPORT = "report"
     const val ANONYMOUS_REPORT = "anonymous_report"
+    const val REPORT_SUCCESS = "report_success"
+
+    // CONFIGURACIÓN
+    const val CHANGE_PASSWORD = "change_password"
+    const val ACCOUNT_DELETED = "account_deleted"
 }
 
 
 // =================================================================
-// NAVEGACIÓN PRINCIPAL
+// APP NAVIGATION
 // =================================================================
 
 @Composable
@@ -62,29 +49,26 @@ fun AppNavigation(
 
 
     NavHost(
-
         navController = navController,
-
         startDestination = Routes.START
-
     ) {
 
+
         // =========================================================
-        // 1. PANTALLA INICIAL
+        // START
         // =========================================================
 
         composable(
             route = Routes.START
         ) {
 
-            WelcomeScreen (
+            WelcomeScreen(
 
                 onLoginClick = {
 
                     navController.navigate(
-                        route = Routes.LOGIN
+                        Routes.LOGIN
                     ) {
-
                         launchSingleTop = true
                     }
                 },
@@ -92,22 +76,22 @@ fun AppNavigation(
                 onRegisterClick = {
 
                     navController.navigate(
-                        route = Routes.REGISTER
+                        Routes.REGISTER
                     ) {
-
                         launchSingleTop = true
                     }
                 },
 
                 darkTheme = darkTheme,
+
                 onThemeChange = onThemeChange
             )
         }
 
 
         // =========================================================
-// 2. INICIAR SESIÓN
-// =========================================================
+        // LOGIN
+        // =========================================================
 
         composable(
             route = Routes.LOGIN
@@ -118,13 +102,12 @@ fun AppNavigation(
                 onLoginClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
 
                         popUpTo(
-                            route = Routes.START
+                            Routes.START
                         ) {
-
                             inclusive = true
                         }
 
@@ -135,13 +118,12 @@ fun AppNavigation(
                 onRegisterClick = {
 
                     navController.navigate(
-                        route = Routes.REGISTER
+                        Routes.REGISTER
                     ) {
 
                         popUpTo(
-                            route = Routes.START
+                            Routes.START
                         ) {
-
                             inclusive = false
                         }
 
@@ -152,38 +134,38 @@ fun AppNavigation(
                 onForgotPasswordClick = {
 
                     navController.navigate(
-                        route = Routes.RECOVER_PASSWORD
+                        Routes.RECOVER_PASSWORD
                     ) {
-
                         launchSingleTop = true
                     }
                 },
 
                 darkTheme = darkTheme,
+
                 onThemeChange = onThemeChange
             )
         }
 
+
         // =========================================================
-// 3. CREAR CUENTA
-// =========================================================
+        // REGISTER
+        // =========================================================
 
         composable(
             route = Routes.REGISTER
         ) {
 
-            RegisterScreen (
+            RegisterScreen(
 
                 onCreateAccountClick = {
 
                     navController.navigate(
-                        route = Routes.LOGIN
+                        Routes.LOGIN
                     ) {
 
                         popUpTo(
-                            route = Routes.START
+                            Routes.START
                         ) {
-
                             inclusive = true
                         }
 
@@ -191,17 +173,15 @@ fun AppNavigation(
                     }
                 },
 
-                // INICIAR SESIÓN DESDE CREAR CUENTA
                 onLoginClick = {
 
                     navController.navigate(
-                        route = Routes.LOGIN
+                        Routes.LOGIN
                     ) {
 
                         popUpTo(
-                            route = Routes.START
+                            Routes.START
                         ) {
-
                             inclusive = false
                         }
 
@@ -210,52 +190,40 @@ fun AppNavigation(
                 },
 
                 darkTheme = darkTheme,
+
                 onThemeChange = onThemeChange
             )
         }
 
 
-// =========================================================
-// 4. RECUPERAR CONTRASEÑA
-// =========================================================
+        // =========================================================
+        // RECUPERAR CONTRASEÑA
+        // =========================================================
 
         composable(
             route = Routes.RECOVER_PASSWORD
         ) {
 
-            ForgotPasswordScreen (
-
-                // -------------------------------------------------
-                // ENVIAR CÓDIGO
-                // -------------------------------------------------
+            ForgotPasswordScreen(
 
                 onSendCodeClick = {
 
-                    // abre la pantalla para introducir código
-                    // y nueva contraseña
-
                     navController.navigate(
-                        route = Routes.RESET_PASSWORD
+                        Routes.RESET_PASSWORD
                     ) {
-
                         launchSingleTop = true
                     }
                 },
 
-                // -------------------------------------------------
-                // INICIAR SESIÓN
-                // -------------------------------------------------
-
                 onLoginClick = {
 
                     navController.navigate(
-                        route = Routes.LOGIN
+                        Routes.LOGIN
                     ) {
 
                         popUpTo(
-                            route = Routes.START
+                            Routes.START
                         ) {
-
                             inclusive = false
                         }
 
@@ -263,20 +231,15 @@ fun AppNavigation(
                     }
                 },
 
-                // -------------------------------------------------
-                // CREAR CUENTA
-                // -------------------------------------------------
-
                 onRegisterClick = {
 
                     navController.navigate(
-                        route = Routes.REGISTER
+                        Routes.REGISTER
                     ) {
 
                         popUpTo(
-                            route = Routes.START
+                            Routes.START
                         ) {
-
                             inclusive = false
                         }
 
@@ -285,9 +248,72 @@ fun AppNavigation(
                 },
 
                 darkTheme = darkTheme,
+
                 onThemeChange = onThemeChange
             )
         }
+
+
+        // =========================================================
+        // RESET PASSWORD
+        // =========================================================
+
+        composable(
+            route = Routes.RESET_PASSWORD
+        ) {
+
+            ResetPasswordScreen(
+
+                onResetPasswordClick = {
+                        recoveryCode,
+                        newPassword,
+                        confirmPassword ->
+
+                    /*
+                     * TODO(BACKEND):
+                     *
+                     * El ViewModel/API deberá validar el código
+                     * y realizar el cambio de contraseña.
+                     *
+                     * Por ahora simulamos éxito.
+                     */
+
+                    navController.navigate(
+                        Routes.LOGIN
+                    ) {
+
+                        popUpTo(
+                            Routes.RECOVER_PASSWORD
+                        ) {
+                            inclusive = true
+                        }
+
+                        launchSingleTop = true
+                    }
+                },
+
+                onLoginClick = {
+
+                    navController.navigate(
+                        Routes.LOGIN
+                    ) {
+
+                        popUpTo(
+                            Routes.RECOVER_PASSWORD
+                        ) {
+                            inclusive = true
+                        }
+
+                        launchSingleTop = true
+                    }
+                },
+
+                darkTheme = darkTheme,
+
+                onThemeChange = onThemeChange
+            )
+        }
+
 
         // =========================================================
         // HOME
@@ -299,56 +325,30 @@ fun AppNavigation(
 
             HomeScreen(
 
-
                 // -------------------------------------------------
                 // REPORTE ANÓNIMO
                 // -------------------------------------------------
 
                 onAnonymousReportClick = {
 
-                    // CAMBIO:
-                    // ahora abre AnonymousReportScreen
-
                     navController.navigate(
-                        route = Routes.ANONYMOUS_REPORT
+                        Routes.ANONYMOUS_REPORT
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // REALIZAR REPORTE
+                // REPORTE CON SEGUIMIENTO
                 // -------------------------------------------------
 
                 onReportClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.REPORT
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
@@ -359,7 +359,11 @@ fun AppNavigation(
 
                 onAboutUsClick = {
 
-                    // Pendiente
+                    navController.navigate(
+                        Routes.ABOUT_US
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
 
 
@@ -369,31 +373,23 @@ fun AppNavigation(
 
                 onTrackingClick = {
 
-                    // Pendiente
+                    /*
+                     * Pendiente:
+                     * conectar pantalla de seguimiento.
+                     */
                 },
 
 
                 // -------------------------------------------------
-                // SETTINGS
+                // CONFIGURACIÓN
                 // -------------------------------------------------
 
                 onSettingsClick = {
 
                     navController.navigate(
-                        route = Routes.SETTINGS
+                        Routes.SETTINGS
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 }
             )
@@ -401,8 +397,46 @@ fun AppNavigation(
 
 
         // =========================================================
-        // REPORT
+        // QUIÉNES SOMOS
         // =========================================================
+
+        composable(
+            route = Routes.ABOUT_US
+        ) {
+
+            AboutUsScreen(
+
+                onHomeClick = {
+
+                    navController.navigate(
+                        Routes.HOME
+                    ) {
+
+                        popUpTo(
+                            Routes.HOME
+                        ) {
+                            inclusive = false
+                        }
+
+                        launchSingleTop = true
+                    }
+                },
+
+                onSettingsClick = {
+
+                    navController.navigate(
+                        Routes.SETTINGS
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
+        // =========================================================
+// REPORTE CON SEGUIMIENTO
+// =========================================================
 
         composable(
             route = Routes.REPORT
@@ -410,78 +444,51 @@ fun AppNavigation(
 
             ReportScreen(
 
-
                 // -------------------------------------------------
-                // HOME
+                // INICIO
                 // -------------------------------------------------
 
                 onHomeClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
 
                         popUpTo(
-                            route = Routes.HOME
+                            Routes.HOME
                         ) {
-
-                            saveState = true
+                            inclusive = false
                         }
 
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // REPORT
+                // QUIÉNES SOMOS
                 // -------------------------------------------------
 
-                onReportClick = {
+                onAboutUsClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.ABOUT_US
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // SETTINGS
+                // CONFIGURACIÓN
                 // -------------------------------------------------
 
                 onSettingsClick = {
 
                     navController.navigate(
-                        route = Routes.SETTINGS
+                        Routes.SETTINGS
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
@@ -492,7 +499,7 @@ fun AppNavigation(
 
                 onMenuClick = {
 
-                    // Descartado
+                    // Pendiente
                 },
 
 
@@ -502,17 +509,17 @@ fun AppNavigation(
 
                 onCurrentLocationClick = {
 
-                    // Funcionalidad después
+                    // Pendiente de implementar
                 },
 
 
                 // -------------------------------------------------
-                // ELEGIR ARCHIVOS
+                // SELECCIONAR EVIDENCIA
                 // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    // Funcionalidad después
+                    // Pendiente de implementar
                 },
 
 
@@ -522,10 +529,17 @@ fun AppNavigation(
 
                 onSendReportClick = {
 
-                    navController.navigate(
-                        route = Routes.REPORT_SUCCESS
-                    ) {
+                    /*
+                     * TODO(BACKEND):
+                     *
+                     * Posteriormente la navegación deberá ocurrir
+                     * únicamente cuando el backend confirme que
+                     * el reporte fue registrado correctamente.
+                     */
 
+                    navController.navigate(
+                        Routes.REPORT_SUCCESS
+                    ) {
                         launchSingleTop = true
                     }
                 }
@@ -543,112 +557,97 @@ fun AppNavigation(
 
             AnonymousReportScreen(
 
-
                 // -------------------------------------------------
-                // HOME
+                // INICIO
                 // -------------------------------------------------
 
                 onHomeClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
 
                         popUpTo(
-                            route = Routes.HOME
+                            Routes.HOME
                         ) {
-
-                            saveState = true
+                            inclusive = false
                         }
 
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // REPORT NORMAL
+                // QUIÉNES SOMOS
                 // -------------------------------------------------
 
-                onReportClick = {
+                onAboutUsClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.ABOUT_US
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // SETTINGS
+                // CONFIGURACIÓN
                 // -------------------------------------------------
 
                 onSettingsClick = {
 
                     navController.navigate(
-                        route = Routes.SETTINGS
+                        Routes.SETTINGS
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // UBICACIÓN
+                // UBICACIÓN ACTUAL
                 // -------------------------------------------------
 
                 onCurrentLocationClick = {
 
-                    // Funcionalidad después
+                    /*
+                     * TODO:
+                     * Conectar ubicación posteriormente.
+                     */
                 },
 
 
                 // -------------------------------------------------
-                // ARCHIVOS
+                // SELECCIONAR ARCHIVOS
                 // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    // Funcionalidad después
+                    /*
+                     * TODO:
+                     * Conectar selector de evidencia.
+                     */
                 },
 
 
                 // -------------------------------------------------
-                // ENVIAR REPORTE ANÓNIMO
+                // ENVIAR REPORTE
                 // -------------------------------------------------
 
                 onSendReportClick = {
 
-                    navController.navigate(
-                        route = Routes.REPORT_SUCCESS
-                    ) {
+                    /*
+                     * TODO(BACKEND):
+                     *
+                     * Aquí después esperaremos la respuesta
+                     * exitosa del ViewModel/API antes de navegar.
+                     */
 
+                    navController.navigate(
+                        Routes.REPORT_SUCCESS
+                    ) {
                         launchSingleTop = true
                     }
                 }
@@ -656,9 +655,9 @@ fun AppNavigation(
         }
 
 
-        // =========================================================
-        // REPORTE CREADO CON ÉXITO
-        // =========================================================
+        //=========================================================
+// REPORTE EXITOSO
+// =========================================================
 
         composable(
             route = Routes.REPORT_SUCCESS
@@ -675,17 +674,23 @@ fun AppNavigation(
 
                 onNewReportClick = {
 
+                    /*
+                     * Por ahora manda al reporte con seguimiento.
+                     *
+                     * Más adelante podríamos hacer que "Nuevo Reporte"
+                     * vuelva al Home y muestre nuevamente el selector
+                     * Anónimo / Con seguimiento.
+                     */
+
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.REPORT
                     ) {
 
                         popUpTo(
-                            route = Routes.REPORT_SUCCESS
+                            Routes.REPORT_SUCCESS
                         ) {
-
                             inclusive = true
                         }
-
 
                         launchSingleTop = true
                     }
@@ -699,95 +704,65 @@ fun AppNavigation(
                 onMainMenuClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
 
                         popUpTo(
-                            route = Routes.HOME
+                            Routes.HOME
                         ) {
-
-                            saveState = true
+                            inclusive = false
                         }
 
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // HOME
+                // INICIO - BOTTOM BAR
                 // -------------------------------------------------
 
                 onHomeClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
 
                         popUpTo(
-                            route = Routes.HOME
+                            Routes.HOME
                         ) {
-
-                            saveState = true
+                            inclusive = false
                         }
 
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // REPORT
+                // QUIÉNES SOMOS - BOTTOM BAR
                 // -------------------------------------------------
 
-                onReportClick = {
+                onAboutUsClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.ABOUT_US
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // SETTINGS
+                // CONFIGURACIÓN - BOTTOM BAR
                 // -------------------------------------------------
 
                 onSettingsClick = {
 
                     navController.navigate(
-                        route = Routes.SETTINGS
+                        Routes.SETTINGS
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 }
             )
@@ -795,8 +770,8 @@ fun AppNavigation(
 
 
         // =========================================================
-        // SETTINGS
-        // =========================================================
+// SETTINGS
+// =========================================================
 
         composable(
             route = Routes.SETTINGS
@@ -814,31 +789,28 @@ fun AppNavigation(
                 onChangePasswordClick = {
 
                     navController.navigate(
-                        route = Routes.CHANGE_PASSWORD
+                        Routes.CHANGE_PASSWORD
                     ) {
-
                         launchSingleTop = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // SALIR DE LA CUENTA
+                // CERRAR SESIÓN
                 // -------------------------------------------------
 
                 onLogoutClick = {
 
                     navController.navigate(
-                        route = Routes.START
+                        Routes.START
                     ) {
 
                         popUpTo(
-                            route = Routes.HOME
+                            Routes.HOME
                         ) {
-
                             inclusive = true
                         }
-
 
                         launchSingleTop = true
                     }
@@ -851,18 +823,19 @@ fun AppNavigation(
 
                 onDeleteAccountClick = {
 
+                    /*
+                     * TODO(BACKEND):
+                     *
+                     * Posteriormente aquí deberá realizarse
+                     * primero la eliminación real mediante
+                     * ViewModel/API.
+                     *
+                     * Por ahora continuamos con el flujo visual.
+                     */
+
                     navController.navigate(
-                        route = Routes.ACCOUNT_DELETED
+                        Routes.ACCOUNT_DELETED
                     ) {
-
-                        popUpTo(
-                            route = Routes.SETTINGS
-                        ) {
-
-                            inclusive = true
-                        }
-
-
                         launchSingleTop = true
                     }
                 },
@@ -872,60 +845,47 @@ fun AppNavigation(
                 // CAMBIAR TEMA
                 // -------------------------------------------------
 
-                onToggleThemeClick = onThemeChange,
+                onToggleThemeClick = {
+
+                    onThemeChange()
+                },
 
 
                 // -------------------------------------------------
-                // HOME
+                // INICIO
                 // -------------------------------------------------
 
                 onHomeClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
 
                         popUpTo(
-                            route = Routes.HOME
+                            Routes.HOME
                         ) {
-
-                            saveState = true
+                            inclusive = false
                         }
 
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // REPORT
+                // QUIÉNES SOMOS
                 // -------------------------------------------------
 
-                onReportClick = {
+                onAboutUsClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.ABOUT_US
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 }
             )
         }
-
 
         // =========================================================
         // CAMBIAR CONTRASEÑA
@@ -939,79 +899,49 @@ fun AppNavigation(
 
                 email = "correo@gmail.com",
 
-
                 onChangePasswordClick = {
                         currentPassword,
                         newPassword,
                         confirmPassword ->
 
-
-                    // Después irá al ViewModel.
-                    // Por ahora solamente regresamos.
+                    /*
+                     * TODO(BACKEND):
+                     *
+                     * Aquí después irá la llamada real
+                     * para cambiar la contraseña.
+                     */
 
                     navController.popBackStack()
                 },
-
-
-                // -------------------------------------------------
-                // HOME
-                // -------------------------------------------------
 
                 onHomeClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
-
-                // -------------------------------------------------
-                // REPORT
-                // -------------------------------------------------
-
-                onReportClick = {
+                onAboutUsClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.ABOUT_US
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // SETTINGS
-                // -------------------------------------------------
 
                 onSettingsClick = {
 
-                    navController.popBackStack()
+                    navController.navigate(
+                        Routes.SETTINGS
+                    ) {
+                        launchSingleTop = true
+                    }
                 }
             )
+
         }
 
 
@@ -1025,147 +955,39 @@ fun AppNavigation(
 
             AccountDeletedScreen(
 
-
-                // -------------------------------------------------
-                // HOME
-                // -------------------------------------------------
-
                 onHomeClick = {
 
                     navController.navigate(
-                        route = Routes.HOME
+                        Routes.HOME
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // REPORT
+                // QUIÉNES SOMOS
                 // -------------------------------------------------
 
-                onReportClick = {
+                onAboutUsClick = {
 
                     navController.navigate(
-                        route = Routes.REPORT
+                        Routes.ABOUT_US
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
                         launchSingleTop = true
-
-                        restoreState = true
                     }
                 },
 
 
                 // -------------------------------------------------
-                // SETTINGS
+                // CONFIGURACIÓN
                 // -------------------------------------------------
 
                 onSettingsClick = {
 
                     navController.navigate(
-                        route = Routes.SETTINGS
+                        Routes.SETTINGS
                     ) {
-
-                        popUpTo(
-                            route = Routes.HOME
-                        ) {
-
-                            saveState = true
-                        }
-
-
-                        launchSingleTop = true
-
-                        restoreState = true
-                    }
-                }
-            )
-        }
-
-
-        // =========================================================
-        // CÓDIGO DE RECUPERACIÓN + NUEVA CONTRASEÑA
-        // =========================================================
-
-        composable(
-            route = Routes.RESET_PASSWORD
-        ) {
-
-            ResetPasswordScreen(
-
-
-                // -------------------------------------------------
-                // RESTABLECER CONTRASEÑA
-                // -------------------------------------------------
-
-                onResetPasswordClick = {
-                        recoveryCode,
-                        newPassword,
-                        confirmPassword ->
-
-
-                    /*
-                     * Después estos tres datos irán al ViewModel.
-                     *
-                     * Por ahora simulamos que todo salió bien
-                     * y regresamos a iniciar sesión.
-                     */
-
-                    navController.navigate(
-                        route = Routes.LOGIN
-                    ) {
-
-                        popUpTo(
-                            route = Routes.RECOVER_PASSWORD
-                        ) {
-
-                            inclusive = true
-                        }
-
-
-                        launchSingleTop = true
-                    }
-                },
-
-
-                // -------------------------------------------------
-                // INICIAR SESIÓN
-                // -------------------------------------------------
-
-                onLoginClick = {
-
-                    navController.navigate(
-                        route = Routes.LOGIN
-                    ) {
-
-                        popUpTo(
-                            route = Routes.RECOVER_PASSWORD
-                        ) {
-
-                            inclusive = true
-                        }
-
-
                         launchSingleTop = true
                     }
                 }

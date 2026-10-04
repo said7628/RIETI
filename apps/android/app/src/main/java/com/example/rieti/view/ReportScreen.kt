@@ -51,10 +51,14 @@ import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
+// =================================================================
+// REPORTE CON SEGUIMIENTO
+// =================================================================
+
 @Composable
 fun ReportScreen(
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onMenuClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
@@ -62,11 +66,12 @@ fun ReportScreen(
     onSendReportClick: () -> Unit
 ) {
 
-    // ****************************************
+    // =============================================================
     // ESTADOS TEMPORALES
     //
-    // Por ahora estan aquí porque solo estamos haciendo front.
+    // Por ahora están aquí porque solo estamos haciendo front.
     // Después probablemente pasarán a un ReportViewModel.
+    // =============================================================
 
     var numberOfChildren by rememberSaveable {
         mutableStateOf("")
@@ -110,8 +115,9 @@ fun ReportScreen(
 
     Scaffold(
 
-        // ********************************************
+        // =========================================================
         // BARRA SUPERIOR REUTILIZABLE
+        // =========================================================
 
         topBar = {
 
@@ -121,16 +127,27 @@ fun ReportScreen(
         },
 
 
-        //************************************
+        // =========================================================
         // BARRA INFERIOR REUTILIZABLE
-
+        //
+        // Inicio | Quiénes somos | Configuración
+        // =========================================================
 
         bottomBar = {
 
             BottomBar(
-                onHomeClick = onHomeClick,
-                onReportClick = onReportClick,
-                onSettingsClick = onSettingsClick
+
+                onHomeClick = {
+                    onHomeClick()
+                },
+
+                onAboutUsClick = {
+                    onAboutUsClick()
+                },
+
+                onSettingsClick = {
+                    onSettingsClick()
+                }
             )
         },
 
@@ -149,9 +166,9 @@ fun ReportScreen(
         ) {
 
 
-            // ********************************
+            // =====================================================
             // TÍTULO PRINCIPAL
-            
+            // =====================================================
 
             item {
 
@@ -159,8 +176,9 @@ fun ReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // DETALLES DEL CASO
+            // =====================================================
 
             item {
 
@@ -181,7 +199,9 @@ fun ReportScreen(
                     )
 
 
-                    // Primera fila
+                    // -------------------------------------------------
+                    // PRIMERA FILA
+                    // -------------------------------------------------
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -220,7 +240,9 @@ fun ReportScreen(
                     )
 
 
-                    // Segunda fila
+                    // -------------------------------------------------
+                    // SEGUNDA FILA
+                    // -------------------------------------------------
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -259,7 +281,9 @@ fun ReportScreen(
                     )
 
 
-                    // Espacio grande de detalles
+                    // -------------------------------------------------
+                    // DETALLES
+                    // -------------------------------------------------
 
                     ReportFieldWithLabel(
                         label = "Detalles:",
@@ -271,6 +295,7 @@ fun ReportScreen(
                         },
 
                         minHeight = 125.dp,
+
                         singleLine = false,
 
                         modifier = Modifier.fillMaxWidth()
@@ -279,9 +304,9 @@ fun ReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // UBICACIÓN DEL CASO
-
+            // =====================================================
 
             item {
 
@@ -306,7 +331,9 @@ fun ReportScreen(
                     )
 
 
-                    // Botón ubicación actual
+                    // -------------------------------------------------
+                    // BOTÓN UBICACIÓN ACTUAL
+                    // -------------------------------------------------
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -330,6 +357,7 @@ fun ReportScreen(
                             ),
 
                             shape = RoundedCornerShape(6.dp)
+
                         ) {
 
                             Text(
@@ -345,7 +373,9 @@ fun ReportScreen(
                     )
 
 
-                    // Por ahora solamente placeholder
+                    // -------------------------------------------------
+                    // MAPA TEMPORAL
+                    // -------------------------------------------------
 
                     MapPlaceholder()
 
@@ -354,6 +384,10 @@ fun ReportScreen(
                         modifier = Modifier.height(16.dp)
                     )
 
+
+                    // -------------------------------------------------
+                    // DIRECCIÓN
+                    // -------------------------------------------------
 
                     ReportFieldWithLabel(
                         label = "Dirección completa",
@@ -425,9 +459,9 @@ fun ReportScreen(
             }
 
 
-            // =================================================
+            // =====================================================
             // EVIDENCIA FOTOGRÁFICA
-
+            // =====================================================
 
             item {
 
@@ -462,8 +496,37 @@ fun ReportScreen(
                     )
 
 
+                    // -------------------------------------------------
+                    // ENVIAR REPORTE
+                    // -------------------------------------------------
+
                     SendReportButton(
-                        onClick = onSendReportClick
+
+                        onClick = {
+
+                            /*
+                             * TODO(BACKEND):
+                             *
+                             * Actualmente este botón únicamente
+                             * continúa con el flujo visual.
+                             *
+                             * Después:
+                             *
+                             * 1. Los datos del formulario pasarán
+                             *    al ViewModel.
+                             *
+                             * 2. El ViewModel llamará al endpoint
+                             *    correspondiente.
+                             *
+                             * 3. Solo cuando el backend confirme
+                             *    que el reporte fue creado
+                             *    correctamente se ejecutará:
+                             *
+                             *    onSendReportClick()
+                             */
+
+                            onSendReportClick()
+                        }
                     )
 
 
@@ -479,7 +542,7 @@ fun ReportScreen(
 
 // =================================================================
 // TÍTULO "REALIZA TU REPORTE"
-
+// =================================================================
 
 @Composable
 private fun ReportMainTitle() {
@@ -506,9 +569,9 @@ private fun ReportMainTitle() {
 }
 
 
-// ======================================
+// =================================================================
 // TÍTULOS DE SECCIÓN
-
+// =================================================================
 
 @Composable
 private fun SectionTitle(
@@ -527,7 +590,6 @@ private fun SectionTitle(
             fontFamily = FontFamily.Serif,
             fontSize = 26.sp,
             maxLines = 1
-
         )
 
 
@@ -545,6 +607,9 @@ private fun SectionTitle(
 }
 
 
+// =================================================================
+// CAMPO CON LABEL
+// =================================================================
 
 @Composable
 private fun ReportFieldWithLabel(
@@ -585,7 +650,9 @@ private fun ReportFieldWithLabel(
 }
 
 
-
+// =================================================================
+// TEXT FIELD RIETI
+// =================================================================
 
 @Composable
 private fun RietiTextField(
@@ -671,7 +738,9 @@ private fun RietiTextField(
 }
 
 
-
+// =================================================================
+// MAPA
+// =================================================================
 
 @Composable
 private fun MapPlaceholder() {
@@ -733,7 +802,7 @@ private fun MapPlaceholder() {
 
 // =================================================================
 // SELECTOR DE ARCHIVOS
-
+// =================================================================
 
 @Composable
 private fun EvidenceSelector(
@@ -760,9 +829,9 @@ private fun EvidenceSelector(
     ) {
 
 
-        // **********************
-        // Elegir archivos
-
+        // =========================================================
+        // ELEGIR ARCHIVOS
+        // =========================================================
 
         Box(
             modifier = Modifier
@@ -781,9 +850,9 @@ private fun EvidenceSelector(
         }
 
 
-        //*************************
-        // Línea divisoria
-
+        // =========================================================
+        // DIVISOR
+        // =========================================================
 
         Box(
             modifier = Modifier
@@ -795,9 +864,9 @@ private fun EvidenceSelector(
         )
 
 
-        //***********************
-        // Nombre de archivo
-
+        // =========================================================
+        // NOMBRE DEL ARCHIVO
+        // =========================================================
 
         Box(
             modifier = Modifier
@@ -818,9 +887,9 @@ private fun EvidenceSelector(
 }
 
 
-// *********************************
+// =================================================================
 // BOTÓN ENVIAR REPORTE
-
+// =================================================================
 
 @Composable
 private fun SendReportButton(
@@ -856,6 +925,9 @@ private fun SendReportButton(
 }
 
 
+// =================================================================
+// PREVIEW LIGHT
+// =================================================================
 
 @Preview(
     showBackground = true,
@@ -872,7 +944,7 @@ private fun ReportScreenLightPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {},
+            onAboutUsClick = {},
 
             onSettingsClick = {},
 
@@ -887,6 +959,10 @@ private fun ReportScreenLightPreview() {
     }
 }
 
+
+// =================================================================
+// PREVIEW DARK
+// =================================================================
 
 @Preview(
     showBackground = true,
@@ -904,7 +980,7 @@ private fun ReportScreenDarkPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {},
+            onAboutUsClick = {},
 
             onSettingsClick = {},
 
@@ -918,27 +994,3 @@ private fun ReportScreenDarkPreview() {
         )
     }
 }
-
-//Borrar lo que sigue después de implementar esas pantallas :DDDD
-@Composable
-fun HomeScreen(
-    onReportClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
-
-    Text(
-        text = "Home"
-    )
-}
-
-@Composable
-fun SettingsScreen(
-    onHomeClick: () -> Unit,
-    onReportClick: () -> Unit
-) {
-
-    Text(
-        text = "Settings"
-    )
-}
-

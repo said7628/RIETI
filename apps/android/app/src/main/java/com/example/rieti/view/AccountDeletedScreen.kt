@@ -5,11 +5,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,10 +35,14 @@ import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
+// =================================================================
+// CUENTA BORRADA
+// =================================================================
+
 @Composable
 fun AccountDeletedScreen(
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
 
@@ -47,9 +54,9 @@ fun AccountDeletedScreen(
         containerColor = colors.surface,
 
 
-        // ============================================
+        // =========================================================
         // TOP BAR
-
+        // =========================================================
 
         topBar = {
 
@@ -60,7 +67,9 @@ fun AccountDeletedScreen(
                 )
 
 
-                // Franja rosa debajo del TopBar
+                // =================================================
+                // FRANJA ROSA
+                // =================================================
 
                 Box(
                     modifier = Modifier
@@ -79,9 +88,9 @@ fun AccountDeletedScreen(
         },
 
 
-        // =========================================
+        // =========================================================
         // BOTTOM BAR
-
+        // =========================================================
 
         bottomBar = {
 
@@ -91,8 +100,8 @@ fun AccountDeletedScreen(
                     onHomeClick()
                 },
 
-                onReportClick = {
-                    onReportClick()
+                onAboutUsClick = {
+                    onAboutUsClick()
                 },
 
                 onSettingsClick = {
@@ -104,6 +113,10 @@ fun AccountDeletedScreen(
     ) { innerPadding ->
 
 
+        // =========================================================
+        // CONTENIDO
+        // =========================================================
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -112,13 +125,16 @@ fun AccountDeletedScreen(
         ) {
 
 
-            // ======================================
+            // =====================================================
             // MENSAJE CENTRAL
+            // =====================================================
 
             DeletedAccountMessage(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 62.dp)
+                    .padding(
+                        top = 62.dp
+                    )
             )
         }
     }
@@ -127,6 +143,7 @@ fun AccountDeletedScreen(
 
 // =================================================================
 // CUADRO "CUENTA BORRADA CON ÉXITO"
+// =================================================================
 
 @Composable
 private fun DeletedAccountMessage(
@@ -147,8 +164,9 @@ private fun DeletedAccountMessage(
     ) {
 
 
-        // =====================================================
+        // =========================================================
         // BORDE PUNTEADO
+        // =========================================================
 
         Canvas(
             modifier = Modifier.fillMaxSize()
@@ -178,21 +196,16 @@ private fun DeletedAccountMessage(
         }
 
 
-        // ==================================================
+        // =========================================================
         // TEXTO
-        // =========================================
+        // =========================================================
 
         Text(
             text = "Cuenta\nborrada con\néxito",
-
             color = colors.titles,
-
             fontFamily = FontFamily.Serif,
-
             fontSize = 40.sp,
-
             lineHeight = 60.sp,
-
             textAlign = TextAlign.Center
         )
     }
@@ -200,7 +213,8 @@ private fun DeletedAccountMessage(
 
 
 // =================================================================
-//BORRAR ASDADAS
+// PREVIEW LIGHT
+// =================================================================
 
 @Preview(
     name = "Account Deleted - Light",
@@ -215,13 +229,20 @@ private fun AccountDeletedLightPreview() {
     ) {
 
         AccountDeletedScreen(
+
             onHomeClick = {},
-            onReportClick = {},
+
+            onAboutUsClick = {},
+
             onSettingsClick = {}
         )
     }
 }
 
+
+// =================================================================
+// PREVIEW DARK
+// =================================================================
 
 @Preview(
     name = "Account Deleted - Dark",
@@ -237,8 +258,11 @@ private fun AccountDeletedDarkPreview() {
     ) {
 
         AccountDeletedScreen(
+
             onHomeClick = {},
-            onReportClick = {},
+
+            onAboutUsClick = {},
+
             onSettingsClick = {}
         )
     }

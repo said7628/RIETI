@@ -28,7 +28,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
-import com.example.rieti.ui.theme.AppTheme.colors
 import com.example.rieti.ui.theme.BrandPink
 import com.example.rieti.ui.theme.BrandPinkMedium
 import com.example.rieti.ui.theme.RIETITheme
@@ -36,26 +35,31 @@ import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
+// =================================================================
+// REPORTE CREADO CON ÉXITO
+// =================================================================
+
 @Composable
 fun ReportSuccessScreen(
     folio: String,
     onNewReportClick: () -> Unit,
     onMainMenuClick: () -> Unit,
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
 
     val colors = AppTheme.colors
-    val isDarkTheme = AppTheme.isDarkTheme
 
 
     Scaffold(
 
         containerColor = colors.surface,
 
-        // ==========================================
+
+        // =========================================================
         // TOP BAR
+        // =========================================================
 
         topBar = {
 
@@ -65,8 +69,11 @@ fun ReportSuccessScreen(
         },
 
 
-        // =======================================
+        // =========================================================
         // BOTTOM BAR
+        //
+        // Inicio | Quiénes somos | Configuración
+        // =========================================================
 
         bottomBar = {
 
@@ -76,8 +83,8 @@ fun ReportSuccessScreen(
                     onHomeClick()
                 },
 
-                onReportClick = {
-                    onReportClick()
+                onAboutUsClick = {
+                    onAboutUsClick()
                 },
 
                 onSettingsClick = {
@@ -97,8 +104,9 @@ fun ReportSuccessScreen(
         ) {
 
 
-            // ========================================
-            // RAYA ROSA DEGRADADA (no sé si se escriba así xd)
+            // =====================================================
+            // FRANJA ROSA DEGRADADA
+            // =====================================================
 
             Box(
                 modifier = Modifier
@@ -120,9 +128,9 @@ fun ReportSuccessScreen(
             )
 
 
-            // ====================================
+            // =====================================================
             // REPORTE CREADO CON ÉXITO
-
+            // =====================================================
 
             SuccessTitleBox(
                 text = "Reporte creado\ncon éxito"
@@ -134,8 +142,9 @@ fun ReportSuccessScreen(
             )
 
 
-            // =========================================
+            // =====================================================
             // FOLIO
+            // =====================================================
 
             Box(
                 modifier = Modifier
@@ -162,6 +171,7 @@ fun ReportSuccessScreen(
                         fontSize = 30.sp
                     )
 
+
                     Text(
                         text = folio,
                         color = colors.text,
@@ -177,8 +187,9 @@ fun ReportSuccessScreen(
             )
 
 
-            // *****************************
+            // =====================================================
             // NUEVO REPORTE
+            // =====================================================
 
             ReportSuccessButton(
 
@@ -187,6 +198,12 @@ fun ReportSuccessScreen(
                 subtitle = "Reporta cualquier forma de trabajo infantil",
 
                 onClick = {
+
+                    /*
+                     * Este callback regresa al flujo para
+                     * crear un nuevo reporte.
+                     */
+
                     onNewReportClick()
                 }
             )
@@ -195,8 +212,9 @@ fun ReportSuccessScreen(
             Separator()
 
 
-            // **************************************
+            // =====================================================
             // MENÚ PRINCIPAL
+            // =====================================================
 
             ReportSuccessButton(
 
@@ -210,7 +228,8 @@ fun ReportSuccessScreen(
             )
 
 
-          //esto ocupa el espacio que resta
+            // Ocupa el espacio restante de la pantalla.
+
             Spacer(
                 modifier = Modifier.weight(1f)
             )
@@ -219,8 +238,9 @@ fun ReportSuccessScreen(
 }
 
 
-// =================================================
-// CUADRO CON BORDE
+// =================================================================
+// CUADRO "REPORTE CREADO CON ÉXITO"
+// =================================================================
 
 @Composable
 private fun SuccessTitleBox(
@@ -228,6 +248,7 @@ private fun SuccessTitleBox(
 ) {
 
     val colors = AppTheme.colors
+
 
     Box(
         modifier = Modifier
@@ -239,7 +260,10 @@ private fun SuccessTitleBox(
     ) {
 
 
-        // Borde punteado
+        // =========================================================
+        // BORDE PUNTEADO
+        // =========================================================
+
         Canvas(
             modifier = Modifier.matchParentSize()
         ) {
@@ -254,6 +278,7 @@ private fun SuccessTitleBox(
                 ),
 
                 style = Stroke(
+
                     width = 1.5.dp.toPx(),
 
                     pathEffect = PathEffect.dashPathEffect(
@@ -267,26 +292,25 @@ private fun SuccessTitleBox(
         }
 
 
+        // =========================================================
+        // TEXTO
+        // =========================================================
+
         Text(
             text = text,
-
             color = colors.titles,
-
             fontFamily = FontFamily.Serif,
-
             fontSize = 32.sp,
-
             lineHeight = 43.sp,
-
             textAlign = TextAlign.Center
         )
     }
 }
 
 
-// ==========================================================
+// =================================================================
 // BOTONES
-
+// =================================================================
 
 @Composable
 private fun ReportSuccessButton(
@@ -308,20 +332,15 @@ private fun ReportSuccessButton(
             },
 
         horizontalAlignment = Alignment.CenterHorizontally,
-
         verticalArrangement = Arrangement.Center
     ) {
 
 
         Text(
             text = title,
-
             color = colors.onPrimary,
-
             fontFamily = FontFamily.Serif,
-
             fontSize = 24.sp,
-
             textAlign = TextAlign.Center
         )
 
@@ -332,13 +351,11 @@ private fun ReportSuccessButton(
                 modifier = Modifier.height(2.dp)
             )
 
+
             Text(
                 text = subtitle,
-
                 color = colors.onPrimary,
-
                 fontSize = 13.sp,
-
                 textAlign = TextAlign.Center
             )
         }
@@ -346,9 +363,9 @@ private fun ReportSuccessButton(
 }
 
 
-// ===================================================
-// SEPARADOR NEGRO
-
+// =================================================================
+// SEPARADOR
+// =================================================================
 
 @Composable
 private fun Separator() {
@@ -357,14 +374,16 @@ private fun Separator() {
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
-            .background(colors.surface)
+            .background(
+                AppTheme.colors.surface
+            )
     )
 }
 
 
-//======================================================
-// PRUEBAS PARA BORRAR DESPUES DE IMPLEMENTAR NAVEGACION
-
+// =================================================================
+// PREVIEW LIGHT
+// =================================================================
 
 @Preview(
     name = "Report Success - Light",
@@ -388,7 +407,7 @@ private fun ReportSuccessLightPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {},
+            onAboutUsClick = {},
 
             onSettingsClick = {}
         )
@@ -396,6 +415,9 @@ private fun ReportSuccessLightPreview() {
 }
 
 
+// =================================================================
+// PREVIEW DARK
+// =================================================================
 
 @Preview(
     name = "Report Success - Dark",
@@ -420,12 +442,9 @@ private fun ReportSuccessDarkPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {},
+            onAboutUsClick = {},
 
             onSettingsClick = {}
         )
     }
 }
-
-
-

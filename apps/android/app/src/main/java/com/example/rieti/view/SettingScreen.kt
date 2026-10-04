@@ -3,7 +3,6 @@ package com.example.rieti.view
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +36,10 @@ import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
+// =================================================================
+// CONFIGURACIÓN
+// =================================================================
+
 @Composable
 fun SettingsScreen(
     email: String,
@@ -45,11 +48,12 @@ fun SettingsScreen(
     onDeleteAccountClick: () -> Unit,
     onToggleThemeClick: () -> Unit,
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit
+    onAboutUsClick: () -> Unit
 ) {
 
     val colors = AppTheme.colors
     val isDarkTheme = AppTheme.isDarkTheme
+
 
     /*
      * Controla si el diálogo de borrar cuenta
@@ -64,8 +68,10 @@ fun SettingsScreen(
 
         containerColor = colors.surface,
 
-        //******************************
+
+        // =========================================================
         // TOP BAR
+        // =========================================================
 
         topBar = {
 
@@ -76,8 +82,9 @@ fun SettingsScreen(
                 )
 
 
-                // **********************************
+                // =================================================
                 // TÍTULO CONFIGURACIÓN
+                // =================================================
 
                 Box(
                     modifier = Modifier
@@ -101,8 +108,11 @@ fun SettingsScreen(
         },
 
 
-        //***************************************************
+        // =========================================================
         // BOTTOM BAR
+        //
+        // Inicio | Quiénes somos | Configuración
+        // =========================================================
 
         bottomBar = {
 
@@ -112,10 +122,14 @@ fun SettingsScreen(
                     onHomeClick()
                 },
 
-                onReportClick = {
-                    onReportClick()
+                onAboutUsClick = {
+                    onAboutUsClick()
                 },
 
+                /*
+                 * Ya estamos dentro de Configuración,
+                 * así que no necesitamos navegar otra vez.
+                 */
                 onSettingsClick = {}
             )
         }
@@ -133,18 +147,18 @@ fun SettingsScreen(
         ) {
 
 
-            // *********************************************
+            // =====================================================
             // ACCESO A LA CUENTA
-
+            // =====================================================
 
             SettingsSectionTitle(
                 title = "Acceso a la cuenta"
             )
 
 
-            //***********************************************
+            // =====================================================
             // CORREO
-
+            // =====================================================
 
             SettingsInfoRow(
                 label = "Correo electrónico",
@@ -152,9 +166,9 @@ fun SettingsScreen(
             )
 
 
-            // **********************************************
+            // =====================================================
             // CONTRASEÑA
-
+            // =====================================================
 
             SettingsInfoRow(
                 label = "Contraseña",
@@ -162,8 +176,9 @@ fun SettingsScreen(
             )
 
 
-            // **********************************
+            // =====================================================
             // CAMBIAR CONTRASEÑA
+            // =====================================================
 
             SettingsActionRow(
 
@@ -175,8 +190,9 @@ fun SettingsScreen(
             )
 
 
-            //**************************************
+            // =====================================================
             // CERRAR SESIÓN
+            // =====================================================
 
             SettingsActionRow(
 
@@ -188,9 +204,9 @@ fun SettingsScreen(
             )
 
 
-            // ****************************
+            // =====================================================
             // BORRAR CUENTA
-
+            // =====================================================
 
             SettingsActionRow(
 
@@ -213,17 +229,18 @@ fun SettingsScreen(
             )
 
 
-            // ******************************************
+            // =====================================================
             // VISUALIZACIÓN
+            // =====================================================
 
             SettingsSectionTitle(
                 title = "Visualización"
             )
 
 
-            // *************************************
+            // =====================================================
             // MODO CLARO / OSCURO
-
+            // =====================================================
 
             SettingsActionRow(
 
@@ -242,15 +259,17 @@ fun SettingsScreen(
     }
 
 
-    // ***************************************
+    // =============================================================
     // DIÁLOGO PARA BORRAR CUENTA
+    // =============================================================
 
     if (showDeleteAccountDialog) {
 
         DeleteAccountDialog(
 
-            // -------------------------------------------------
+            // -----------------------------------------------------
             // NO / TOCAR FUERA
+            // -----------------------------------------------------
 
             onDismiss = {
 
@@ -258,9 +277,9 @@ fun SettingsScreen(
             },
 
 
-            // -------------------------------------------------
+            // -----------------------------------------------------
             // SÍ
-
+            // -----------------------------------------------------
 
             onConfirm = {
 
@@ -281,9 +300,9 @@ fun SettingsScreen(
 }
 
 
-// *******************************************
+// =================================================================
 // TÍTULO DE SECCIÓN
-
+// =================================================================
 
 @Composable
 private fun SettingsSectionTitle(
@@ -326,9 +345,9 @@ private fun SettingsSectionTitle(
 }
 
 
-// **************************************
+// =================================================================
 // FILA CON INFORMACIÓN
-
+// =================================================================
 
 @Composable
 private fun SettingsInfoRow(
@@ -382,9 +401,9 @@ private fun SettingsInfoRow(
 }
 
 
-// **********************************
+// =================================================================
 // FILA CLICKEABLE
-
+// =================================================================
 
 @Composable
 private fun SettingsActionRow(
@@ -433,8 +452,9 @@ private fun SettingsActionRow(
 }
 
 
-// ***********************************
+// =================================================================
 // DIÁLOGO DE BORRAR CUENTA
+// =================================================================
 
 @Composable
 private fun DeleteAccountDialog(
@@ -462,14 +482,11 @@ private fun DeleteAccountDialog(
         Column(
             modifier = Modifier
 
-
                 .width(220.dp)
-
 
                 .clip(
                     RoundedCornerShape(14.dp)
                 )
-
 
                 .background(
                     colors.navVar
@@ -482,9 +499,6 @@ private fun DeleteAccountDialog(
 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-
-
 
 
             Text(
@@ -507,8 +521,9 @@ private fun DeleteAccountDialog(
             )
 
 
-
-
+            // =====================================================
+            // NO
+            // =====================================================
 
             DeleteDialogButton(
 
@@ -526,7 +541,9 @@ private fun DeleteAccountDialog(
             )
 
 
-
+            // =====================================================
+            // SÍ
+            // =====================================================
 
             DeleteDialogButton(
 
@@ -542,7 +559,9 @@ private fun DeleteAccountDialog(
 }
 
 
-
+// =================================================================
+// BOTÓN DEL DIÁLOGO
+// =================================================================
 
 @Composable
 private fun DeleteDialogButton(
@@ -581,7 +600,9 @@ private fun DeleteDialogButton(
 }
 
 
-
+// =================================================================
+// PREVIEW LIGHT
+// =================================================================
 
 @Preview(
     name = "Settings - Light",
@@ -609,13 +630,15 @@ private fun SettingsLightPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {}
+            onAboutUsClick = {}
         )
     }
 }
 
 
-
+// =================================================================
+// PREVIEW DARK
+// =================================================================
 
 @Preview(
     name = "Settings - Dark",
@@ -644,7 +667,7 @@ private fun SettingsDarkPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {}
+            onAboutUsClick = {}
         )
     }
 }

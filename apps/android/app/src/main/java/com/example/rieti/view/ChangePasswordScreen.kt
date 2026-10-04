@@ -44,7 +44,7 @@ fun ChangePasswordScreen(
         confirmPassword: String
     ) -> Unit,
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
 
@@ -66,6 +66,7 @@ fun ChangePasswordScreen(
     Scaffold(
 
         containerColor = colors.surface,
+
 
         // =====================================================
         // TOP BAR
@@ -104,8 +105,8 @@ fun ChangePasswordScreen(
                     onHomeClick()
                 },
 
-                onReportClick = {
-                    onReportClick()
+                onAboutUsClick = {
+                    onAboutUsClick()
                 },
 
                 onSettingsClick = {
@@ -246,6 +247,14 @@ fun ChangePasswordScreen(
 
                 onClick = {
 
+                    /*
+                     * TODO(BACKEND):
+                     *
+                     * Posteriormente el ViewModel/API deberá
+                     * validar la contraseña actual y realizar
+                     * el cambio de contraseña.
+                     */
+
                     onChangePasswordClick(
                         currentPassword,
                         newPassword,
@@ -268,6 +277,7 @@ private fun EmailRow(
 ) {
 
     val colors = AppTheme.colors
+
 
     androidx.compose.foundation.layout.Row(
         modifier = Modifier
@@ -306,6 +316,7 @@ private fun PasswordField(
 ) {
 
     val colors = AppTheme.colors
+
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -372,6 +383,7 @@ private fun ChangePasswordButton(
 
     val colors = AppTheme.colors
 
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -410,7 +422,8 @@ private fun ChangePasswordButton(
 
 
 // =================================================================
-// BORRAR LAS PRUEBAS DESPUES DE IMPLEMENTAR LA NAVEGACIÓN
+// PREVIEW LIGHT
+// =================================================================
 
 @Preview(
     name = "Change Password - Light",
@@ -432,7 +445,7 @@ private fun ChangePasswordLightPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {},
+            onAboutUsClick = {},
 
             onSettingsClick = {}
         )
@@ -440,6 +453,9 @@ private fun ChangePasswordLightPreview() {
 }
 
 
+// =================================================================
+// PREVIEW DARK
+// =================================================================
 
 @Preview(
     name = "Change Password - Dark",
@@ -462,7 +478,7 @@ private fun ChangePasswordDarkPreview() {
 
             onHomeClick = {},
 
-            onReportClick = {},
+            onAboutUsClick = {},
 
             onSettingsClick = {}
         )
