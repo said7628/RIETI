@@ -29,6 +29,14 @@ object Routes {
     const val ANONYMOUS_REPORT = "anonymous_report"
     const val REPORT_SUCCESS = "report_success"
 
+    /*
+     * TODO(NAVIGATION):
+     *
+     * Cuando creemos TrackingScreen agregaremos:
+     *
+     * const val TRACKING = "tracking"
+     */
+
     // CONFIGURACIÓN
     const val CHANGE_PASSWORD = "change_password"
     const val ACCOUNT_DELETED = "account_deleted"
@@ -374,8 +382,19 @@ fun AppNavigation(
                 onTrackingClick = {
 
                     /*
-                     * Pendiente:
-                     * conectar pantalla de seguimiento.
+                     * TODO(NAVIGATION):
+                     *
+                     * Este botón y "Consultar seguimiento"
+                     * de ReportSuccessScreen deberán navegar
+                     * exactamente a la misma pantalla.
+                     *
+                     * Cuando exista TrackingScreen:
+                     *
+                     * navController.navigate(
+                     *     Routes.TRACKING
+                     * ) {
+                     *     launchSingleTop = true
+                     * }
                      */
                 },
 
@@ -435,8 +454,8 @@ fun AppNavigation(
 
 
         // =========================================================
-// REPORTE CON SEGUIMIENTO
-// =========================================================
+        // REPORTE CON SEGUIMIENTO
+        // =========================================================
 
         composable(
             route = Routes.REPORT
@@ -491,9 +510,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-
 
 
                 // -------------------------------------------------
@@ -648,9 +664,9 @@ fun AppNavigation(
         }
 
 
-        //=========================================================
-// REPORTE EXITOSO
-// =========================================================
+        // =========================================================
+        // REPORTE EXITOSO
+        // =========================================================
 
         composable(
             route = Routes.REPORT_SUCCESS
@@ -658,40 +674,45 @@ fun AppNavigation(
 
             ReportSuccessScreen(
 
+                /*
+                 * TODO(BACKEND):
+                 *
+                 * Este folio es temporal.
+                 *
+                 * Posteriormente deberá recibirse el folio
+                 * generado por el backend al registrar
+                 * correctamente el reporte.
+                 */
+
                 folio = "261908-1017S",
 
 
                 // -------------------------------------------------
-                // NUEVO REPORTE
+                // CONSULTAR SEGUIMIENTO
                 // -------------------------------------------------
 
-                onNewReportClick = {
+                onTrackingClick = {
 
                     /*
-                     * Por ahora manda al reporte con seguimiento.
+                     * TODO(NAVIGATION):
                      *
-                     * Más adelante podríamos hacer que "Nuevo Reporte"
-                     * vuelva al Home y muestre nuevamente el selector
-                     * Anónimo / Con seguimiento.
+                     * Este botón debe ir exactamente al mismo
+                     * destino que el botón "Seguimiento"
+                     * de HomeScreen.
+                     *
+                     * Cuando exista TrackingScreen:
+                     *
+                     * navController.navigate(
+                     *     Routes.TRACKING
+                     * ) {
+                     *     launchSingleTop = true
+                     * }
                      */
-
-                    navController.navigate(
-                        Routes.REPORT
-                    ) {
-
-                        popUpTo(
-                            Routes.REPORT_SUCCESS
-                        ) {
-                            inclusive = true
-                        }
-
-                        launchSingleTop = true
-                    }
                 },
 
 
                 // -------------------------------------------------
-                // MENÚ PRINCIPAL
+                // VOLVER AL INICIO
                 // -------------------------------------------------
 
                 onMainMenuClick = {
@@ -763,8 +784,8 @@ fun AppNavigation(
 
 
         // =========================================================
-// SETTINGS
-// =========================================================
+        // SETTINGS
+        // =========================================================
 
         composable(
             route = Routes.SETTINGS
@@ -880,6 +901,7 @@ fun AppNavigation(
             )
         }
 
+
         // =========================================================
         // CAMBIAR CONTRASEÑA
         // =========================================================
@@ -934,7 +956,6 @@ fun AppNavigation(
                     }
                 }
             )
-
         }
 
 

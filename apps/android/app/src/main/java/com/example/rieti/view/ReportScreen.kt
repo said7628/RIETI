@@ -24,8 +24,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LocationOn
@@ -383,7 +383,7 @@ private fun ReportHeader(
         ) {
 
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Regresar",
                 tint = colors.titles,
                 modifier = Modifier.size(28.dp)
@@ -1672,7 +1672,7 @@ private fun NextButton(
 
 
             Icon(
-                imageVector = Icons.Default.ArrowForward,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
                 modifier = Modifier
                     .align(
@@ -1824,10 +1824,8 @@ private fun valueOrEmpty(
     value: String
 ): String {
 
-    return if (value.isBlank()) {
+    return value.ifBlank {
         "No especificado"
-    } else {
-        value
     }
 }
 

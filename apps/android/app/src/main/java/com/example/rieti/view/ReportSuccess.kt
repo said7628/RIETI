@@ -1,48 +1,66 @@
 package com.example.rieti.view
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.res.Configuration
-import androidx.compose.foundation.Canvas
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
-import com.example.rieti.ui.theme.BrandPink
-import com.example.rieti.ui.theme.BrandPinkMedium
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
 // =================================================================
-// REPORTE CREADO CON ÉXITO
+// REPORTE REGISTRADO CORRECTAMENTE
 // =================================================================
 
 @Composable
 fun ReportSuccessScreen(
     folio: String,
-    onNewReportClick: () -> Unit,
+    onTrackingClick: () -> Unit,
     onMainMenuClick: () -> Unit,
     onHomeClick: () -> Unit,
     onAboutUsClick: () -> Unit,
@@ -53,30 +71,24 @@ fun ReportSuccessScreen(
 
 
     Scaffold(
-
         containerColor = colors.surface,
-
 
         // =========================================================
         // TOP BAR
         // =========================================================
 
         topBar = {
-
             TopBar()
         },
 
-
         // =========================================================
         // BOTTOM BAR
-        //
         // Inicio | Quiénes somos | Configuración
         // =========================================================
 
         bottomBar = {
 
             BottomBar(
-
                 onHomeClick = {
                     onHomeClick()
                 },
@@ -99,44 +111,107 @@ fun ReportSuccessScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(colors.surface)
+                .verticalScroll(
+                    rememberScrollState()
+                )
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 14.dp,
+                    bottom = 18.dp
+                ),
+
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
 
             // =====================================================
-            // FRANJA ROSA DEGRADADA
+            // CONFIRMACIÓN
+            // =====================================================
+
+            SuccessCheckIcon()
+
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+
+            // =====================================================
+            // TÍTULO
+            // =====================================================
+
+            Text(
+                text = "Reporte registrado",
+                color = colors.titles,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                lineHeight = 31.sp,
+                textAlign = TextAlign.Center
+            )
+
+
+            Text(
+                text = "correctamente",
+                color = colors.pinkPrincipal,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                lineHeight = 31.sp,
+                textAlign = TextAlign.Center
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(9.dp)
+            )
+
+
+            // =====================================================
+            // LÍNEA DECORATIVA
             // =====================================================
 
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(38.dp)
+                    .width(70.dp)
+                    .height(4.dp)
                     .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                BrandPink,
-                                BrandPinkMedium
-                            )
-                        )
+                        color = colors.pinkPrincipal,
+                        shape = RoundedCornerShape(20.dp)
                     )
             )
 
 
             Spacer(
-                modifier = Modifier.height(34.dp)
+                modifier = Modifier.height(17.dp)
             )
 
 
             // =====================================================
-            // REPORTE CREADO CON ÉXITO
+            // EXPLICACIÓN
             // =====================================================
 
-            SuccessTitleBox(
-                text = "Reporte creado\ncon éxito"
+            Text(
+                text =
+                    "Tu reporte ha sido registrado correctamente. " +
+                            "Conserva el siguiente folio para consultar " +
+                            "posteriormente su estado.",
+
+                color = colors.text.copy(
+                    alpha = 0.78f
+                ),
+
+                fontFamily = FontFamily.Serif,
+                fontSize = 14.sp,
+                lineHeight = 19.sp,
+
+                modifier = Modifier.fillMaxWidth()
             )
 
 
             Spacer(
-                modifier = Modifier.height(40.dp)
+                modifier = Modifier.height(16.dp)
             )
 
 
@@ -144,92 +219,57 @@ fun ReportSuccessScreen(
             // FOLIO
             // =====================================================
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 21.dp)
-                    .height(76.dp)
-                    .background(
-                        color = colors.navVar,
-                        shape = RoundedCornerShape(7.dp)
-                    ),
-
-                contentAlignment = Alignment.Center
-            ) {
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-
-                    Text(
-                        text = "Folio:",
-                        color = colors.text,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 30.sp
-                    )
-
-
-                    Text(
-                        text = folio,
-                        color = colors.text,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 30.sp
-                    )
-                }
-            }
+            FolioCard(
+                folio = folio
+            )
 
 
             Spacer(
-                modifier = Modifier.height(45.dp)
+                modifier = Modifier.height(12.dp)
             )
 
 
             // =====================================================
-            // NUEVO REPORTE
+            // AVISO
             // =====================================================
 
-            ReportSuccessButton(
+            FolioInformationCard()
 
-                title = "Nuevo Reporte",
 
-                subtitle = "Reporta cualquier forma de trabajo infantil",
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
+
+            // =====================================================
+            // CONSULTAR SEGUIMIENTO
+            // =====================================================
+
+            TrackingButton(
                 onClick = {
-
-                    /*
-                     * Este callback regresa al flujo para
-                     * crear un nuevo reporte.
-                     */
-
-                    onNewReportClick()
+                    onTrackingClick()
                 }
             )
 
 
-            Separator()
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
 
 
             // =====================================================
-            // MENÚ PRINCIPAL
+            // VOLVER AL INICIO
             // =====================================================
 
-            ReportSuccessButton(
-
-                title = "Menú Principal",
-
-                subtitle = "",
-
+            HomeButton(
                 onClick = {
                     onMainMenuClick()
                 }
             )
 
 
-            // Ocupa el espacio restante de la pantalla.
-
             Spacer(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.height(12.dp)
             )
         }
     }
@@ -237,124 +277,316 @@ fun ReportSuccessScreen(
 
 
 // =================================================================
-// CUADRO "REPORTE CREADO CON ÉXITO"
+// ÍCONO DE CONFIRMACIÓN
 // =================================================================
 
 @Composable
-private fun SuccessTitleBox(
-    text: String
-) {
+private fun SuccessCheckIcon() {
 
-    val colors = AppTheme.colors
+    val successGreen = Color(0xFF27A869)
 
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 7.dp)
-            .height(130.dp),
+            .size(86.dp)
+            .background(
+                color = successGreen.copy(
+                    alpha = 0.50f
+                ),
+                shape = CircleShape
+            ),
 
         contentAlignment = Alignment.Center
     ) {
 
-
-        // =========================================================
-        // BORDE PUNTEADO
-        // =========================================================
-
-        Canvas(
-            modifier = Modifier.matchParentSize()
-        ) {
-
-            drawRoundRect(
-
-                color = colors.titles,
-
-                cornerRadius = CornerRadius(
-                    x = 15.dp.toPx(),
-                    y = 15.dp.toPx()
-                ),
-
-                style = Stroke(
-
-                    width = 1.5.dp.toPx(),
-
-                    pathEffect = PathEffect.dashPathEffect(
-                        intervals = floatArrayOf(
-                            3.dp.toPx(),
-                            3.dp.toPx()
-                        )
-                    )
-                )
-            )
-        }
-
-
-        // =========================================================
-        // TEXTO
-        // =========================================================
-
-        Text(
-            text = text,
-            color = colors.titles,
-            fontFamily = FontFamily.Serif,
-            fontSize = 32.sp,
-            lineHeight = 43.sp,
-            textAlign = TextAlign.Center
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = "Reporte registrado correctamente",
+            tint = Color.White,
+            modifier = Modifier.size(50.dp)
         )
     }
 }
 
 
 // =================================================================
-// BOTONES
+// TARJETA DEL FOLIO
 // =================================================================
 
 @Composable
-private fun ReportSuccessButton(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
+private fun FolioCard(
+    folio: String
 ) {
+
+    val colors = AppTheme.colors
+    val context = LocalContext.current
+
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(
+                min = 94.dp
+            ),
+
+        color = colors.pinkPrincipal.copy(
+            alpha = 0.055f
+        ),
+
+        shape = RoundedCornerShape(12.dp),
+
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.pinkPrincipal.copy(
+                alpha = 0.28f
+            )
+        )
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 18.dp,
+                    end = 10.dp,
+                    top = 14.dp,
+                    bottom = 14.dp
+                ),
+
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "Folio de seguimiento",
+                    color = colors.titles,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
+
+
+                Text(
+                    text = folio,
+                    color = colors.titles,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp
+                )
+            }
+
+
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(54.dp)
+                    .background(
+                        colors.text.copy(
+                            alpha = 0.12f
+                        )
+                    )
+            )
+
+
+            Column(
+                modifier = Modifier
+                    .width(68.dp)
+                    .clickable {
+
+                        copyFolioToClipboard(
+                            context = context,
+                            folio = folio
+                        )
+                    },
+
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Copiar folio",
+                    tint = colors.titles,
+                    modifier = Modifier.size(24.dp)
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+
+                Text(
+                    text = "Copiar\nfolio",
+                    color = colors.titles,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 11.sp,
+                    lineHeight = 12.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// INFORMACIÓN SOBRE EL FOLIO
+// =================================================================
+
+@Composable
+private fun FolioInformationCard() {
 
     val colors = AppTheme.colors
 
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(65.dp)
-            .background(colors.bluePrincipal)
-            .clickable {
-                onClick()
-            },
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
 
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        color = colors.bluePrincipal.copy(
+            alpha = 0.08f
+        ),
+
+        shape = RoundedCornerShape(12.dp)
     ) {
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 13.dp
+                ),
 
-        Text(
-            text = title,
-            color = colors.onPrimary,
-            fontFamily = FontFamily.Serif,
-            fontSize = 24.sp,
-            textAlign = TextAlign.Center
-        )
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
 
-        if (subtitle.isNotEmpty()) {
-
-            Spacer(
-                modifier = Modifier.height(2.dp)
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                tint = colors.bluePrincipal,
+                modifier = Modifier.size(32.dp)
             )
 
 
+            Spacer(
+                modifier = Modifier.width(13.dp)
+            )
+
+
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(44.dp)
+                    .background(
+                        colors.bluePrincipal.copy(
+                            alpha = 0.20f
+                        )
+                    )
+            )
+
+
+            Spacer(
+                modifier = Modifier.width(13.dp)
+            )
+
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "Guarda este folio en un lugar seguro.",
+                    color = colors.titles,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(2.dp)
+                )
+
+
+                Text(
+                    text =
+                        "Lo necesitarás para consultar posteriormente " +
+                                "el estado de tu reporte.",
+
+                    color = colors.text.copy(
+                        alpha = 0.72f
+                    ),
+
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// BOTÓN CONSULTAR SEGUIMIENTO
+// =================================================================
+
+@Composable
+private fun TrackingButton(
+    onClick: () -> Unit
+) {
+    val strongPink = Color(0xFFD10A5A)
+
+
+    Button(
+        onClick = onClick,
+
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(55.dp),
+
+        shape = RoundedCornerShape(10.dp),
+
+        colors = ButtonDefaults.buttonColors(
+            containerColor = strongPink,
+            contentColor = Color.White
+        )
+    ) {
+
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
             Text(
-                text = subtitle,
-                color = colors.onPrimary,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center
+                text = "Consultar seguimiento",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                modifier = Modifier.align(
+                    Alignment.Center
+                )
+            )
+
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Consultar seguimiento",
+
+                modifier = Modifier
+                    .align(
+                        Alignment.CenterEnd
+                    )
+                    .size(21.dp)
             )
         }
     }
@@ -362,20 +594,78 @@ private fun ReportSuccessButton(
 
 
 // =================================================================
-// SEPARADOR
+// BOTÓN VOLVER AL INICIO
 // =================================================================
 
 @Composable
-private fun Separator() {
+private fun HomeButton(
+    onClick: () -> Unit
+) {
 
-    Spacer(
+    OutlinedButton(
+        onClick = {
+            onClick()
+        },
+
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
-            .background(
-                AppTheme.colors.surface
+            .height(52.dp),
+
+        shape = RoundedCornerShape(10.dp),
+
+        border = BorderStroke(
+            width = 1.dp,
+            color = AppTheme.colors.pinkPrincipal.copy(
+                alpha = 0.70f
             )
-    )
+        ),
+
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = AppTheme.colors.pinkPrincipal
+        )
+    ) {
+
+        Text(
+            text = "Volver al inicio",
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+    }
+}
+
+
+// =================================================================
+// COPIAR FOLIO
+// =================================================================
+
+private fun copyFolioToClipboard(
+    context: Context,
+    folio: String
+) {
+
+    val clipboard =
+        context.getSystemService(
+            Context.CLIPBOARD_SERVICE
+        ) as ClipboardManager
+
+
+    val clip =
+        ClipData.newPlainText(
+            "Folio RIETI",
+            folio
+        )
+
+
+    clipboard.setPrimaryClip(clip)
+
+
+    Toast.makeText(
+        context,
+        "Folio copiado",
+        Toast.LENGTH_SHORT
+    ).show()
 }
 
 
@@ -396,17 +686,11 @@ private fun ReportSuccessLightPreview() {
     ) {
 
         ReportSuccessScreen(
-
             folio = "261908-1017S",
-
-            onNewReportClick = {},
-
+            onTrackingClick = {},
             onMainMenuClick = {},
-
             onHomeClick = {},
-
             onAboutUsClick = {},
-
             onSettingsClick = {}
         )
     }
@@ -431,17 +715,11 @@ private fun ReportSuccessDarkPreview() {
     ) {
 
         ReportSuccessScreen(
-
             folio = "261908-1017S",
-
-            onNewReportClick = {},
-
+            onTrackingClick = {},
             onMainMenuClick = {},
-
             onHomeClick = {},
-
             onAboutUsClick = {},
-
             onSettingsClick = {}
         )
     }
