@@ -78,7 +78,7 @@ fun SettingsScreen(
             Column {
 
                 TopBar(
-                    onMenuClick = {}
+
                 )
 
 

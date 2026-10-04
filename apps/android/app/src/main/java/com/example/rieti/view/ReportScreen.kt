@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,26 +15,37 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -48,7 +58,6 @@ import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
-import com.example.rieti.view.components.TopBar
 
 
 // =================================================================
@@ -60,17 +69,26 @@ fun ReportScreen(
     onHomeClick: () -> Unit,
     onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onMenuClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
     onSelectFilesClick: () -> Unit,
     onSendReportClick: () -> Unit
 ) {
 
     // =============================================================
-    // ESTADOS TEMPORALES
+    // PASO ACTUAL
+    // =============================================================
+
+    var currentStep by rememberSaveable {
+        mutableIntStateOf(1)
+    }
+
+
+    // =============================================================
+    // DATOS TEMPORALES DEL FORMULARIO
     //
-    // Por ahora están aquí porque solo estamos haciendo front.
-    // Después probablemente pasarán a un ReportViewModel.
+    // TODO(BACKEND):
+    // Posteriormente estos datos pueden administrarse desde
+    // ReportViewModel y enviarse al backend.
     // =============================================================
 
     var numberOfChildren by rememberSaveable {
@@ -114,29 +132,15 @@ fun ReportScreen(
 
 
     Scaffold(
+        containerColor = colors.surface,
 
         // =========================================================
-        // BARRA SUPERIOR REUTILIZABLE
-        // =========================================================
-
-        topBar = {
-
-            TopBar(
-                onMenuClick = onMenuClick
-            )
-        },
-
-
-        // =========================================================
-        // BARRA INFERIOR REUTILIZABLE
-        //
-        // Inicio | Quiénes somos | Configuración
+        // BOTTOM BAR
         // =========================================================
 
         bottomBar = {
 
             BottomBar(
-
                 onHomeClick = {
                     onHomeClick()
                 },
@@ -149,390 +153,200 @@ fun ReportScreen(
                     onSettingsClick()
                 }
             )
-        },
-
-
-        containerColor = colors.surface
+        }
 
     ) { innerPadding ->
 
 
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(innerPadding)
+                .background(colors.surface)
         ) {
 
 
             // =====================================================
-            // TÍTULO PRINCIPAL
+            // ENCABEZADO
             // =====================================================
 
-            item {
+            ReportHeader(
+                onBackClick = {
 
-                ReportMainTitle()
-            }
+                    if (currentStep > 1) {
+                        currentStep--
+                    } else {
+                        onHomeClick()
+                    }
+                }
+            )
 
 
             // =====================================================
-            // DETALLES DEL CASO
+            // INDICADOR DE PROGRESO
             // =====================================================
 
-            item {
-
-                Column(
-                    modifier = Modifier.padding(
-                        horizontal = 12.dp,
-                        vertical = 8.dp
-                    )
-                ) {
-
-                    SectionTitle(
-                        title = "Detalles del caso"
-                    )
+            ReportProgressIndicator(
+                currentStep = currentStep
+            )
 
 
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
+            // =====================================================
+            // CONTENIDO
+            // =====================================================
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+            ) {
+
+                when (currentStep) {
 
 
-                    // -------------------------------------------------
-                    // PRIMERA FILA
-                    // -------------------------------------------------
+                    // =================================================
+                    // PASO 1 - DETALLES
+                    // =================================================
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(28.dp)
-                    ) {
+                    1 -> {
 
-                        ReportFieldWithLabel(
-                            label = "Número de niños",
-                            value = numberOfChildren,
-                            placeholder = "1",
-
-                            onValueChange = {
+                        ReportDetailsStep(
+                            numberOfChildren = numberOfChildren,
+                            onNumberOfChildrenChange = {
                                 numberOfChildren = it
                             },
 
-                            modifier = Modifier.weight(1f)
-                        )
-
-
-                        ReportFieldWithLabel(
-                            label = "Edades de los niños",
-                            value = childrenAges,
-                            placeholder = "Ej: 6, 12, 16 años",
-
-                            onValueChange = {
+                            childrenAges = childrenAges,
+                            onChildrenAgesChange = {
                                 childrenAges = it
                             },
 
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-
-
-                    // -------------------------------------------------
-                    // SEGUNDA FILA
-                    // -------------------------------------------------
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(28.dp)
-                    ) {
-
-                        ReportFieldWithLabel(
-                            label = "Tipo de Trabajo",
-                            value = workType,
-                            placeholder = "1",
-
-                            onValueChange = {
+                            workType = workType,
+                            onWorkTypeChange = {
                                 workType = it
                             },
 
-                            modifier = Modifier.weight(1f)
-                        )
-
-
-                        ReportFieldWithLabel(
-                            label = "Horario de Trabajo",
-                            value = workSchedule,
-                            placeholder = "Ej: 8:00 am - 6:00 pm",
-
-                            onValueChange = {
+                            workSchedule = workSchedule,
+                            onWorkScheduleChange = {
                                 workSchedule = it
                             },
 
-                            modifier = Modifier.weight(1f)
+                            details = details,
+                            onDetailsChange = {
+                                details = it
+                            },
+
+                            onNextClick = {
+                                currentStep = 2
+                            }
                         )
                     }
 
 
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
+                    // =================================================
+                    // PASO 2 - UBICACIÓN
+                    // =================================================
 
+                    2 -> {
 
-                    // -------------------------------------------------
-                    // DETALLES
-                    // -------------------------------------------------
-
-                    ReportFieldWithLabel(
-                        label = "Detalles:",
-                        value = details,
-                        placeholder = "Describa detalladamente lo que observó ...",
-
-                        onValueChange = {
-                            details = it
-                        },
-
-                        minHeight = 125.dp,
-
-                        singleLine = false,
-
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-
-
-            // =====================================================
-            // UBICACIÓN DEL CASO
-            // =====================================================
-
-            item {
-
-                Column(
-                    modifier = Modifier.padding(
-                        horizontal = 12.dp
-                    )
-                ) {
-
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-
-
-                    SectionTitle(
-                        title = "Ubicación del caso"
-                    )
-
-
-                    Spacer(
-                        modifier = Modifier.height(10.dp)
-                    )
-
-
-                    // -------------------------------------------------
-                    // BOTÓN UBICACIÓN ACTUAL
-                    // -------------------------------------------------
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-
-                        Button(
-
-                            onClick = {
-                                onCurrentLocationClick()
+                        ReportLocationStep(
+                            fullAddress = fullAddress,
+                            onFullAddressChange = {
+                                fullAddress = it
                             },
 
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.surface,
-                                contentColor = colors.bluePrincipal
-                            ),
-
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = colors.bluePrincipal
-                            ),
-
-                            shape = RoundedCornerShape(6.dp)
-
-                        ) {
-
-                            Text(
-                                text = "Ubicación actual",
-                                fontFamily = FontFamily.Serif
-                            )
-                        }
-                    }
-
-
-                    Spacer(
-                        modifier = Modifier.height(5.dp)
-                    )
-
-
-                    // -------------------------------------------------
-                    // MAPA TEMPORAL
-                    // -------------------------------------------------
-
-                    MapPlaceholder()
-
-
-                    Spacer(
-                        modifier = Modifier.height(16.dp)
-                    )
-
-
-                    // -------------------------------------------------
-                    // DIRECCIÓN
-                    // -------------------------------------------------
-
-                    ReportFieldWithLabel(
-                        label = "Dirección completa",
-                        value = fullAddress,
-                        placeholder = "",
-
-                        onValueChange = {
-                            fullAddress = it
-                        },
-
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(28.dp)
-                    ) {
-
-                        ReportFieldWithLabel(
-                            label = "Colonia",
-                            value = neighborhood,
-                            placeholder = "",
-
-                            onValueChange = {
+                            neighborhood = neighborhood,
+                            onNeighborhoodChange = {
                                 neighborhood = it
                             },
 
-                            modifier = Modifier.weight(1.7f)
-                        )
-
-
-                        ReportFieldWithLabel(
-                            label = "Código Postal",
-                            value = postalCode,
-                            placeholder = "",
-
-                            onValueChange = {
+                            postalCode = postalCode,
+                            onPostalCodeChange = {
                                 postalCode = it
                             },
 
-                            modifier = Modifier.weight(1f)
+                            municipality = municipality,
+                            onMunicipalityChange = {
+                                municipality = it
+                            },
+
+                            onCurrentLocationClick = {
+                                onCurrentLocationClick()
+                            },
+
+                            onNextClick = {
+                                currentStep = 3
+                            }
                         )
                     }
 
 
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
+                    // =================================================
+                    // PASO 3 - EVIDENCIA
+                    // =================================================
+
+                    3 -> {
+
+                        ReportEvidenceStep(
+                            onSelectFilesClick = {
+                                onSelectFilesClick()
+                            },
+
+                            onNextClick = {
+                                currentStep = 4
+                            }
+                        )
+                    }
 
 
-                    ReportFieldWithLabel(
-                        label = "Municipio",
-                        value = municipality,
-                        placeholder = "",
+                    // =================================================
+                    // PASO 4 - REVISIÓN
+                    // =================================================
 
-                        onValueChange = {
-                            municipality = it
-                        },
+                    4 -> {
 
-                        modifier = Modifier.fillMaxWidth(0.58f)
-                    )
-                }
-            }
+                        ReportReviewStep(
+                            numberOfChildren = numberOfChildren,
+                            childrenAges = childrenAges,
+                            workType = workType,
+                            workSchedule = workSchedule,
+                            details = details,
 
+                            fullAddress = fullAddress,
+                            neighborhood = neighborhood,
+                            postalCode = postalCode,
+                            municipality = municipality,
 
-            // =====================================================
-            // EVIDENCIA FOTOGRÁFICA
-            // =====================================================
+                            onEditDetailsClick = {
+                                currentStep = 1
+                            },
 
-            item {
+                            onEditLocationClick = {
+                                currentStep = 2
+                            },
 
-                Column(
-                    modifier = Modifier.padding(
-                        horizontal = 12.dp
-                    )
-                ) {
+                            onEditEvidenceClick = {
+                                currentStep = 3
+                            },
 
-                    Spacer(
-                        modifier = Modifier.height(25.dp)
-                    )
+                            onSendReportClick = {
 
+                                /*
+                                 * TODO(BACKEND):
+                                 *
+                                 * Posteriormente:
+                                 *
+                                 * 1. Validar los datos.
+                                 * 2. Enviar el reporte al ViewModel.
+                                 * 3. El ViewModel llamará al endpoint.
+                                 * 4. Cuando el backend confirme el reporte,
+                                 *    navegar a ReportSuccessScreen.
+                                 */
 
-                    SectionTitle(
-                        title = "Evidencia"
-                    )
-
-
-                    Spacer(
-                        modifier = Modifier.height(20.dp)
-                    )
-
-
-                    EvidenceSelector(
-                        onClick = onSelectFilesClick
-                    )
-
-
-                    Spacer(
-                        modifier = Modifier.height(45.dp)
-                    )
-
-
-                    // -------------------------------------------------
-                    // ENVIAR REPORTE
-                    // -------------------------------------------------
-
-                    SendReportButton(
-
-                        onClick = {
-
-                            /*
-                             * TODO(BACKEND):
-                             *
-                             * Actualmente este botón únicamente
-                             * continúa con el flujo visual.
-                             *
-                             * Después:
-                             *
-                             * 1. Los datos del formulario pasarán
-                             *    al ViewModel.
-                             *
-                             * 2. El ViewModel llamará al endpoint
-                             *    correspondiente.
-                             *
-                             * 3. Solo cuando el backend confirme
-                             *    que el reporte fue creado
-                             *    correctamente se ejecutará:
-                             *
-                             *    onSendReportClick()
-                             */
-
-                            onSendReportClick()
-                        }
-                    )
-
-
-                    Spacer(
-                        modifier = Modifier.height(30.dp)
-                    )
+                                onSendReportClick()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -541,69 +355,879 @@ fun ReportScreen(
 
 
 // =================================================================
-// TÍTULO "REALIZA TU REPORTE"
+// ENCABEZADO
 // =================================================================
 
 @Composable
-private fun ReportMainTitle() {
+private fun ReportHeader(
+    onBackClick: () -> Unit
+) {
 
-    Box(
+    val colors = AppTheme.colors
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(55.dp)
-            .background(
-                AppTheme.colors.pinkPrincipal
+            .height(64.dp)
+            .padding(
+                horizontal = 14.dp
             ),
 
-        contentAlignment = Alignment.Center
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
+        IconButton(
+            onClick = {
+                onBackClick()
+            }
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Regresar",
+                tint = colors.titles,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
+
+        Spacer(
+            modifier = Modifier.width(8.dp)
+        )
+
+
         Text(
-            text = "Realiza tu reporte",
-            color = AppTheme.colors.text,
-            fontSize = 30.sp,
+            text = "Realizar reporte",
+            color = colors.text,
             fontFamily = FontFamily.Serif,
-            textAlign = TextAlign.Center
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp
         )
     }
 }
 
 
 // =================================================================
-// TÍTULOS DE SECCIÓN
+// INDICADOR DE PROGRESO
 // =================================================================
 
 @Composable
-private fun SectionTitle(
-    title: String
+private fun ReportProgressIndicator(
+    currentStep: Int
+) {
+
+    val colors = AppTheme.colors
+
+    val pink = colors.pinkPrincipal
+
+    val inactiveColor =
+        colors.text.copy(
+            alpha = 0.30f
+        )
+
+    val labels = listOf(
+        "Detalles",
+        "Ubicación",
+        "Evidencia",
+        "Revisión"
+    )
+
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 16.dp,
+                vertical = 10.dp
+            ),
+
+        verticalAlignment = Alignment.Top
+    ) {
+
+        labels.forEachIndexed { index, label ->
+
+            val step = index + 1
+
+            val isCompleted = step < currentStep
+            val isCurrent = step == currentStep
+
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+
+                // =================================================
+                // CÍRCULO + LÍNEAS
+                // =================================================
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+
+                    if (step != 1) {
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(1.dp)
+                                .background(
+                                    if (step <= currentStep) {
+                                        pink
+                                    } else {
+                                        inactiveColor
+                                    }
+                                )
+                        )
+                    } else {
+
+                        Spacer(
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isCompleted || isCurrent) {
+                                    pink
+                                } else {
+                                    colors.surface
+                                }
+                            )
+                            .border(
+                                width = 1.5.dp,
+                                color =
+                                    if (isCompleted || isCurrent) {
+                                        pink
+                                    } else {
+                                        inactiveColor
+                                    },
+                                shape = CircleShape
+                            ),
+
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        if (isCompleted) {
+
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+
+                        } else {
+
+                            Text(
+                                text = step.toString(),
+                                color =
+                                    if (isCurrent) {
+                                        Color.White
+                                    } else {
+                                        colors.text.copy(
+                                            alpha = 0.65f
+                                        )
+                                    },
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+
+                    if (step != 4) {
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(1.dp)
+                                .background(
+                                    if (step < currentStep) {
+                                        pink
+                                    } else {
+                                        inactiveColor
+                                    }
+                                )
+                        )
+
+                    } else {
+
+                        Spacer(
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+
+                Spacer(
+                    modifier = Modifier.height(6.dp)
+                )
+
+
+                // =================================================
+                // NOMBRE DEL PASO
+                // =================================================
+
+                Text(
+                    text = label,
+
+                    color =
+                        if (isCurrent) {
+                            pink
+                        } else {
+                            colors.text.copy(
+                                alpha = 0.70f
+                            )
+                        },
+
+                    fontSize = 11.sp,
+
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// PASO 1 - DETALLES
+// =================================================================
+
+@Composable
+private fun ReportDetailsStep(
+    numberOfChildren: String,
+    onNumberOfChildrenChange: (String) -> Unit,
+
+    childrenAges: String,
+    onChildrenAgesChange: (String) -> Unit,
+
+    workType: String,
+    onWorkTypeChange: (String) -> Unit,
+
+    workSchedule: String,
+    onWorkScheduleChange: (String) -> Unit,
+
+    details: String,
+    onDetailsChange: (String) -> Unit,
+
+    onNextClick: () -> Unit
 ) {
 
     Column(
-        modifier = Modifier.width(
-            IntrinsicSize.Max
-        )
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(
+                rememberScrollState()
+            )
+            .padding(
+                start = 22.dp,
+                end = 22.dp,
+                top = 16.dp,
+                bottom = 24.dp
+            )
     ) {
 
-        Text(
-            text = title,
-            color = AppTheme.colors.titles,
-            fontFamily = FontFamily.Serif,
-            fontSize = 26.sp,
-            maxLines = 1
+
+        StepTitle(
+            title = "Detalles del reporte",
+            description =
+                "Proporciona la información disponible sobre la situación observada. No es necesario contar con todos los datos para continuar."
         )
 
 
         Spacer(
-            modifier = Modifier.height(4.dp)
+            modifier = Modifier.height(24.dp)
         )
 
 
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 2.dp,
-            color = AppTheme.colors.titles
+        ReportFieldWithLabel(
+            label = "Número de niñas, niños",
+            value = numberOfChildren,
+            placeholder = "Ingresa una cantidad",
+            onValueChange = onNumberOfChildrenChange
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+
+        ReportFieldWithLabel(
+            label = "Rango de edad aproximado",
+            value = childrenAges,
+            placeholder = "Ej: 6 - 12 años",
+            onValueChange = onChildrenAgesChange
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+
+        ReportFieldWithLabel(
+            label = "Tipo de actividad observada",
+            value = workType,
+            placeholder = "Describe la actividad observada",
+            onValueChange = onWorkTypeChange
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+
+        ReportFieldWithLabel(
+            label = "Horario aproximado",
+            value = workSchedule,
+            placeholder = "Ej: 8:00 am - 6:00 pm",
+            onValueChange = onWorkScheduleChange
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+
+        ReportFieldWithLabel(
+            label = "Descripción de la situación",
+            value = details,
+            placeholder = "Describe brevemente los hechos observados...",
+            onValueChange = {
+
+                if (it.length <= 500) {
+                    onDetailsChange(it)
+                }
+            },
+            minHeight = 120.dp,
+            singleLine = false
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(5.dp)
+        )
+
+
+        Text(
+            text = "${details.length}/500",
+            color = AppTheme.colors.text.copy(
+                alpha = 0.65f
+            ),
+            fontSize = 12.sp,
+            modifier = Modifier.align(
+                Alignment.End
+            )
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(26.dp)
+        )
+
+
+        NextButton(
+            text = "Siguiente",
+            onClick = onNextClick
         )
     }
+}
+
+
+// =================================================================
+// PASO 2 - UBICACIÓN
+// =================================================================
+
+@Composable
+private fun ReportLocationStep(
+    fullAddress: String,
+    onFullAddressChange: (String) -> Unit,
+
+    neighborhood: String,
+    onNeighborhoodChange: (String) -> Unit,
+
+    postalCode: String,
+    onPostalCodeChange: (String) -> Unit,
+
+    municipality: String,
+    onMunicipalityChange: (String) -> Unit,
+
+    onCurrentLocationClick: () -> Unit,
+    onNextClick: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(
+                rememberScrollState()
+            )
+            .padding(
+                start = 22.dp,
+                end = 22.dp,
+                top = 16.dp,
+                bottom = 24.dp
+            )
+    ) {
+
+
+        StepTitle(
+            title = "Ubicación del reporte",
+            description =
+                "Indica el lugar donde ocurrió la situación. Puedes usar tu ubicación actual o proporcionar la dirección de forma manual."
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(22.dp)
+        )
+
+
+        // =========================================================
+        // MAPA TEMPORAL
+        // =========================================================
+
+        MapPlaceholder(
+            onCurrentLocationClick = onCurrentLocationClick
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(20.dp)
+        )
+
+
+        ReportFieldWithLabel(
+            label = "Dirección completa",
+            value = fullAddress,
+            placeholder = "Ingresa la dirección o referencia",
+            onValueChange = onFullAddressChange,
+            minHeight = 72.dp,
+            singleLine = false
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            ReportFieldWithLabel(
+                label = "Colonia",
+                value = neighborhood,
+                placeholder = "Ingresar",
+                onValueChange = onNeighborhoodChange,
+                modifier = Modifier.weight(1.2f)
+            )
+
+
+            ReportFieldWithLabel(
+                label = "Código postal",
+                value = postalCode,
+                placeholder = "Ingresar",
+                onValueChange = onPostalCodeChange,
+                modifier = Modifier.weight(0.8f)
+            )
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+
+        ReportFieldWithLabel(
+            label = "Municipio",
+            value = municipality,
+            placeholder = "Ingresa el municipio",
+            onValueChange = onMunicipalityChange
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(28.dp)
+        )
+
+
+        NextButton(
+            text = "Siguiente",
+            onClick = onNextClick
+        )
+    }
+}
+
+
+// =================================================================
+// PASO 3 - EVIDENCIA
+// =================================================================
+
+@Composable
+private fun ReportEvidenceStep(
+    onSelectFilesClick: () -> Unit,
+    onNextClick: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(
+                rememberScrollState()
+            )
+            .padding(
+                start = 22.dp,
+                end = 22.dp,
+                top = 16.dp,
+                bottom = 24.dp
+            )
+    ) {
+
+
+        StepTitle(
+            title = "Evidencia fotográfica",
+            description =
+                "Puedes agregar fotografías que ayuden a documentar la situación. Este campo es opcional."
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(28.dp)
+        )
+
+
+        // =========================================================
+        // SELECTOR DE EVIDENCIAS
+        // =========================================================
+
+        EvidenceSelector(
+            onClick = onSelectFilesClick
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+
+
+        // =========================================================
+        // PLACEHOLDERS DE FOTOGRAFÍAS
+        //
+        // TODO:
+        // Después mostrar aquí las fotografías seleccionadas.
+        // =========================================================
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            repeat(4) { index ->
+
+                EvidencePlaceholder(
+                    showAdd = index == 0,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+
+        EvidencePlaceholder(
+            showAdd = false,
+            modifier = Modifier
+                .width(76.dp)
+                .height(76.dp)
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(40.dp)
+        )
+
+
+        NextButton(
+            text = "Siguiente",
+            onClick = onNextClick
+        )
+    }
+}
+
+
+// =================================================================
+// PASO 4 - REVISIÓN
+// =================================================================
+
+@Composable
+private fun ReportReviewStep(
+    numberOfChildren: String,
+    childrenAges: String,
+    workType: String,
+    workSchedule: String,
+    details: String,
+
+    fullAddress: String,
+    neighborhood: String,
+    postalCode: String,
+    municipality: String,
+
+    onEditDetailsClick: () -> Unit,
+    onEditLocationClick: () -> Unit,
+    onEditEvidenceClick: () -> Unit,
+
+    onSendReportClick: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(
+                rememberScrollState()
+            )
+            .padding(
+                start = 18.dp,
+                end = 18.dp,
+                top = 16.dp,
+                bottom = 28.dp
+            )
+    ) {
+
+
+        StepTitle(
+            title = "Revisión del reporte",
+            description =
+                "Verifica que la información sea correcta antes de enviarlo. Puedes editar los datos si es necesario."
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(22.dp)
+        )
+
+
+        // =========================================================
+        // DETALLES
+        // =========================================================
+
+        ReviewCard(
+            title = "Detalles del reporte",
+            onEditClick = onEditDetailsClick
+        ) {
+
+            ReviewRow(
+                label = "Número de niñas, niños",
+                value = valueOrEmpty(
+                    numberOfChildren
+                )
+            )
+
+            ReviewRow(
+                label = "Rango de edad aproximado",
+                value = valueOrEmpty(
+                    childrenAges
+                )
+            )
+
+            ReviewRow(
+                label = "Tipo de actividad",
+                value = valueOrEmpty(
+                    workType
+                )
+            )
+
+            ReviewRow(
+                label = "Horario aproximado",
+                value = valueOrEmpty(
+                    workSchedule
+                )
+            )
+
+            ReviewRow(
+                label = "Descripción",
+                value = valueOrEmpty(
+                    details
+                )
+            )
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+
+        // =========================================================
+        // UBICACIÓN
+        // =========================================================
+
+        ReviewCard(
+            title = "Ubicación del reporte",
+            onEditClick = onEditLocationClick
+        ) {
+
+            ReviewRow(
+                label = "Dirección",
+                value = valueOrEmpty(
+                    fullAddress
+                )
+            )
+
+            ReviewRow(
+                label = "Colonia",
+                value = valueOrEmpty(
+                    neighborhood
+                )
+            )
+
+            ReviewRow(
+                label = "Código postal",
+                value = valueOrEmpty(
+                    postalCode
+                )
+            )
+
+            ReviewRow(
+                label = "Municipio",
+                value = valueOrEmpty(
+                    municipality
+                )
+            )
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+
+        // =========================================================
+        // EVIDENCIAS
+        // =========================================================
+
+        ReviewCard(
+            title = "Evidencias",
+            onEditClick = onEditEvidenceClick
+        ) {
+
+            Text(
+                text = "Las evidencias seleccionadas aparecerán aquí cuando se conecte el selector de archivos.",
+                color = AppTheme.colors.text.copy(
+                    alpha = 0.70f
+                ),
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(28.dp)
+        )
+
+
+        // =========================================================
+        // ENVIAR
+        // =========================================================
+
+        Button(
+            onClick = {
+                onSendReportClick()
+            },
+
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(58.dp),
+
+            shape = RoundedCornerShape(10.dp),
+
+            colors = ButtonDefaults.buttonColors(
+                containerColor =
+                    AppTheme.colors.pinkPrincipal,
+                contentColor = Color.White
+            )
+        ) {
+
+            Text(
+                text = "Enviar reporte",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
+
+
+        Text(
+            text =
+                "La información proporcionada será utilizada únicamente para atender el reporte.",
+
+            color = AppTheme.colors.text.copy(
+                alpha = 0.65f
+            ),
+
+            fontSize = 12.sp,
+
+            lineHeight = 17.sp
+        )
+    }
+}
+
+
+// =================================================================
+// TÍTULO DE CADA PASO
+// =================================================================
+
+@Composable
+private fun StepTitle(
+    title: String,
+    description: String
+) {
+
+    Text(
+        text = title,
+        color = AppTheme.colors.titles,
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 25.sp
+    )
+
+
+    Spacer(
+        modifier = Modifier.height(7.dp)
+    )
+
+
+    Text(
+        text = description,
+        color = AppTheme.colors.text.copy(
+            alpha = 0.78f
+        ),
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    )
 }
 
 
@@ -618,7 +1242,7 @@ private fun ReportFieldWithLabel(
     placeholder: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    minHeight: Dp = 42.dp,
+    minHeight: Dp = 52.dp,
     singleLine: Boolean = true
 ) {
 
@@ -629,12 +1253,13 @@ private fun ReportFieldWithLabel(
         Text(
             text = label,
             color = AppTheme.colors.text,
-            fontSize = 16.sp
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
         )
 
 
         Spacer(
-            modifier = Modifier.height(8.dp)
+            modifier = Modifier.height(7.dp)
         )
 
 
@@ -660,7 +1285,7 @@ private fun RietiTextField(
     placeholder: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    minHeight: Dp = 42.dp,
+    minHeight: Dp = 52.dp,
     singleLine: Boolean = true
 ) {
 
@@ -668,7 +1293,6 @@ private fun RietiTextField(
 
 
     BasicTextField(
-
         value = value,
 
         onValueChange = {
@@ -677,30 +1301,33 @@ private fun RietiTextField(
 
         singleLine = singleLine,
 
-
         textStyle = TextStyle(
             color = colors.textTyping,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
         ),
-
 
         cursorBrush = SolidColor(
-            colors.textTyping
+            colors.pinkPrincipal
         ),
-
 
         modifier = modifier
             .heightIn(
                 min = minHeight
             )
             .clip(
-                RoundedCornerShape(10.dp)
+                RoundedCornerShape(9.dp)
             )
             .background(
-                colors.blueBoxes
+                colors.surface
+            )
+            .border(
+                width = 1.dp,
+                color = colors.text.copy(
+                    alpha = 0.18f
+                ),
+                shape = RoundedCornerShape(9.dp)
             ),
-
 
         decorationBox = { innerTextField ->
 
@@ -709,7 +1336,7 @@ private fun RietiTextField(
                     .fillMaxWidth()
                     .padding(
                         horizontal = 14.dp,
-                        vertical = 12.dp
+                        vertical = 14.dp
                     ),
 
                 contentAlignment =
@@ -724,9 +1351,10 @@ private fun RietiTextField(
 
                     Text(
                         text = placeholder,
-                        color = colors.textTyping,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        color = colors.text.copy(
+                            alpha = 0.45f
+                        ),
+                        fontSize = 14.sp
                     )
                 }
 
@@ -739,11 +1367,13 @@ private fun RietiTextField(
 
 
 // =================================================================
-// MAPA
+// MAPA TEMPORAL
 // =================================================================
 
 @Composable
-private fun MapPlaceholder() {
+private fun MapPlaceholder(
+    onCurrentLocationClick: () -> Unit
+) {
 
     val colors = AppTheme.colors
 
@@ -751,39 +1381,54 @@ private fun MapPlaceholder() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
-            .border(
-                width = 1.dp,
-                color = colors.blueDetails
+            .height(225.dp)
+            .clip(
+                RoundedCornerShape(10.dp)
             )
             .background(
                 colors.blueDetails.copy(
-                    alpha = 0.12f
+                    alpha = 0.10f
                 )
-            ),
-
-        contentAlignment = Alignment.Center
+            )
+            .border(
+                width = 1.dp,
+                color = colors.blueDetails.copy(
+                    alpha = 0.35f
+                ),
+                shape = RoundedCornerShape(10.dp)
+            )
     ) {
 
+
+        // =========================================================
+        // CONTENIDO TEMPORAL
+        // =========================================================
+
         Column(
+            modifier = Modifier.align(
+                Alignment.Center
+            ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = null,
-                tint = colors.bluePrincipal
+                tint = colors.bluePrincipal,
+                modifier = Modifier.size(44.dp)
             )
 
 
             Spacer(
-                modifier = Modifier.height(8.dp)
+                modifier = Modifier.height(6.dp)
             )
 
 
             Text(
                 text = "Mapa",
                 color = colors.text,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
 
@@ -791,17 +1436,75 @@ private fun MapPlaceholder() {
             Text(
                 text = "Se conectará posteriormente",
                 color = colors.text.copy(
-                    alpha = 0.6f
+                    alpha = 0.55f
                 ),
-                fontSize = 12.sp
+                fontSize = 11.sp
             )
+        }
+
+
+        // =========================================================
+        // BOTÓN UBICACIÓN
+        // =========================================================
+
+        Surface(
+            modifier = Modifier
+                .align(
+                    Alignment.TopEnd
+                )
+                .padding(10.dp)
+                .clickable {
+                    onCurrentLocationClick()
+                },
+
+            color = colors.surface,
+
+            shape = RoundedCornerShape(8.dp),
+
+            border = BorderStroke(
+                width = 1.dp,
+                color = colors.bluePrincipal.copy(
+                    alpha = 0.25f
+                )
+            )
+        ) {
+
+            Row(
+                modifier = Modifier.padding(
+                    horizontal = 10.dp,
+                    vertical = 8.dp
+                ),
+
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = colors.bluePrincipal,
+                    modifier = Modifier.size(17.dp)
+                )
+
+
+                Spacer(
+                    modifier = Modifier.width(5.dp)
+                )
+
+
+                Text(
+                    text = "Usar ubicación actual",
+                    color = colors.bluePrincipal,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
 
 
 // =================================================================
-// SELECTOR DE ARCHIVOS
+// SELECTOR DE EVIDENCIAS
 // =================================================================
 
 @Composable
@@ -812,75 +1515,113 @@ private fun EvidenceSelector(
     val colors = AppTheme.colors
 
 
-    Row(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(45.dp)
-            .border(
-                width = 1.dp,
-                color = colors.bluePrincipal,
-                shape = RoundedCornerShape(8.dp)
-            )
+            .height(105.dp)
             .clickable {
                 onClick()
             },
 
-        verticalAlignment = Alignment.CenterVertically
+        color = colors.surface,
+
+        shape = RoundedCornerShape(10.dp),
+
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.pinkPrincipal.copy(
+                alpha = 0.55f
+            )
+        )
     ) {
 
-
-        // =========================================================
-        // ELEGIR ARCHIVOS
-        // =========================================================
-
-        Box(
+        Row(
             modifier = Modifier
-                .weight(0.9f)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(
+                    horizontal = 22.dp
+                ),
 
-            contentAlignment = Alignment.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
 
-            Text(
-                text = "Elegir archivos",
-                color = colors.bluePrincipal,
-                fontFamily = FontFamily.Serif,
-                fontSize = 14.sp
+            Icon(
+                imageVector = Icons.Default.AddPhotoAlternate,
+                contentDescription = null,
+                tint = colors.pinkPrincipal,
+                modifier = Modifier.size(38.dp)
             )
-        }
 
 
-        // =========================================================
-        // DIVISOR
-        // =========================================================
+            Spacer(
+                modifier = Modifier.width(18.dp)
+            )
 
-        Box(
-            modifier = Modifier
-                .width(1.dp)
-                .height(34.dp)
-                .background(
-                    colors.bluePrincipal
+
+            Column {
+
+                Text(
+                    text = "Agregar fotografías",
+                    color = colors.text,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
                 )
-        )
 
 
-        // =========================================================
-        // NOMBRE DEL ARCHIVO
-        // =========================================================
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
 
-        Box(
-            modifier = Modifier
-                .weight(1.8f)
-                .fillMaxSize(),
 
-            contentAlignment = Alignment.Center
-        ) {
+                Text(
+                    text = "Puedes subir hasta 5 imágenes.",
+                    color = colors.text.copy(
+                        alpha = 0.65f
+                    ),
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// PLACEHOLDER DE EVIDENCIA
+// =================================================================
+
+@Composable
+private fun EvidencePlaceholder(
+    showAdd: Boolean,
+    modifier: Modifier = Modifier
+) {
+
+    val colors = AppTheme.colors
+
+
+    Box(
+        modifier = modifier
+            .height(76.dp)
+            .clip(
+                RoundedCornerShape(8.dp)
+            )
+            .background(
+                colors.text.copy(
+                    alpha = 0.06f
+                )
+            ),
+
+        contentAlignment = Alignment.Center
+    ) {
+
+        if (showAdd) {
 
             Text(
-                text = "Ningún archivo seleccionado...",
-                color = colors.bluePrincipal,
-                fontFamily = FontFamily.Serif,
-                fontSize = 14.sp
+                text = "+",
+                color = colors.pinkPrincipal,
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Light
             )
         }
     }
@@ -888,39 +1629,205 @@ private fun EvidenceSelector(
 
 
 // =================================================================
-// BOTÓN ENVIAR REPORTE
+// BOTÓN SIGUIENTE
 // =================================================================
 
 @Composable
-private fun SendReportButton(
+private fun NextButton(
+    text: String,
     onClick: () -> Unit
 ) {
 
     Button(
-
         onClick = {
             onClick()
         },
 
         modifier = Modifier
             .fillMaxWidth()
-            .height(105.dp),
+            .height(58.dp),
 
         shape = RoundedCornerShape(10.dp),
 
         colors = ButtonDefaults.buttonColors(
-            containerColor = AppTheme.colors.blueBoxes,
-            contentColor = AppTheme.colors.textTyping
+            containerColor =
+                AppTheme.colors.pinkPrincipal,
+            contentColor = Color.White
         )
+    ) {
 
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Text(
+                text = text,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.align(
+                    Alignment.Center
+                )
+            )
+
+
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                modifier = Modifier
+                    .align(
+                        Alignment.CenterEnd
+                    )
+                    .size(22.dp)
+            )
+        }
+    }
+}
+
+
+// =================================================================
+// TARJETA DE REVISIÓN
+// =================================================================
+
+@Composable
+private fun ReviewCard(
+    title: String,
+    onEditClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+
+    val colors = AppTheme.colors
+
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+
+        color = colors.surface,
+
+        shape = RoundedCornerShape(10.dp),
+
+        border = BorderStroke(
+            width = 1.dp,
+            color = colors.text.copy(
+                alpha = 0.14f
+            )
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.padding(
+                14.dp
+            )
+        ) {
+
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Description,
+                    contentDescription = null,
+                    tint = colors.titles,
+                    modifier = Modifier.size(22.dp)
+                )
+
+
+                Spacer(
+                    modifier = Modifier.width(9.dp)
+                )
+
+
+                Text(
+                    text = title,
+                    color = colors.text,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f)
+                )
+
+
+                Text(
+                    text = "Editar",
+                    color = colors.pinkPrincipal,
+                    fontSize = 13.sp,
+                    textDecoration =
+                        androidx.compose.ui.text.style.TextDecoration.Underline,
+                    modifier = Modifier.clickable {
+                        onEditClick()
+                    }
+                )
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+
+            content()
+        }
+    }
+}
+
+
+// =================================================================
+// FILA DE REVISIÓN
+// =================================================================
+
+@Composable
+private fun ReviewRow(
+    label: String,
+    value: String
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                vertical = 4.dp
+            )
     ) {
 
         Text(
-            text = "Enviar Reporte",
-            fontFamily = FontFamily.Serif,
-            fontSize = 36.sp,
-            textAlign = TextAlign.Center
+            text = label,
+            color = AppTheme.colors.text.copy(
+                alpha = 0.75f
+            ),
+            fontSize = 12.sp,
+            modifier = Modifier.weight(1.25f)
         )
+
+
+        Spacer(
+            modifier = Modifier.width(10.dp)
+        )
+
+
+        Text(
+            text = value,
+            color = AppTheme.colors.text,
+            fontSize = 12.sp,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+
+// =================================================================
+// TEXTO VACÍO EN REVISIÓN
+// =================================================================
+
+private fun valueOrEmpty(
+    value: String
+): String {
+
+    return if (value.isBlank()) {
+        "No especificado"
+    } else {
+        value
     }
 }
 
@@ -930,6 +1837,7 @@ private fun SendReportButton(
 // =================================================================
 
 @Preview(
+    name = "Reporte - Light",
     showBackground = true,
     showSystemUi = true
 )
@@ -941,19 +1849,11 @@ private fun ReportScreenLightPreview() {
     ) {
 
         ReportScreen(
-
             onHomeClick = {},
-
             onAboutUsClick = {},
-
             onSettingsClick = {},
-
-            onMenuClick = {},
-
             onCurrentLocationClick = {},
-
             onSelectFilesClick = {},
-
             onSendReportClick = {}
         )
     }
@@ -965,6 +1865,7 @@ private fun ReportScreenLightPreview() {
 // =================================================================
 
 @Preview(
+    name = "Reporte - Dark",
     showBackground = true,
     showSystemUi = true,
     uiMode = Configuration.UI_MODE_NIGHT_YES
@@ -977,19 +1878,11 @@ private fun ReportScreenDarkPreview() {
     ) {
 
         ReportScreen(
-
             onHomeClick = {},
-
             onAboutUsClick = {},
-
             onSettingsClick = {},
-
-            onMenuClick = {},
-
             onCurrentLocationClick = {},
-
             onSelectFilesClick = {},
-
             onSendReportClick = {}
         )
     }

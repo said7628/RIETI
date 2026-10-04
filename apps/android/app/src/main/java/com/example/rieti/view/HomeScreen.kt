@@ -147,11 +147,7 @@ fun HomeScreen(
 
         topBar = {
 
-            TopBar(
-                onMenuClick = {
-                    // Menú hamburguesa descartado por ahora
-                }
-            )
+            TopBar( )
         },
 
 
@@ -461,11 +457,11 @@ private fun HomeHeroSection(
 
         Box(
             modifier = Modifier
-                .size(130.dp)
+                .size(155.dp)
                 .align(Alignment.TopEnd)
                 .offset(
-                    x = 38.dp,
-                    y = (-12).dp
+                    x = 30.dp,
+                    y = (-30).dp
                 )
                 .background(
                     color = pink.copy(
@@ -645,12 +641,12 @@ private fun HomeActionCard(
             .padding(
                 horizontal = 12.dp
             )
-            .height(88.dp)
+            .height(102.dp)
             .clickable {
                 onClick()
             },
 
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
 
         color = backgroundColor,
 
@@ -660,13 +656,12 @@ private fun HomeActionCard(
         )
     ) {
 
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    start = 18.dp,
-                    end = 16.dp
+                    start = 20.dp,
+                    end = 18.dp
                 ),
 
             verticalAlignment = Alignment.CenterVertically
@@ -681,12 +676,12 @@ private fun HomeActionCard(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(34.dp)
+                modifier = Modifier.size(40.dp)
             )
 
 
             Spacer(
-                modifier = Modifier.width(16.dp)
+                modifier = Modifier.width(18.dp)
             )
 
 
@@ -704,12 +699,12 @@ private fun HomeActionCard(
                     color = titleColor,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    fontSize = 21.sp
                 )
 
 
                 Spacer(
-                    modifier = Modifier.height(5.dp)
+                    modifier = Modifier.height(6.dp)
                 )
 
 
@@ -717,8 +712,8 @@ private fun HomeActionCard(
                     text = subtitle,
                     color = subtitleColor,
                     fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp
                 )
             }
 
@@ -729,19 +724,18 @@ private fun HomeActionCard(
 
 
             // =====================================================
-            // FLECHITA
+            // FLECHA
             // =====================================================
 
             Text(
                 text = "›",
                 color = arrowColor,
                 fontFamily = FontFamily.Serif,
-                fontSize = 31.sp
+                fontSize = 36.sp
             )
         }
     }
 }
-
 
 // =================================================================
 // CONTENIDO DEL MODAL
@@ -1018,14 +1012,14 @@ private fun ReportTypeOption(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(68.dp)
+            .height(82.dp)
             .clickable {
                 onClick()
             },
 
         color = backgroundColor,
 
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
 
         border = BorderStroke(
             width = 1.dp,
@@ -1033,17 +1027,18 @@ private fun ReportTypeOption(
         )
     ) {
 
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    horizontal = 16.dp
+                    start = 18.dp,
+                    end = 18.dp,
+                    top = 12.dp,
+                    bottom = 12.dp
                 ),
 
             verticalAlignment = Alignment.CenterVertically
         ) {
-
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -1055,12 +1050,12 @@ private fun ReportTypeOption(
                     color = titleColor,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 15.sp
                 )
 
 
                 Spacer(
-                    modifier = Modifier.height(3.dp)
+                    modifier = Modifier.height(6.dp)
                 )
 
 
@@ -1068,20 +1063,20 @@ private fun ReportTypeOption(
                     text = subtitle,
                     color = subtitleColor,
                     fontFamily = FontFamily.Serif,
-                    fontSize = 10.sp,
-                    lineHeight = 12.sp
+                    fontSize = 11.sp,
+                    lineHeight = 14.sp
                 )
             }
 
 
             Spacer(
-                modifier = Modifier.width(12.dp)
+                modifier = Modifier.width(16.dp)
             )
 
 
             Box(
                 modifier = Modifier
-                    .size(18.dp)
+                    .size(20.dp)
                     .border(
                         width = 1.5.dp,
                         color = Color(0xFFB5C7D1),

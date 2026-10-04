@@ -3,11 +3,11 @@ package com.example.rieti.view.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material.icons.Icons
@@ -24,10 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.example.rieti.ui.theme.AppTheme
 
 
-// =================================================================
-// BOTTOM BAR
-// =================================================================
-
 @Composable
 fun BottomBar(
     onHomeClick: () -> Unit,
@@ -37,23 +33,28 @@ fun BottomBar(
 ) {
 
     val colors = AppTheme.colors
+    val isDarkTheme = AppTheme.isDarkTheme
+
+    val navigationColor =
+        if (isDarkTheme) {
+            Color(0xFFF8F5F6)
+        } else {
+            Color(0xFFD9165D)
+        }
 
 
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .background(colors.surface)
     ) {
 
-
-        // =========================================================
-        // BARRA PRINCIPAL
-        // =========================================================
-
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp)
-                .background(colors.pinkPrincipal)
+                .height(72.dp),
+
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
 
@@ -61,22 +62,26 @@ fun BottomBar(
             // INICIO
             // =====================================================
 
-            IconButton(
-                onClick = {
-                    onHomeClick()
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 22.dp)
-                    .size(58.dp)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
 
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "Inicio",
-                    tint = colors.onPrimary,
-                    modifier = Modifier.size(38.dp)
-                )
+                IconButton(
+                    onClick = {
+                        onHomeClick()
+                    },
+
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = "Inicio",
+                        tint = navigationColor,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
             }
 
 
@@ -84,21 +89,26 @@ fun BottomBar(
             // QUIÉNES SOMOS
             // =====================================================
 
-            IconButton(
-                onClick = {
-                    onAboutUsClick()
-                },
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(62.dp)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
 
-                Icon(
-                    imageVector = Icons.Default.Groups,
-                    contentDescription = "Quiénes somos",
-                    tint = colors.onPrimary,
-                    modifier = Modifier.size(42.dp)
-                )
+                IconButton(
+                    onClick = {
+                        onAboutUsClick()
+                    },
+
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Groups,
+                        contentDescription = "Quiénes somos",
+                        tint = navigationColor,
+                        modifier = Modifier.size(45.dp)
+                    )
+                }
             }
 
 
@@ -106,53 +116,52 @@ fun BottomBar(
             // CONFIGURACIÓN
             // =====================================================
 
-            IconButton(
-                onClick = {
-                    onSettingsClick()
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 22.dp)
-                    .size(58.dp)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
 
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Configuración",
-                    tint = colors.onPrimary,
-                    modifier = Modifier.size(38.dp)
-                )
+                IconButton(
+                    onClick = {
+                        onSettingsClick()
+                    },
+
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configuración",
+                        tint = navigationColor,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
             }
         }
 
 
-        // =========================================================
-        // ESPACIO PARA NAVEGACIÓN DEL SISTEMA
-        // =========================================================
-
-        SpacerForSystemNavigation()
+        SpacerForSystemNavigation(
+            backgroundColor = colors.surface
+        )
     }
 }
 
 
 // =================================================================
-// NAVEGACIÓN DEL SISTEMA
+// ESPACIO DE NAVEGACIÓN DEL SISTEMA
 // =================================================================
 
 @Composable
-private fun SpacerForSystemNavigation() {
+private fun SpacerForSystemNavigation(
+    backgroundColor: Color
+) {
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-
-            // Toma exactamente la altura requerida
-            // por la barra de navegación de Android.
             .windowInsetsBottomHeight(
                 WindowInsets.navigationBars
             )
-
-            // Fondo de ■ ● ◀
-            .background(Color.Black)
+            .background(backgroundColor)
     )
 }

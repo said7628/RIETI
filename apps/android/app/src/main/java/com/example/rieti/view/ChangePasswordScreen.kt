@@ -77,7 +77,7 @@ fun ChangePasswordScreen(
             Column {
 
                 TopBar(
-                    onMenuClick = {}
+
                 )
 
                 /*

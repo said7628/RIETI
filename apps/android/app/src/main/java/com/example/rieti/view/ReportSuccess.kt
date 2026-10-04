@@ -63,9 +63,7 @@ fun ReportSuccessScreen(
 
         topBar = {
 
-            TopBar(
-                onMenuClick = {}
-            )
+            TopBar()
         },
 
 

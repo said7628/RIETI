@@ -112,9 +112,7 @@ fun AboutUsScreen(
         topBar = {
 
             TopBar(
-                onMenuClick = {
-                    // Menú descartado por ahora
-                }
+
             )
         },
 

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -19,15 +21,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import com.example.rieti.R
 import com.example.rieti.ui.theme.AppTheme
 
 
 @Composable
 fun TopBar(
-    onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -58,6 +57,11 @@ fun TopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
+
+                // =================================================
+                // LOGO
+                // =================================================
+
                 Image(
                     painter = painterResource(
                         id = logoResource
@@ -67,6 +71,10 @@ fun TopBar(
                     modifier = Modifier.height(45.dp)
                 )
 
+
+                // =================================================
+                // NOMBRE RIETI
+                // =================================================
 
                 Text(
                     text = "RIETI",

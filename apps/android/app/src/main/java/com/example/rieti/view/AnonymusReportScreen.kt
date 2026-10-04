@@ -137,7 +137,7 @@ fun AnonymousReportScreen(
         topBar = {
 
             TopBar(
-                onMenuClick = {}
+
             )
         },
 

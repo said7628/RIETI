@@ -62,10 +62,7 @@ fun AccountDeletedScreen(
 
             Column {
 
-                TopBar(
-                    onMenuClick = {}
-                )
-
+                TopBar()
 
                 // =================================================
                 // FRANJA ROSA
