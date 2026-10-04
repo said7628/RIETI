@@ -41,7 +41,7 @@ object Routes {
 
     const val ACCOUNT_DELETED = "account_deleted"
 
-    const val VERIFICATE_CODE = "verificate_code"
+    const val RESET_PASSWORD = "reset_password"
 
     // NUEVO
     const val ANONYMOUS_REPORT = "anonymous_report"
@@ -223,7 +223,7 @@ fun AppNavigation(
             route = Routes.RECOVER_PASSWORD
         ) {
 
-            RecuperarContraseñaPantalla4(
+            ForgotPasswordScreen (
 
                 // -------------------------------------------------
                 // ENVIAR CÓDIGO
@@ -235,7 +235,7 @@ fun AppNavigation(
                     // y nueva contraseña
 
                     navController.navigate(
-                        route = Routes.VERIFICATE_CODE
+                        route = Routes.RESET_PASSWORD
                     ) {
 
                         launchSingleTop = true
@@ -1108,7 +1108,7 @@ fun AppNavigation(
         // =========================================================
 
         composable(
-            route = Routes.VERIFICATE_CODE
+            route = Routes.RESET_PASSWORD
         ) {
 
             ResetPasswordScreen(
