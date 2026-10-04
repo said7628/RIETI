@@ -194,9 +194,8 @@ fun ReportSuccessScreen(
 
             Text(
                 text =
-                    "Tu reporte ha sido registrado correctamente. " +
-                            "Conserva el siguiente folio para consultar " +
-                            "posteriormente su estado.",
+                    "Conserva el siguiente folio,  " +
+                            "para consultar posteriormente su estado.",
 
                 color = colors.text.copy(
                     alpha = 0.78f
@@ -363,7 +362,7 @@ private fun FolioCard(
 
                 Text(
                     text = "Folio de seguimiento",
-                    color = colors.titles,
+                    color = Color.White,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp

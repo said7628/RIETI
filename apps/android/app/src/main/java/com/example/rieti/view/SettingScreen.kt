@@ -2,6 +2,7 @@ package com.example.rieti.view
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,10 +12,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,8 +42,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,9 +58,9 @@ import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
 
 
-// =================================================================
+// =====================================================================
 // CONFIGURACIÓN
-// =================================================================
+// =====================================================================
 
 @Composable
 fun SettingsScreen(
@@ -54,70 +76,64 @@ fun SettingsScreen(
     val colors = AppTheme.colors
     val isDarkTheme = AppTheme.isDarkTheme
 
+    val navy =
+        if (isDarkTheme) {
+            colors.text
+        } else {
+            Color(0xFF123A68)
+        }
 
-    /*
-     * Controla si el diálogo de borrar cuenta
-     * está visible o no.
-     */
+    val background =
+        if (isDarkTheme) {
+            colors.surface
+        } else {
+            Color(0xFFFCFBF9)
+        }
+
+    val cardBackground =
+        if (isDarkTheme) {
+            colors.navVar
+        } else {
+            Color.White
+        }
+
+    val secondaryText =
+        if (isDarkTheme) {
+            colors.text.copy(alpha = 0.65f)
+        } else {
+            Color(0xFF627894)
+        }
+
+    val divider =
+        if (isDarkTheme) {
+            colors.text.copy(alpha = 0.12f)
+        } else {
+            Color(0xFFE5E7EA)
+        }
+
     var showDeleteAccountDialog by rememberSaveable {
         mutableStateOf(false)
     }
 
 
     Scaffold(
+        containerColor = background,
 
-        containerColor = colors.surface,
-
-
-        // =========================================================
+        // =============================================================
         // TOP BAR
-        // =========================================================
+        // =============================================================
 
         topBar = {
-
-            Column {
-
-                TopBar(
-
-                )
-
-
-                // =================================================
-                // TÍTULO CONFIGURACIÓN
-                // =================================================
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(38.dp)
-                        .background(
-                            colors.pinkPrincipal
-                        ),
-
-                    contentAlignment = Alignment.Center
-                ) {
-
-                    Text(
-                        text = "Configuración",
-                        color = colors.text,
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 25.sp
-                    )
-                }
-            }
+            TopBar()
         },
 
-
-        // =========================================================
+        // =============================================================
         // BOTTOM BAR
-        //
-        // Inicio | Quiénes somos | Configuración
-        // =========================================================
+        // =============================================================
 
         bottomBar = {
 
             BottomBar(
-
                 onHomeClick = {
                     onHomeClick()
                 },
@@ -126,172 +142,340 @@ fun SettingsScreen(
                     onAboutUsClick()
                 },
 
-                /*
-                 * Ya estamos dentro de Configuración,
-                 * así que no necesitamos navegar otra vez.
-                 */
-                onSettingsClick = {}
+                onSettingsClick = {
+                    // Ya estamos en Configuración.
+                }
             )
         }
 
     ) { innerPadding ->
 
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(
-                    colors.surface
-                )
+                .background(background)
         ) {
 
+            // =========================================================
+            // CONTENIDO
+            // =========================================================
 
-            // =====================================================
-            // ACCESO A LA CUENTA
-            // =====================================================
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 16.dp,
+                        bottom = 24.dp
+                    )
+            ) {
 
-            SettingsSectionTitle(
-                title = "Acceso a la cuenta"
-            )
+                // =====================================================
+                // TÍTULO
+                // =====================================================
+
+                Text(
+                    text = "Configuración",
+                    color = navy,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 34.sp,
+                    lineHeight = 38.sp
+                )
 
 
-            // =====================================================
-            // CORREO
-            // =====================================================
-
-            SettingsInfoRow(
-                label = "Correo electrónico",
-                value = email
-            )
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
 
-            // =====================================================
-            // CONTRASEÑA
-            // =====================================================
+                // =====================================================
+                // ACENTO ROSA
+                // =====================================================
 
-            SettingsInfoRow(
-                label = "Contraseña",
-                value = "**************"
-            )
+                Box(
+                    modifier = Modifier
+                        .width(58.dp)
+                        .height(3.dp)
+                        .background(
+                            colors.pinkPrincipal
+                        )
+                )
 
 
-            // =====================================================
-            // CAMBIAR CONTRASEÑA
-            // =====================================================
+                Spacer(
+                    modifier = Modifier.height(24.dp)
+                )
 
-            SettingsActionRow(
 
-                text = "Cambiar contraseña",
+                // =====================================================
+                // CUENTA
+                // =====================================================
 
-                onClick = {
-                    onChangePasswordClick()
+                SettingsSectionHeader(
+                    title = "Cuenta",
+                    description = "Administra la información de tu cuenta.",
+                    navy = navy,
+                    secondaryText = secondaryText
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+
+
+                // =====================================================
+                // TARJETA CUENTA
+                // =====================================================
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+
+                    colors = CardDefaults.cardColors(
+                        containerColor = cardBackground
+                    ),
+
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+
+                        SettingsInformationRow(
+                            icon = Icons.Default.Email,
+                            title = "Correo electrónico",
+                            value = email,
+                            navy = navy,
+                            secondaryText = secondaryText
+                        )
+
+
+                        SettingsDivider(
+                            color = divider
+                        )
+
+
+                        SettingsInformationRow(
+                            icon = Icons.Default.Lock,
+                            title = "Contraseña",
+                            value = "************",
+                            navy = navy,
+                            secondaryText = secondaryText
+                        )
+
+
+                        SettingsDivider(
+                            color = divider
+                        )
+
+
+                        SettingsActionRow(
+                            icon = Icons.Default.Key,
+                            title = "Cambiar contraseña",
+                            navy = navy,
+
+                            onClick = {
+                                onChangePasswordClick()
+                            }
+                        )
+
+
+                        SettingsDivider(
+                            color = divider
+                        )
+
+
+                        SettingsActionRow(
+                            icon = Icons.Default.Logout,
+                            title = "Salir de la cuenta",
+                            navy = navy,
+
+                            onClick = {
+                                onLogoutClick()
+                            }
+                        )
+
+
+                        SettingsDivider(
+                            color = divider
+                        )
+
+
+                        SettingsActionRow(
+                            icon = Icons.Default.DeleteOutline,
+                            title = "Borrar cuenta",
+                            navy = navy,
+
+                            onClick = {
+                                showDeleteAccountDialog = true
+                            }
+                        )
+                    }
                 }
-            )
 
 
-            // =====================================================
-            // CERRAR SESIÓN
-            // =====================================================
+                Spacer(
+                    modifier = Modifier.height(26.dp)
+                )
 
-            SettingsActionRow(
 
-                text = "Salir de la cuenta",
+                // =====================================================
+                // VISUALIZACIÓN
+                // =====================================================
 
-                onClick = {
-                    onLogoutClick()
+                SettingsSectionHeader(
+                    title = "Visualización",
+                    description = "Personaliza tu experiencia en la aplicación.",
+                    navy = navy,
+                    secondaryText = secondaryText
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+
+
+                // =====================================================
+                // MODO OSCURO
+                // =====================================================
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+
+                    colors = CardDefaults.cardColors(
+                        containerColor = cardBackground
+                    ),
+
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onToggleThemeClick()
+                            }
+                            .padding(
+                                horizontal = 17.dp,
+                                vertical = 13.dp
+                            ),
+
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.DarkMode,
+                            contentDescription = null,
+                            tint = navy,
+                            modifier = Modifier.size(29.dp)
+                        )
+
+
+                        Spacer(
+                            modifier = Modifier.width(18.dp)
+                        )
+
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+
+                            Text(
+                                text = "Modo oscuro",
+                                color = navy,
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp
+                            )
+
+
+                            Spacer(
+                                modifier = Modifier.height(1.dp)
+                            )
+
+
+                            Text(
+                                text =
+                                    if (isDarkTheme) {
+                                        "Oscuro"
+                                    } else {
+                                        "Claro"
+                                    },
+
+                                color = secondaryText,
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 13.sp
+                            )
+                        }
+
+
+                        Switch(
+                            checked = isDarkTheme,
+
+                            onCheckedChange = {
+                                onToggleThemeClick()
+                            },
+
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = colors.pinkPrincipal,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFD4D7DA),
+                                uncheckedBorderColor = Color.Transparent
+                            )
+                        )
+                    }
                 }
-            )
 
 
-            // =====================================================
-            // BORRAR CUENTA
-            // =====================================================
-
-            SettingsActionRow(
-
-                text = "Borrar cuenta",
-
-                onClick = {
-
-                    /*
-                     * Todavía NO borramos la cuenta.
-                     *
-                     * Solo mostramos la confirmación.
-                     */
-                    showDeleteAccountDialog = true
-                }
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
-            // =====================================================
-            // VISUALIZACIÓN
-            // =====================================================
-
-            SettingsSectionTitle(
-                title = "Visualización"
-            )
-
-
-            // =====================================================
-            // MODO CLARO / OSCURO
-            // =====================================================
-
-            SettingsActionRow(
-
-                text =
-                    if (isDarkTheme) {
-                        "Modo claro"
-                    } else {
-                        "Modo oscuro"
-                    },
-
-                onClick = {
-                    onToggleThemeClick()
-                }
-            )
+                Spacer(
+                    modifier = Modifier.height(18.dp)
+                )
+            }
         }
     }
 
 
-    // =============================================================
-    // DIÁLOGO PARA BORRAR CUENTA
-    // =============================================================
+    // =================================================================
+    // ALERTA BORRAR CUENTA
+    // =================================================================
 
     if (showDeleteAccountDialog) {
 
         DeleteAccountDialog(
-
-            // -----------------------------------------------------
-            // NO / TOCAR FUERA
-            // -----------------------------------------------------
+            navy = navy,
+            cardBackground = cardBackground,
+            secondaryText = secondaryText,
 
             onDismiss = {
-
                 showDeleteAccountDialog = false
             },
 
-
-            // -----------------------------------------------------
-            // SÍ
-            // -----------------------------------------------------
-
             onConfirm = {
 
-                /*
-                 * Primero cerramos el disclaimer.
-                 */
                 showDeleteAccountDialog = false
 
-
                 /*
-                 * Ahora sí avisamos que el usuario
-                 * confirmó borrar la cuenta.
+                 * TODO(BACKEND):
+                 *
+                 * Navigation recibe este evento.
+                 * Más adelante el backend deberá eliminar realmente
+                 * la cuenta antes de mostrar la pantalla de éxito.
                  */
                 onDeleteAccountClick()
             }
@@ -300,164 +484,198 @@ fun SettingsScreen(
 }
 
 
-// =================================================================
+// =====================================================================
 // TÍTULO DE SECCIÓN
-// =================================================================
+// =====================================================================
 
 @Composable
-private fun SettingsSectionTitle(
-    title: String
+private fun SettingsSectionHeader(
+    title: String,
+    description: String,
+    navy: Color,
+    secondaryText: Color
 ) {
 
-    val colors = AppTheme.colors
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = 16.dp,
-                top = 15.dp,
-                bottom = 5.dp
-            )
-    ) {
+    Column {
 
         Text(
             text = title,
-            color = colors.titles,
+            color = navy,
             fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
             fontSize = 20.sp
         )
 
 
-        HorizontalDivider(
-            modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .padding(
-                    top = 3.dp
-                ),
-
-            thickness = 1.5.dp,
-
-            color = colors.titles
+        Text(
+            text = description,
+            color = secondaryText,
+            fontFamily = FontFamily.Serif,
+            fontSize = 14.sp,
+            lineHeight = 17.sp
         )
     }
 }
 
 
-// =================================================================
-// FILA CON INFORMACIÓN
-// =================================================================
+// =====================================================================
+// FILA DE INFORMACIÓN
+// =====================================================================
 
 @Composable
-private fun SettingsInfoRow(
-    label: String,
-    value: String
+private fun SettingsInformationRow(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    navy: Color,
+    secondaryText: Color
 ) {
 
-    val colors = AppTheme.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 17.dp,
+                vertical = 11.dp
+            ),
 
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = navy,
+            modifier = Modifier.size(25.dp)
+        )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(
-                    horizontal = 8.dp
-                ),
 
-            verticalAlignment = Alignment.CenterVertically
+        Spacer(
+            modifier = Modifier.width(18.dp)
+        )
+
+
+        Column(
+            modifier = Modifier.weight(1f)
         ) {
 
-
             Text(
-                text = label,
-                color = colors.text,
-                fontSize = 15.sp,
-                modifier = Modifier.weight(1f)
+                text = title,
+                color = navy,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp
             )
 
 
             Text(
                 text = value,
-                color = colors.text,
+                color = secondaryText,
+                fontFamily = FontFamily.Serif,
                 fontSize = 13.sp,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f)
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
 
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = colors.titles
+        Icon(
+            imageVector = Icons.Default.ArrowForwardIos,
+            contentDescription = null,
+            tint = navy,
+            modifier = Modifier.size(15.dp)
         )
     }
 }
 
 
-// =================================================================
-// FILA CLICKEABLE
-// =================================================================
+// =====================================================================
+// FILA DE ACCIÓN
+// =====================================================================
 
 @Composable
 private fun SettingsActionRow(
-    text: String,
+    icon: ImageVector,
+    title: String,
+    navy: Color,
     onClick: () -> Unit
 ) {
 
-    val colors = AppTheme.colors
-
-
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-
                 onClick()
             }
+            .padding(
+                horizontal = 17.dp,
+                vertical = 14.dp
+            ),
+
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .padding(
-                    horizontal = 8.dp
-                ),
-
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = navy,
+            modifier = Modifier.size(25.dp)
+        )
 
 
-            Text(
-                text = text,
-                color = colors.text,
-                fontSize = 15.sp
-            )
-        }
+        Spacer(
+            modifier = Modifier.width(18.dp)
+        )
 
 
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = colors.titles
+        Text(
+            text = title,
+            color = navy,
+            fontFamily = FontFamily.Serif,
+            fontSize = 15.sp,
+            modifier = Modifier.weight(1f)
+        )
+
+
+        Icon(
+            imageVector = Icons.Default.ArrowForwardIos,
+            contentDescription = null,
+            tint = navy,
+            modifier = Modifier.size(15.dp)
         )
     }
 }
 
 
-// =================================================================
-// DIÁLOGO DE BORRAR CUENTA
-// =================================================================
+// =====================================================================
+// DIVISOR
+// =====================================================================
+
+@Composable
+private fun SettingsDivider(
+    color: Color
+) {
+
+    HorizontalDivider(
+        modifier = Modifier.padding(
+            start = 60.dp,
+            end = 16.dp
+        ),
+        thickness = 0.7.dp,
+        color = color
+    )
+}
+
+
+// =====================================================================
+// ALERTA DE CONFIRMACIÓN
+// =====================================================================
 
 @Composable
 private fun DeleteAccountDialog(
+    navy: Color,
+    cardBackground: Color,
+    secondaryText: Color,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -466,54 +684,53 @@ private fun DeleteAccountDialog(
 
 
     Dialog(
-
-        /*
-         * Si el usuario toca afuera del diálogo
-         * o presiona atrás:
-         */
         onDismissRequest = {
-
             onDismiss()
         }
-
     ) {
-
 
         Column(
             modifier = Modifier
-
-                .width(220.dp)
-
+                .fillMaxWidth()
                 .clip(
                     RoundedCornerShape(14.dp)
                 )
-
                 .background(
-                    colors.navVar
+                    cardBackground
                 )
-
                 .padding(
-                    horizontal = 16.dp,
-                    vertical = 14.dp
+                    horizontal = 22.dp,
+                    vertical = 20.dp
                 ),
 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            // =========================================================
+            // ICONO DE PAPELERA
+            // =========================================================
 
-            Text(
-                text = "¿Estás seguro de que quieres borrar tu cuenta?",
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(
+                        color =
+                            colors.pinkPrincipal.copy(
+                                alpha = 0.11f
+                            ),
+                        shape = CircleShape
+                    ),
 
-                color = colors.text,
+                contentAlignment = Alignment.Center
+            ) {
 
-                fontFamily = FontFamily.Serif,
-
-                fontSize = 18.sp,
-
-                lineHeight = 22.sp,
-
-                textAlign = TextAlign.Center
-            )
+                Icon(
+                    imageVector = Icons.Default.DeleteOutline,
+                    contentDescription = null,
+                    tint = colors.pinkPrincipal,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
 
 
             Spacer(
@@ -521,88 +738,122 @@ private fun DeleteAccountDialog(
             )
 
 
-            // =====================================================
-            // NO
-            // =====================================================
+            // =========================================================
+            // PREGUNTA
+            // =========================================================
 
-            DeleteDialogButton(
-
-                text = "No",
-
-                onClick = {
-
-                    onDismiss()
-                }
+            Text(
+                text = "¿Estás seguro de\nborrar tu cuenta?",
+                color = navy,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                lineHeight = 22.sp,
+                textAlign = TextAlign.Center
             )
 
 
             Spacer(
-                modifier = Modifier.height(10.dp)
+                modifier = Modifier.height(9.dp)
             )
 
 
-            // =====================================================
-            // SÍ
-            // =====================================================
+            // =========================================================
+            // ADVERTENCIA
+            // =========================================================
 
-            DeleteDialogButton(
+            Text(
+                text =
+                    "Esta acción eliminará permanentemente\n" +
+                            "tu cuenta y toda la información asociada.\n" +
+                            "No podrás recuperarla.",
 
-                text = "Sí",
-
-                onClick = {
-
-                    onConfirm()
-                }
+                color = secondaryText,
+                fontFamily = FontFamily.Serif,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                textAlign = TextAlign.Center
             )
+
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+
+            // =========================================================
+            // SÍ, BORRAR CUENTA
+            // =========================================================
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(
+                        RoundedCornerShape(6.dp)
+                    )
+                    .background(
+                        colors.pinkPrincipal
+                    )
+                    .clickable {
+                        onConfirm()
+                    },
+
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = "Sí, borrar cuenta",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(9.dp)
+            )
+
+
+            // =========================================================
+            // CANCELAR
+            // =========================================================
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .border(
+                        width = 1.dp,
+                        color = colors.pinkPrincipal,
+                        shape = RoundedCornerShape(6.dp)
+                    )
+                    .clip(
+                        RoundedCornerShape(6.dp)
+                    )
+                    .clickable {
+                        onDismiss()
+                    },
+
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = "Cancelar",
+                    color = colors.pinkPrincipal,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
 
 
-// =================================================================
-// BOTÓN DEL DIÁLOGO
-// =================================================================
-
-@Composable
-private fun DeleteDialogButton(
-    text: String,
-    onClick: () -> Unit
-) {
-
-    val colors = AppTheme.colors
-
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp)
-            .clip(
-                RoundedCornerShape(9.dp)
-            )
-            .background(
-                colors.pinkPrincipal
-            )
-            .clickable {
-
-                onClick()
-            },
-
-        contentAlignment = Alignment.Center
-    ) {
-
-
-        Text(
-            text = text,
-            color = colors.onPrimary,
-            fontSize = 16.sp
-        )
-    }
-}
-
-
-// =================================================================
+// =====================================================================
 // PREVIEW LIGHT
-// =================================================================
+// =====================================================================
 
 @Preview(
     name = "Settings - Light",
@@ -617,28 +868,21 @@ private fun SettingsLightPreview() {
     ) {
 
         SettingsScreen(
-
             email = "correo@gmail.com",
-
             onChangePasswordClick = {},
-
             onLogoutClick = {},
-
             onDeleteAccountClick = {},
-
             onToggleThemeClick = {},
-
             onHomeClick = {},
-
             onAboutUsClick = {}
         )
     }
 }
 
 
-// =================================================================
+// =====================================================================
 // PREVIEW DARK
-// =================================================================
+// =====================================================================
 
 @Preview(
     name = "Settings - Dark",
@@ -654,19 +898,12 @@ private fun SettingsDarkPreview() {
     ) {
 
         SettingsScreen(
-
             email = "correo@gmail.com",
-
             onChangePasswordClick = {},
-
             onLogoutClick = {},
-
             onDeleteAccountClick = {},
-
             onToggleThemeClick = {},
-
             onHomeClick = {},
-
             onAboutUsClick = {}
         )
     }

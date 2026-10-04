@@ -333,10 +333,6 @@ fun AppNavigation(
 
             HomeScreen(
 
-                // -------------------------------------------------
-                // REPORTE ANÓNIMO
-                // -------------------------------------------------
-
                 onAnonymousReportClick = {
 
                     navController.navigate(
@@ -345,11 +341,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // REPORTE CON SEGUIMIENTO
-                // -------------------------------------------------
 
                 onReportClick = {
 
@@ -360,11 +351,6 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // QUIÉNES SOMOS
-                // -------------------------------------------------
-
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -374,19 +360,10 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // SEGUIMIENTO
-                // -------------------------------------------------
-
                 onTrackingClick = {
 
                     /*
                      * TODO(NAVIGATION):
-                     *
-                     * Este botón y "Consultar seguimiento"
-                     * de ReportSuccessScreen deberán navegar
-                     * exactamente a la misma pantalla.
                      *
                      * Cuando exista TrackingScreen:
                      *
@@ -397,11 +374,6 @@ fun AppNavigation(
                      * }
                      */
                 },
-
-
-                // -------------------------------------------------
-                // CONFIGURACIÓN
-                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -463,10 +435,6 @@ fun AppNavigation(
 
             ReportScreen(
 
-                // -------------------------------------------------
-                // INICIO
-                // -------------------------------------------------
-
                 onHomeClick = {
 
                     navController.navigate(
@@ -483,11 +451,6 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // QUIÉNES SOMOS
-                // -------------------------------------------------
-
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -496,11 +459,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // CONFIGURACIÓN
-                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -511,39 +469,23 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // UBICACIÓN ACTUAL
-                // -------------------------------------------------
-
                 onCurrentLocationClick = {
 
-                    // Pendiente de implementar
+                    // TODO: Conectar ubicación
                 },
-
-
-                // -------------------------------------------------
-                // SELECCIONAR EVIDENCIA
-                // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    // Pendiente de implementar
+                    // TODO: Conectar selector de evidencia
                 },
-
-
-                // -------------------------------------------------
-                // ENVIAR REPORTE
-                // -------------------------------------------------
 
                 onSendReportClick = {
 
                     /*
                      * TODO(BACKEND):
                      *
-                     * Posteriormente la navegación deberá ocurrir
-                     * únicamente cuando el backend confirme que
-                     * el reporte fue registrado correctamente.
+                     * Navegar únicamente cuando el backend
+                     * confirme el registro del reporte.
                      */
 
                     navController.navigate(
@@ -566,10 +508,6 @@ fun AppNavigation(
 
             AnonymousReportScreen(
 
-                // -------------------------------------------------
-                // INICIO
-                // -------------------------------------------------
-
                 onHomeClick = {
 
                     navController.navigate(
@@ -586,11 +524,6 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // QUIÉNES SOMOS
-                // -------------------------------------------------
-
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -599,11 +532,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // CONFIGURACIÓN
-                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -614,44 +542,23 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // UBICACIÓN ACTUAL
-                // -------------------------------------------------
-
                 onCurrentLocationClick = {
 
-                    /*
-                     * TODO:
-                     * Conectar ubicación posteriormente.
-                     */
+                    // TODO: Conectar ubicación
                 },
-
-
-                // -------------------------------------------------
-                // SELECCIONAR ARCHIVOS
-                // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    /*
-                     * TODO:
-                     * Conectar selector de evidencia.
-                     */
+                    // TODO: Conectar selector de evidencia
                 },
-
-
-                // -------------------------------------------------
-                // ENVIAR REPORTE
-                // -------------------------------------------------
 
                 onSendReportClick = {
 
                     /*
                      * TODO(BACKEND):
                      *
-                     * Aquí después esperaremos la respuesta
-                     * exitosa del ViewModel/API antes de navegar.
+                     * Esperar confirmación del backend antes
+                     * de navegar.
                      */
 
                     navController.navigate(
@@ -676,44 +583,20 @@ fun AppNavigation(
 
                 /*
                  * TODO(BACKEND):
-                 *
-                 * Este folio es temporal.
-                 *
-                 * Posteriormente deberá recibirse el folio
-                 * generado por el backend al registrar
-                 * correctamente el reporte.
+                 * Folio temporal.
                  */
 
                 folio = "261908-1017S",
-
-
-                // -------------------------------------------------
-                // CONSULTAR SEGUIMIENTO
-                // -------------------------------------------------
 
                 onTrackingClick = {
 
                     /*
                      * TODO(NAVIGATION):
                      *
-                     * Este botón debe ir exactamente al mismo
-                     * destino que el botón "Seguimiento"
-                     * de HomeScreen.
-                     *
-                     * Cuando exista TrackingScreen:
-                     *
-                     * navController.navigate(
-                     *     Routes.TRACKING
-                     * ) {
-                     *     launchSingleTop = true
-                     * }
+                     * Debe ir al mismo TrackingScreen que
+                     * el botón Seguimiento de HomeScreen.
                      */
                 },
-
-
-                // -------------------------------------------------
-                // VOLVER AL INICIO
-                // -------------------------------------------------
 
                 onMainMenuClick = {
 
@@ -731,11 +614,6 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // INICIO - BOTTOM BAR
-                // -------------------------------------------------
-
                 onHomeClick = {
 
                     navController.navigate(
@@ -752,11 +630,6 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // QUIÉNES SOMOS - BOTTOM BAR
-                // -------------------------------------------------
-
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -765,11 +638,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // CONFIGURACIÓN - BOTTOM BAR
-                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -795,11 +663,6 @@ fun AppNavigation(
 
                 email = "correo@gmail.com",
 
-
-                // -------------------------------------------------
-                // CAMBIAR CONTRASEÑA
-                // -------------------------------------------------
-
                 onChangePasswordClick = {
 
                     navController.navigate(
@@ -808,11 +671,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // CERRAR SESIÓN
-                // -------------------------------------------------
 
                 onLogoutClick = {
 
@@ -830,21 +688,16 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // BORRAR CUENTA
-                // -------------------------------------------------
-
                 onDeleteAccountClick = {
 
                     /*
                      * TODO(BACKEND):
                      *
-                     * Posteriormente aquí deberá realizarse
-                     * primero la eliminación real mediante
+                     * Primero eliminar la cuenta mediante
                      * ViewModel/API.
                      *
-                     * Por ahora continuamos con el flujo visual.
+                     * Navegar únicamente cuando el backend
+                     * confirme la eliminación.
                      */
 
                     navController.navigate(
@@ -854,20 +707,10 @@ fun AppNavigation(
                     }
                 },
 
-
-                // -------------------------------------------------
-                // CAMBIAR TEMA
-                // -------------------------------------------------
-
                 onToggleThemeClick = {
 
                     onThemeChange()
                 },
-
-
-                // -------------------------------------------------
-                // INICIO
-                // -------------------------------------------------
 
                 onHomeClick = {
 
@@ -884,11 +727,6 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
-
-
-                // -------------------------------------------------
-                // QUIÉNES SOMOS
-                // -------------------------------------------------
 
                 onAboutUsClick = {
 
@@ -922,8 +760,18 @@ fun AppNavigation(
                     /*
                      * TODO(BACKEND):
                      *
-                     * Aquí después irá la llamada real
-                     * para cambiar la contraseña.
+                     * Aquí irá la llamada real para cambiar
+                     * la contraseña.
+                     *
+                     * El backend deberá validar:
+                     *
+                     * - currentPassword
+                     * - newPassword
+                     * - confirmPassword
+                     *
+                     * Sólo después de una respuesta exitosa
+                     * deberá mostrarse confirmación o regresar
+                     * a Configuración.
                      */
 
                     navController.popBackStack()
@@ -969,39 +817,24 @@ fun AppNavigation(
 
             AccountDeletedScreen(
 
-                onHomeClick = {
+                onBackToStartClick = {
+
+                    /*
+                     * Después de borrar la cuenta regresamos
+                     * a WelcomeScreen y eliminamos el historial
+                     * de la sesión anterior.
+                     */
 
                     navController.navigate(
-                        Routes.HOME
+                        Routes.START
                     ) {
-                        launchSingleTop = true
-                    }
-                },
 
+                        popUpTo(
+                            navController.graph.id
+                        ) {
+                            inclusive = true
+                        }
 
-                // -------------------------------------------------
-                // QUIÉNES SOMOS
-                // -------------------------------------------------
-
-                onAboutUsClick = {
-
-                    navController.navigate(
-                        Routes.ABOUT_US
-                    ) {
-                        launchSingleTop = true
-                    }
-                },
-
-
-                // -------------------------------------------------
-                // CONFIGURACIÓN
-                // -------------------------------------------------
-
-                onSettingsClick = {
-
-                    navController.navigate(
-                        Routes.SETTINGS
-                    ) {
                         launchSingleTop = true
                     }
                 }
