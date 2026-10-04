@@ -22,6 +22,7 @@ object Routes {
     // APP PRINCIPAL
     const val HOME = "home"
     const val ABOUT_US = "about_us"
+    const val ORIENTATION = "orientation"
     const val SETTINGS = "settings"
 
     // REPORTES
@@ -375,6 +376,21 @@ fun AppNavigation(
                      */
                 },
 
+
+                // =====================================================
+                // ORIENTACIÓN
+                // =====================================================
+
+                onOrientationClick = {
+
+                    navController.navigate(
+                        Routes.ORIENTATION
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+
+
                 onSettingsClick = {
 
                     navController.navigate(
@@ -409,6 +425,53 @@ fun AppNavigation(
                             inclusive = false
                         }
 
+                        launchSingleTop = true
+                    }
+                },
+
+                onSettingsClick = {
+
+                    navController.navigate(
+                        Routes.SETTINGS
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
+        // =========================================================
+        // ORIENTACIÓN
+        // =========================================================
+
+        composable(
+            route = Routes.ORIENTATION
+        ) {
+
+            OrientationScreen(
+
+                onHomeClick = {
+
+                    navController.navigate(
+                        Routes.HOME
+                    ) {
+
+                        popUpTo(
+                            Routes.HOME
+                        ) {
+                            inclusive = false
+                        }
+
+                        launchSingleTop = true
+                    }
+                },
+
+                onAboutUsClick = {
+
+                    navController.navigate(
+                        Routes.ABOUT_US
+                    ) {
                         launchSingleTop = true
                     }
                 },
