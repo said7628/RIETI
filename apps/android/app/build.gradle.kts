@@ -48,7 +48,13 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.5")
     implementation("androidx.compose.material:material-icons-extended")
 
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation(libs.play.services.location)
+    implementation(libs.play.services.maps)
 
     testImplementation(libs.junit)
 
