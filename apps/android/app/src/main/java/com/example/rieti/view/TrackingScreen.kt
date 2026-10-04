@@ -59,7 +59,23 @@ import com.example.rieti.view.components.TopBar
 
 
 // =================================================================
-// ESTADOS DEL SEGUIMIENTO
+// ESTADO REAL DEL REPORTE
+// =================================================================
+
+private enum class ReportStatus {
+    REGISTRADO,
+    EN_REVISION,
+    EN_SEGUIMIENTO,
+    CANALIZADO,
+    CONCLUIDO,
+    ARCHIVADO,
+    CANCELADO,
+    REINCIDENTE
+}
+
+
+// =================================================================
+// ESTADO VISUAL DE CADA PUNTO DEL TIMELINE
 // =================================================================
 
 private enum class TrackingStatus {
@@ -70,7 +86,27 @@ private enum class TrackingStatus {
 
 
 // =================================================================
-// PANTALLA DE SEGUIMIENTO
+// MODELO DE UI
+//
+// TODO(BACKEND):
+// Posteriormente estos datos deberán construirse a partir de la
+// respuesta del endpoint de seguimiento.
+// =================================================================
+
+private data class TrackingReportUi(
+    val folio: String,
+    val status: ReportStatus,
+    val lastUpdate: String,
+    val registrationDate: String,
+    val municipality: String,
+    val modality: String,
+    val closingDate: String? = null,
+    val resolution: String? = null
+)
+
+
+// =================================================================
+// PANTALLA PRINCIPAL
 // =================================================================
 
 @Composable
@@ -82,20 +118,12 @@ fun TrackingScreen(
 
     val colors = AppTheme.colors
 
-    // =============================================================
-    // DATOS TEMPORALES
-    //
-    // TODO(BACKEND):
-    // El folio se utilizará posteriormente para consultar el
-    // reporte real mediante el endpoint correspondiente.
-    // =============================================================
-
     var reportFolio by rememberSaveable {
         mutableStateOf("")
     }
 
-    var reportFound by rememberSaveable {
-        mutableStateOf(false)
+    var selectedReportStatus by rememberSaveable {
+        mutableStateOf<ReportStatus?>(null)
     }
 
 
@@ -107,7 +135,6 @@ fun TrackingScreen(
         },
 
         bottomBar = {
-
             BottomBar(
                 onHomeClick = onHomeClick,
                 onAboutUsClick = onAboutUsClick,
@@ -124,7 +151,7 @@ fun TrackingScreen(
                 .background(colors.surface)
         ) {
 
-            if (!reportFound) {
+            if (selectedReportStatus == null) {
 
                 TrackingSearchContent(
                     folio = reportFolio,
@@ -137,36 +164,181 @@ fun TrackingScreen(
 
                         /*
                          * TODO(BACKEND):
+                         * DATOS SIMULADOS ÚNICAMENTE PARA PRUEBAS DE UI.
                          *
-                         * Sustituir este cambio de estado por
-                         * la consulta real del reporte mediante
-                         * el folio ingresado.
+                         * Cuando se conecte el backend:
                          *
-                         * Si el reporte existe:
-                         * mostrar los datos recibidos.
+                         * 1. Eliminar la selección mediante folios
+                         *    especiales de prueba.
                          *
-                         * Si no existe:
-                         * mostrar el mensaje de error correspondiente.
+                         * 2. Consultar el reporte real mediante el
+                         *    folio ingresado.
+                         *
+                         * 3. Convertir la respuesta del API a un
+                         *    TrackingReportUi.
+                         *
+                         * 4. Mostrar un estado de carga mientras se
+                         *    realiza la consulta.
+                         *
+                         * 5. Mostrar un error si el folio no existe.
+                         *
+                         * 6. Manejar errores de conexión.
+                         *
+                         * 7. Utilizar el estatus recibido por backend
+                         *    para construir el timeline.
+                         *
+                         * 8. Mostrar información de cierre únicamente
+                         *    cuando corresponda.
                          */
 
-                        if (reportFolio.isNotBlank()) {
-                            reportFound = true
-                        }
+                        selectedReportStatus =
+                            getSimulatedStatus(
+                                reportFolio
+                            )
                     }
                 )
 
             } else {
 
+                val report =
+                    createSimulatedReport(
+                        folio = reportFolio,
+                        status = selectedReportStatus!!
+                    )
+
                 TrackingResultContent(
-                    folio = reportFolio,
+                    report = report,
 
                     onEditFolioClick = {
-                        reportFound = false
+                        selectedReportStatus = null
                     }
                 )
             }
         }
     }
+}
+
+
+// =================================================================
+// DATOS TEMPORALES PARA PROBAR TODOS LOS ESTADOS
+// =================================================================
+
+private fun getSimulatedStatus(
+    folio: String
+): ReportStatus {
+
+    val normalizedFolio =
+        folio
+            .trim()
+            .uppercase()
+
+    return when (normalizedFolio) {
+
+        "RIETI-REGISTRADO" ->
+            ReportStatus.REGISTRADO
+
+        "RIETI-REVISION" ->
+            ReportStatus.EN_REVISION
+
+        "RIETI-SEGUIMIENTO" ->
+            ReportStatus.EN_SEGUIMIENTO
+
+        "RIETI-CANALIZADO" ->
+            ReportStatus.CANALIZADO
+
+        "RIETI-CONCLUIDO" ->
+            ReportStatus.CONCLUIDO
+
+        "RIETI-ARCHIVADO" ->
+            ReportStatus.ARCHIVADO
+
+        "RIETI-CANCELADO" ->
+            ReportStatus.CANCELADO
+
+        "RIETI-REINCIDENTE" ->
+            ReportStatus.REINCIDENTE
+
+        else ->
+            ReportStatus.EN_SEGUIMIENTO
+    }
+}
+
+
+// =================================================================
+// CREACIÓN TEMPORAL DEL REPORTE
+//
+// TODO(BACKEND):
+// Eliminar esta función cuando TrackingReportUi se construya con
+// los datos reales recibidos desde el API.
+// =================================================================
+
+private fun createSimulatedReport(
+    folio: String,
+    status: ReportStatus
+): TrackingReportUi {
+
+    val lastUpdate =
+        when (status) {
+
+            ReportStatus.REGISTRADO ->
+                "28 de septiembre de 2026, 10:12 h"
+
+            ReportStatus.EN_REVISION ->
+                "29 de septiembre de 2026, 16:40 h"
+
+            ReportStatus.EN_SEGUIMIENTO ->
+                "03 de octubre de 2026, 14:25 h"
+
+            ReportStatus.CANALIZADO ->
+                "08 de octubre de 2026, 09:30 h"
+
+            ReportStatus.CONCLUIDO ->
+                "12 de octubre de 2026, 12:15 h"
+
+            ReportStatus.ARCHIVADO ->
+                "12 de octubre de 2026, 12:15 h"
+
+            ReportStatus.CANCELADO ->
+                "06 de octubre de 2026, 11:20 h"
+
+            ReportStatus.REINCIDENTE ->
+                "10 de octubre de 2026, 15:45 h"
+        }
+
+
+    return TrackingReportUi(
+        folio = folio,
+
+        status = status,
+
+        lastUpdate = lastUpdate,
+
+        registrationDate =
+            "28 de septiembre de 2026",
+
+        municipality =
+            "Atizapán de Zaragoza",
+
+        modality =
+            "Con seguimiento",
+
+        closingDate =
+            if (
+                status == ReportStatus.CONCLUIDO ||
+                status == ReportStatus.ARCHIVADO
+            ) {
+                "12 de octubre de 2026"
+            } else {
+                null
+            },
+
+        resolution =
+            if (status == ReportStatus.CONCLUIDO) {
+                "La atención del reporte ha finalizado conforme al proceso correspondiente."
+            } else {
+                null
+            }
+    )
 }
 
 
@@ -210,10 +382,6 @@ private fun TrackingSearchContent(
         )
 
 
-        // =========================================================
-        // FOLIO
-        // =========================================================
-
         Text(
             text = "Folio del reporte",
 
@@ -246,10 +414,6 @@ private fun TrackingSearchContent(
             modifier = Modifier.height(18.dp)
         )
 
-
-        // =========================================================
-        // CONSULTAR
-        // =========================================================
 
         Button(
             onClick = onSearchClick,
@@ -311,10 +475,6 @@ private fun TrackingSearchContent(
         )
 
 
-        // =========================================================
-        // AVISO DE SEGURIDAD
-        // =========================================================
-
         TrackingInformationNotice(
             text =
                 "Por seguridad, la consulta muestra únicamente información relacionada con el avance del reporte."
@@ -324,12 +484,12 @@ private fun TrackingSearchContent(
 
 
 // =================================================================
-// VISTA 2 - RESULTADO DEL SEGUIMIENTO
+// VISTA 2 - RESULTADO
 // =================================================================
 
 @Composable
 private fun TrackingResultContent(
-    folio: String,
+    report: TrackingReportUi,
     onEditFolioClick: () -> Unit
 ) {
 
@@ -353,7 +513,11 @@ private fun TrackingResultContent(
             title = "Seguimiento",
 
             description =
-                "Consulta el estado general de tu reporte."
+                if (report.status == ReportStatus.CONCLUIDO) {
+                    "Consulta el resultado general de tu reporte."
+                } else {
+                    "Consulta el estado general de tu reporte."
+                }
         )
 
 
@@ -362,12 +526,8 @@ private fun TrackingResultContent(
         )
 
 
-        // =========================================================
-        // FOLIO CONSULTADO
-        // =========================================================
-
         TrackingCurrentFolio(
-            folio = folio,
+            folio = report.folio,
 
             onEditClick = onEditFolioClick
         )
@@ -377,10 +537,6 @@ private fun TrackingResultContent(
             modifier = Modifier.height(16.dp)
         )
 
-
-        // =========================================================
-        // REPORTE
-        // =========================================================
 
         Text(
             text = "Reporte",
@@ -401,7 +557,7 @@ private fun TrackingResultContent(
 
 
         Text(
-            text = folio,
+            text = report.folio,
 
             color = colors.pinkPrincipal,
 
@@ -419,20 +575,37 @@ private fun TrackingResultContent(
 
 
         // =========================================================
-        // ESTADO ACTUAL
+        // TARJETA PRINCIPAL SEGÚN ESTADO
         // =========================================================
 
-        CurrentStatusCard()
+        when (report.status) {
+
+            ReportStatus.CONCLUIDO -> {
+                ConcludedStatusCard(
+                    report = report
+                )
+            }
+
+            ReportStatus.ARCHIVADO,
+            ReportStatus.CANCELADO,
+            ReportStatus.REINCIDENTE -> {
+                SpecialStatusCard(
+                    report = report
+                )
+            }
+
+            else -> {
+                CurrentStatusCard(
+                    report = report
+                )
+            }
+        }
 
 
         Spacer(
             modifier = Modifier.height(22.dp)
         )
 
-
-        // =========================================================
-        // AVANCE
-        // =========================================================
 
         Text(
             text = "Avance del reporte",
@@ -452,17 +625,36 @@ private fun TrackingResultContent(
         )
 
 
-        TrackingTimeline()
+        TrackingTimeline(
+            report = report
+        )
+
+
+        // =========================================================
+        // RESULTADO DE SEGUIMIENTO
+        // Solo se muestra cuando el reporte está concluido.
+        // =========================================================
+
+        if (
+            report.status == ReportStatus.CONCLUIDO &&
+            report.resolution != null
+        ) {
+
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
+
+
+            TrackingResolution(
+                resolution = report.resolution
+            )
+        }
 
 
         Spacer(
             modifier = Modifier.height(24.dp)
         )
 
-
-        // =========================================================
-        // INFORMACIÓN GENERAL
-        // =========================================================
 
         Box(
             modifier = Modifier
@@ -499,7 +691,9 @@ private fun TrackingResultContent(
         )
 
 
-        ReportGeneralInformation()
+        ReportGeneralInformation(
+            report = report
+        )
 
 
         Spacer(
@@ -590,15 +784,6 @@ private fun TrackingSearchField(
 
     val colors = AppTheme.colors
 
-    /*
-     * IMPORTANTE:
-     *
-     * Antes utilizábamos colors.textTyping para el texto escrito.
-     * Para asegurar contraste tanto en Light como en Dark,
-     * utilizamos colors.titles, que ya funciona correctamente
-     * en ambos temas dentro de esta misma pantalla.
-     */
-
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -655,19 +840,11 @@ private fun TrackingSearchField(
 
                 singleLine = true,
 
-                // =================================================
-                // TEXTO ESCRITO POR EL USUARIO
-                // =================================================
-
                 textStyle = TextStyle(
                     color = colors.titles,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 ),
-
-                // =================================================
-                // CURSOR
-                // =================================================
 
                 cursorBrush =
                     SolidColor(
@@ -685,10 +862,6 @@ private fun TrackingSearchField(
                             Alignment.CenterStart
                     ) {
 
-                        // =========================================
-                        // PLACEHOLDER
-                        // =========================================
-
                         if (value.isEmpty()) {
 
                             Text(
@@ -703,10 +876,6 @@ private fun TrackingSearchField(
                             )
                         }
 
-
-                        // =========================================
-                        // CAMPO REAL
-                        // =========================================
 
                         innerTextField()
                     }
@@ -802,11 +971,13 @@ private fun TrackingCurrentFolio(
 
 
 // =================================================================
-// ESTADO ACTUAL
+// TARJETA DE ESTADO ACTIVO
 // =================================================================
 
 @Composable
-private fun CurrentStatusCard() {
+private fun CurrentStatusCard(
+    report: TrackingReportUi
+) {
 
     val colors = AppTheme.colors
 
@@ -830,11 +1001,6 @@ private fun CurrentStatusCard() {
             verticalAlignment =
                 Alignment.CenterVertically
         ) {
-
-
-            // =====================================================
-            // ICONO
-            // =====================================================
 
             Box(
                 modifier = Modifier
@@ -882,7 +1048,10 @@ private fun CurrentStatusCard() {
 
 
                 Text(
-                    text = "En seguimiento",
+                    text =
+                        getStatusLabel(
+                            report.status
+                        ),
 
                     color = colors.titles,
 
@@ -901,7 +1070,7 @@ private fun CurrentStatusCard() {
 
                 Text(
                     text =
-                        "Última actualización\n03 de octubre de 2026, 14:25 h",
+                        "Última actualización\n${report.lastUpdate}",
 
                     color =
                         colors.text.copy(
@@ -919,89 +1088,575 @@ private fun CurrentStatusCard() {
 
 
 // =================================================================
-// LÍNEA DE TIEMPO
+// TARJETA DE REPORTE CONCLUIDO
 // =================================================================
 
 @Composable
-private fun TrackingTimeline() {
+private fun ConcludedStatusCard(
+    report: TrackingReportUi
+) {
 
-    Column {
+    val colors = AppTheme.colors
+    val teal = Color(0xFF20AFAE)
 
-        TrackingTimelineItem(
-            title = "Registrado",
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
 
-            date =
-                "28 de septiembre de 2026, 10:12 h",
+        color =
+            teal.copy(
+                alpha = 0.075f
+            ),
 
-            description =
-                "Tu reporte ha sido recibido.",
+        shape = RoundedCornerShape(9.dp),
 
-            status = TrackingStatus.COMPLETED,
-
-            showLine = true
+        border = BorderStroke(
+            width = 1.dp,
+            color = teal.copy(alpha = 0.22f)
         )
+    ) {
+
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 14.dp,
+                vertical = 16.dp
+            ),
+
+            verticalAlignment =
+                Alignment.Top
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(CircleShape)
+                    .background(teal),
+
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                Icon(
+                    imageVector =
+                        Icons.Default.Check,
+
+                    contentDescription = null,
+
+                    tint = Color.White,
+
+                    modifier = Modifier.size(26.dp)
+                )
+            }
 
 
-        TrackingTimelineItem(
-            title = "En revisión",
-
-            date =
-                "29 de septiembre de 2026, 16:40 h",
-
-            description =
-                "El reporte está siendo revisado por el equipo correspondiente.",
-
-            status = TrackingStatus.COMPLETED,
-
-            showLine = true
-        )
+            Spacer(
+                modifier = Modifier.width(14.dp)
+            )
 
 
-        TrackingTimelineItem(
-            title = "En seguimiento",
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
 
-            date =
-                "03 de octubre de 2026, 14:25 h",
+                Text(
+                    text = "Reporte concluido",
 
-            description =
-                "El reporte se encuentra en seguimiento con la instancia responsable.",
+                    color = colors.titles,
 
-            status = TrackingStatus.CURRENT,
+                    fontFamily = FontFamily.Serif,
 
-            showLine = true
-        )
+                    fontWeight = FontWeight.Bold,
 
-
-        TrackingTimelineItem(
-            title = "Canalizado",
-
-            date = "Pendiente",
-
-            description = "",
-
-            status = TrackingStatus.PENDING,
-
-            showLine = true
-        )
+                    fontSize = 18.sp
+                )
 
 
-        TrackingTimelineItem(
-            title = "Concluido",
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
 
-            date = "Pendiente",
 
-            description = "",
+                Text(
+                    text =
+                        "La atención correspondiente a este reporte ha finalizado.",
 
-            status = TrackingStatus.PENDING,
+                    color =
+                        colors.text.copy(
+                            alpha = 0.72f
+                        ),
 
-            showLine = false
-        )
+                    fontSize = 11.sp,
+
+                    lineHeight = 15.sp
+                )
+
+
+                if (report.closingDate != null) {
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+
+                    Text(
+                        text = "Fecha de conclusión",
+
+                        color =
+                            colors.text.copy(
+                                alpha = 0.58f
+                            ),
+
+                        fontSize = 10.sp
+                    )
+
+
+                    Text(
+                        text = report.closingDate,
+
+                        color = colors.titles,
+
+                        fontWeight = FontWeight.Bold,
+
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
     }
 }
 
 
 // =================================================================
-// ELEMENTO DE LÍNEA DE TIEMPO
+// TARJETA DE ESTADOS ESPECIALES
+// =================================================================
+
+@Composable
+private fun SpecialStatusCard(
+    report: TrackingReportUi
+) {
+
+    val colors = AppTheme.colors
+
+    val message =
+        when (report.status) {
+
+            ReportStatus.ARCHIVADO ->
+                "El seguimiento de este reporte ha sido archivado."
+
+            ReportStatus.CANCELADO ->
+                "El seguimiento de este reporte ha sido cancelado."
+
+            ReportStatus.REINCIDENTE ->
+                "El reporte ha sido identificado como reincidente."
+
+            else ->
+                ""
+        }
+
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+
+        color =
+            colors.pinkPrincipal.copy(
+                alpha = 0.055f
+            ),
+
+        shape = RoundedCornerShape(9.dp),
+
+        border = BorderStroke(
+            width = 1.dp,
+
+            color =
+                colors.pinkPrincipal.copy(
+                    alpha = 0.18f
+                )
+        )
+    ) {
+
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 14.dp,
+                vertical = 15.dp
+            ),
+
+            verticalAlignment =
+                Alignment.CenterVertically
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .border(
+                        width = 1.5.dp,
+                        color = colors.pinkPrincipal,
+                        shape = CircleShape
+                    ),
+
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Info,
+
+                    contentDescription = null,
+
+                    tint = colors.pinkPrincipal,
+
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+
+            Spacer(
+                modifier = Modifier.width(13.dp)
+            )
+
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text =
+                        getStatusLabel(
+                            report.status
+                        ),
+
+                    color = colors.titles,
+
+                    fontFamily = FontFamily.Serif,
+
+                    fontWeight = FontWeight.Bold,
+
+                    fontSize = 17.sp
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+
+                Text(
+                    text = message,
+
+                    color =
+                        colors.text.copy(
+                            alpha = 0.72f
+                        ),
+
+                    fontSize = 11.sp,
+
+                    lineHeight = 15.sp
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
+
+
+                Text(
+                    text =
+                        "Última actualización: ${report.lastUpdate}",
+
+                    color =
+                        colors.text.copy(
+                            alpha = 0.58f
+                        ),
+
+                    fontSize = 10.sp
+                )
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// TEXTO DEL ESTADO
+// =================================================================
+
+private fun getStatusLabel(
+    status: ReportStatus
+): String {
+
+    return when (status) {
+
+        ReportStatus.REGISTRADO ->
+            "Registrado"
+
+        ReportStatus.EN_REVISION ->
+            "En revisión"
+
+        ReportStatus.EN_SEGUIMIENTO ->
+            "En seguimiento"
+
+        ReportStatus.CANALIZADO ->
+            "Canalizado"
+
+        ReportStatus.CONCLUIDO ->
+            "Concluido"
+
+        ReportStatus.ARCHIVADO ->
+            "Archivado"
+
+        ReportStatus.CANCELADO ->
+            "Cancelado"
+
+        ReportStatus.REINCIDENTE ->
+            "Reincidente"
+    }
+}
+
+
+// =================================================================
+// LÍNEA DE TIEMPO
+// =================================================================
+
+@Composable
+private fun TrackingTimeline(
+    report: TrackingReportUi
+) {
+
+    /*
+     * ARCHIVADO, CANCELADO y REINCIDENTE no se agregan como pasos
+     * adicionales del timeline.
+     *
+     * Son desenlaces/estados especiales y se representan mediante
+     * la tarjeta principal.
+     */
+
+    TrackingTimelineItem(
+        title = "Registrado",
+
+        date =
+            getTimelineDate(
+                ReportStatus.REGISTRADO,
+                report
+            ),
+
+        description =
+            "Tu reporte ha sido recibido.",
+
+        status =
+            getTimelineStatus(
+                step = ReportStatus.REGISTRADO,
+                current = report.status
+            ),
+
+        showLine = true
+    )
+
+
+    TrackingTimelineItem(
+        title = "En revisión",
+
+        date =
+            getTimelineDate(
+                ReportStatus.EN_REVISION,
+                report
+            ),
+
+        description =
+            "El reporte está siendo revisado por el equipo correspondiente.",
+
+        status =
+            getTimelineStatus(
+                step = ReportStatus.EN_REVISION,
+                current = report.status
+            ),
+
+        showLine = true
+    )
+
+
+    TrackingTimelineItem(
+        title = "En seguimiento",
+
+        date =
+            getTimelineDate(
+                ReportStatus.EN_SEGUIMIENTO,
+                report
+            ),
+
+        description =
+            "El reporte se encuentra en seguimiento con la instancia responsable.",
+
+        status =
+            getTimelineStatus(
+                step = ReportStatus.EN_SEGUIMIENTO,
+                current = report.status
+            ),
+
+        showLine = true
+    )
+
+
+    TrackingTimelineItem(
+        title = "Canalizado",
+
+        date =
+            getTimelineDate(
+                ReportStatus.CANALIZADO,
+                report
+            ),
+
+        description = "",
+
+        status =
+            getTimelineStatus(
+                step = ReportStatus.CANALIZADO,
+                current = report.status
+            ),
+
+        showLine = true
+    )
+
+
+    TrackingTimelineItem(
+        title = "Concluido",
+
+        date =
+            getTimelineDate(
+                ReportStatus.CONCLUIDO,
+                report
+            ),
+
+        description = "",
+
+        status =
+            getTimelineStatus(
+                step = ReportStatus.CONCLUIDO,
+                current = report.status
+            ),
+
+        showLine = false
+    )
+}
+
+
+// =================================================================
+// CALCULAR ESTADO VISUAL DEL TIMELINE
+// =================================================================
+
+private fun getTimelineStatus(
+    step: ReportStatus,
+    current: ReportStatus
+): TrackingStatus {
+
+    val orderedStatuses =
+        listOf(
+            ReportStatus.REGISTRADO,
+            ReportStatus.EN_REVISION,
+            ReportStatus.EN_SEGUIMIENTO,
+            ReportStatus.CANALIZADO,
+            ReportStatus.CONCLUIDO
+        )
+
+
+    // =============================================================
+    // ESTADOS ESPECIALES
+    //
+    // Para la simulación visual mantenemos únicamente como
+    // completados los pasos que razonablemente ya ocurrieron.
+    //
+    // TODO(BACKEND):
+    // El historial real deberá venir del servidor. No se deberá
+    // inferir únicamente a partir del estado final.
+    // =============================================================
+
+    if (
+        current == ReportStatus.ARCHIVADO ||
+        current == ReportStatus.CANCELADO ||
+        current == ReportStatus.REINCIDENTE
+    ) {
+
+        return when (step) {
+
+            ReportStatus.REGISTRADO ->
+                TrackingStatus.COMPLETED
+
+            else ->
+                TrackingStatus.PENDING
+        }
+    }
+
+
+    val currentIndex =
+        orderedStatuses.indexOf(current)
+
+    val stepIndex =
+        orderedStatuses.indexOf(step)
+
+
+    return when {
+
+        stepIndex < currentIndex ->
+            TrackingStatus.COMPLETED
+
+        stepIndex == currentIndex -> {
+
+            if (current == ReportStatus.CONCLUIDO) {
+                TrackingStatus.COMPLETED
+            } else {
+                TrackingStatus.CURRENT
+            }
+        }
+
+        else ->
+            TrackingStatus.PENDING
+    }
+}
+
+
+// =================================================================
+// FECHAS TEMPORALES DEL TIMELINE
+// =================================================================
+
+private fun getTimelineDate(
+    step: ReportStatus,
+    report: TrackingReportUi
+): String {
+
+    val visualStatus =
+        getTimelineStatus(
+            step = step,
+            current = report.status
+        )
+
+
+    if (visualStatus == TrackingStatus.PENDING) {
+        return "Pendiente"
+    }
+
+
+    return when (step) {
+
+        ReportStatus.REGISTRADO ->
+            "28 de septiembre de 2026, 10:12 h"
+
+        ReportStatus.EN_REVISION ->
+            "29 de septiembre de 2026, 16:40 h"
+
+        ReportStatus.EN_SEGUIMIENTO ->
+            "03 de octubre de 2026, 14:25 h"
+
+        ReportStatus.CANALIZADO ->
+            "08 de octubre de 2026, 09:30 h"
+
+        ReportStatus.CONCLUIDO ->
+            "12 de octubre de 2026, 12:15 h"
+
+        else ->
+            report.lastUpdate
+    }
+}
+
+
+// =================================================================
+// ELEMENTO DEL TIMELINE
 // =================================================================
 
 @Composable
@@ -1014,7 +1669,6 @@ private fun TrackingTimelineItem(
 ) {
 
     val colors = AppTheme.colors
-
     val teal = Color(0xFF20AFAE)
 
     val circleColor =
@@ -1036,11 +1690,6 @@ private fun TrackingTimelineItem(
     Row(
         modifier = Modifier.fillMaxWidth()
     ) {
-
-
-        // =========================================================
-        // INDICADOR
-        // =========================================================
 
         Column(
             horizontalAlignment =
@@ -1133,10 +1782,6 @@ private fun TrackingTimelineItem(
         )
 
 
-        // =========================================================
-        // INFORMACIÓN
-        // =========================================================
-
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -1186,7 +1831,10 @@ private fun TrackingTimelineItem(
             )
 
 
-            if (description.isNotBlank()) {
+            if (
+                description.isNotBlank() &&
+                status != TrackingStatus.PENDING
+            ) {
 
                 Spacer(
                     modifier = Modifier.height(3.dp)
@@ -1212,11 +1860,101 @@ private fun TrackingTimelineItem(
 
 
 // =================================================================
+// RESULTADO DEL SEGUIMIENTO
+// =================================================================
+
+@Composable
+private fun TrackingResolution(
+    resolution: String
+) {
+
+    val colors = AppTheme.colors
+    val teal = Color(0xFF20AFAE)
+
+    Text(
+        text = "Resultado del seguimiento",
+
+        color = colors.titles,
+
+        fontFamily = FontFamily.Serif,
+
+        fontWeight = FontWeight.Bold,
+
+        fontSize = 18.sp
+    )
+
+
+    Spacer(
+        modifier = Modifier.height(10.dp)
+    )
+
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+
+        color =
+            teal.copy(
+                alpha = 0.065f
+            ),
+
+        shape = RoundedCornerShape(8.dp)
+    ) {
+
+        Row(
+            modifier = Modifier.padding(
+                horizontal = 13.dp,
+                vertical = 13.dp
+            ),
+
+            verticalAlignment =
+                Alignment.Top
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.Check,
+
+                contentDescription = null,
+
+                tint = teal,
+
+                modifier = Modifier.size(19.dp)
+            )
+
+
+            Spacer(
+                modifier = Modifier.width(10.dp)
+            )
+
+
+            Text(
+                text = resolution,
+
+                color =
+                    colors.text.copy(
+                        alpha = 0.78f
+                    ),
+
+                fontFamily = FontFamily.Serif,
+
+                fontSize = 11.sp,
+
+                lineHeight = 16.sp,
+
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+
+// =================================================================
 // INFORMACIÓN GENERAL
 // =================================================================
 
 @Composable
-private fun ReportGeneralInformation() {
+private fun ReportGeneralInformation(
+    report: TrackingReportUi
+) {
 
     val colors = AppTheme.colors
 
@@ -1241,7 +1979,7 @@ private fun ReportGeneralInformation() {
             GeneralInformationRow(
                 icon = Icons.Default.Description,
                 label = "Modalidad",
-                value = "Con seguimiento"
+                value = report.modality
             )
 
 
@@ -1253,7 +1991,7 @@ private fun ReportGeneralInformation() {
             GeneralInformationRow(
                 icon = Icons.Default.CalendarMonth,
                 label = "Fecha de registro",
-                value = "28 de septiembre de 2026"
+                value = report.registrationDate
             )
 
 
@@ -1265,8 +2003,23 @@ private fun ReportGeneralInformation() {
             GeneralInformationRow(
                 icon = Icons.Default.LocationOn,
                 label = "Municipio",
-                value = "Atizapán de Zaragoza"
+                value = report.municipality
             )
+
+
+            if (report.closingDate != null) {
+
+                Spacer(
+                    modifier = Modifier.height(13.dp)
+                )
+
+
+                GeneralInformationRow(
+                    icon = Icons.Default.Check,
+                    label = "Fecha de cierre",
+                    value = report.closingDate
+                )
+            }
         }
     }
 }
