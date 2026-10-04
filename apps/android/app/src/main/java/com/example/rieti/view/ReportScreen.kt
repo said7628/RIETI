@@ -23,9 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LocationOn
@@ -61,11 +61,48 @@ import com.example.rieti.view.components.BottomBar
 
 
 // =================================================================
+// MODALIDAD DEL REPORTE
+// =================================================================
+
+enum class ReportMode {
+    TRACKING,
+    ANONYMOUS
+}
+
+
+// =================================================================
 // REPORTE CON SEGUIMIENTO
 // =================================================================
 
 @Composable
 fun ReportScreen(
+    onHomeClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onCurrentLocationClick: () -> Unit,
+    onSelectFilesClick: () -> Unit,
+    onSendReportClick: () -> Unit
+) {
+
+    ReportFormScreen(
+        mode = ReportMode.TRACKING,
+        onHomeClick = onHomeClick,
+        onAboutUsClick = onAboutUsClick,
+        onSettingsClick = onSettingsClick,
+        onCurrentLocationClick = onCurrentLocationClick,
+        onSelectFilesClick = onSelectFilesClick,
+        onSendReportClick = onSendReportClick
+    )
+}
+
+
+// =================================================================
+// FORMULARIO COMPARTIDO
+// =================================================================
+
+@Composable
+fun ReportFormScreen(
+    mode: ReportMode,
     onHomeClick: () -> Unit,
     onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -84,7 +121,24 @@ fun ReportScreen(
 
 
     // =============================================================
-    // DATOS TEMPORALES DEL FORMULARIO
+    // DATOS ESPECÍFICOS DEL REPORTE ANÓNIMO
+    //
+    // TODO(BACKEND):
+    // Estos datos posteriormente podrán administrarse desde
+    // ReportViewModel.
+    // =============================================================
+
+    var email by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var confirmEmail by rememberSaveable {
+        mutableStateOf("")
+    }
+
+
+    // =============================================================
+    // DATOS COMUNES DEL REPORTE
     //
     // TODO(BACKEND):
     // Posteriormente estos datos pueden administrarse desde
@@ -131,12 +185,12 @@ fun ReportScreen(
     val colors = AppTheme.colors
 
 
+    // =============================================================
+    // PANTALLA
+    // =============================================================
+
     Scaffold(
         containerColor = colors.surface,
-
-        // =========================================================
-        // BOTTOM BAR
-        // =========================================================
 
         bottomBar = {
 
@@ -156,7 +210,6 @@ fun ReportScreen(
         }
 
     ) { innerPadding ->
-
 
         Column(
             modifier = Modifier
@@ -211,6 +264,18 @@ fun ReportScreen(
                     1 -> {
 
                         ReportDetailsStep(
+                            mode = mode,
+
+                            email = email,
+                            onEmailChange = {
+                                email = it
+                            },
+
+                            confirmEmail = confirmEmail,
+                            onConfirmEmailChange = {
+                                confirmEmail = it
+                            },
+
                             numberOfChildren = numberOfChildren,
                             onNumberOfChildrenChange = {
                                 numberOfChildren = it
@@ -237,6 +302,15 @@ fun ReportScreen(
                             },
 
                             onNextClick = {
+
+                                /*
+                                 * TODO(BACKEND / VALIDATION):
+                                 *
+                                 * En la modalidad ANONYMOUS se deberá
+                                 * validar el correo de acuerdo con las
+                                 * reglas ya definidas para el sistema.
+                                 */
+
                                 currentStep = 2
                             }
                         )
@@ -251,21 +325,25 @@ fun ReportScreen(
 
                         ReportLocationStep(
                             fullAddress = fullAddress,
+
                             onFullAddressChange = {
                                 fullAddress = it
                             },
 
                             neighborhood = neighborhood,
+
                             onNeighborhoodChange = {
                                 neighborhood = it
                             },
 
                             postalCode = postalCode,
+
                             onPostalCodeChange = {
                                 postalCode = it
                             },
 
                             municipality = municipality,
+
                             onMunicipalityChange = {
                                 municipality = it
                             },
@@ -306,6 +384,9 @@ fun ReportScreen(
                     4 -> {
 
                         ReportReviewStep(
+                            mode = mode,
+                            email = email,
+
                             numberOfChildren = numberOfChildren,
                             childrenAges = childrenAges,
                             workType = workType,
@@ -334,13 +415,14 @@ fun ReportScreen(
                                 /*
                                  * TODO(BACKEND):
                                  *
-                                 * Posteriormente:
+                                 * Mantener la modalidad seleccionada
+                                 * al construir el request del reporte:
                                  *
-                                 * 1. Validar los datos.
-                                 * 2. Enviar el reporte al ViewModel.
-                                 * 3. El ViewModel llamará al endpoint.
-                                 * 4. Cuando el backend confirme el reporte,
-                                 *    navegar a ReportSuccessScreen.
+                                 * ReportMode.TRACKING
+                                 * ReportMode.ANONYMOUS
+                                 *
+                                 * Después de la confirmación del backend,
+                                 * navegar a ReportSuccessScreen.
                                  */
 
                                 onSendReportClick()
@@ -482,6 +564,7 @@ private fun ReportProgressIndicator(
                                     }
                                 )
                         )
+
                     } else {
 
                         Spacer(
@@ -503,12 +586,14 @@ private fun ReportProgressIndicator(
                             )
                             .border(
                                 width = 1.5.dp,
+
                                 color =
                                     if (isCompleted || isCurrent) {
                                         pink
                                     } else {
                                         inactiveColor
                                     },
+
                                 shape = CircleShape
                             ),
 
@@ -528,6 +613,7 @@ private fun ReportProgressIndicator(
 
                             Text(
                                 text = step.toString(),
+
                                 color =
                                     if (isCurrent) {
                                         Color.White
@@ -536,6 +622,7 @@ private fun ReportProgressIndicator(
                                             alpha = 0.65f
                                         )
                                     },
+
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -572,10 +659,6 @@ private fun ReportProgressIndicator(
                 )
 
 
-                // =================================================
-                // NOMBRE DEL PASO
-                // =================================================
-
                 Text(
                     text = label,
 
@@ -604,6 +687,14 @@ private fun ReportProgressIndicator(
 
 @Composable
 private fun ReportDetailsStep(
+    mode: ReportMode,
+
+    email: String,
+    onEmailChange: (String) -> Unit,
+
+    confirmEmail: String,
+    onConfirmEmailChange: (String) -> Unit,
+
     numberOfChildren: String,
     onNumberOfChildrenChange: (String) -> Unit,
 
@@ -637,8 +728,34 @@ private fun ReportDetailsStep(
     ) {
 
 
+        // =========================================================
+        // BLOQUE EXCLUSIVO DEL REPORTE ANÓNIMO
+        // =========================================================
+
+        if (mode == ReportMode.ANONYMOUS) {
+
+            AnonymousModeCard(
+                email = email,
+                onEmailChange = onEmailChange,
+
+                confirmEmail = confirmEmail,
+                onConfirmEmailChange = onConfirmEmailChange
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
+        }
+
+
+        // =========================================================
+        // DATOS COMUNES
+        // =========================================================
+
         StepTitle(
             title = "Detalles del reporte",
+
             description =
                 "Proporciona la información disponible sobre la situación observada. No es necesario contar con todos los datos para continuar."
         )
@@ -705,12 +822,14 @@ private fun ReportDetailsStep(
             label = "Descripción de la situación",
             value = details,
             placeholder = "Describe brevemente los hechos observados...",
+
             onValueChange = {
 
                 if (it.length <= 500) {
                     onDetailsChange(it)
                 }
             },
+
             minHeight = 120.dp,
             singleLine = false
         )
@@ -723,10 +842,14 @@ private fun ReportDetailsStep(
 
         Text(
             text = "${details.length}/500",
-            color = AppTheme.colors.text.copy(
-                alpha = 0.65f
-            ),
+
+            color =
+                AppTheme.colors.text.copy(
+                    alpha = 0.65f
+                ),
+
             fontSize = 12.sp,
+
             modifier = Modifier.align(
                 Alignment.End
             )
@@ -742,6 +865,145 @@ private fun ReportDetailsStep(
             text = "Siguiente",
             onClick = onNextClick
         )
+    }
+}
+
+
+// =================================================================
+// BLOQUE EXCLUSIVO - REPORTE ANÓNIMO
+// =================================================================
+
+@Composable
+private fun AnonymousModeCard(
+    email: String,
+    onEmailChange: (String) -> Unit,
+    confirmEmail: String,
+    onConfirmEmailChange: (String) -> Unit
+) {
+
+    val colors = AppTheme.colors
+
+    /*
+     * Se utiliza el rosa de la identidad visual con transparencia
+     * para que el bloque también se adapte al modo oscuro.
+     */
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+
+        color =
+            colors.pinkPrincipal.copy(
+                alpha = 0.08f
+            ),
+
+        shape = RoundedCornerShape(12.dp),
+
+        border = BorderStroke(
+            width = 1.dp,
+
+            color =
+                colors.pinkPrincipal.copy(
+                    alpha = 0.22f
+                )
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.padding(
+                horizontal = 16.dp,
+                vertical = 16.dp
+            )
+        ) {
+
+
+            Text(
+                text = "Reporte anónimo",
+
+                color = colors.pinkPrincipal,
+
+                fontFamily = FontFamily.Serif,
+
+                fontWeight = FontWeight.Bold,
+
+                fontSize = 21.sp
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+
+            Text(
+                text =
+                    "El reporte se registrará de forma anónima. " +
+                            "El correo electrónico se utilizará únicamente " +
+                            "para los fines definidos para esta modalidad.",
+
+                color =
+                    colors.text.copy(
+                        alpha = 0.78f
+                    ),
+
+                fontSize = 12.sp,
+
+                lineHeight = 17.sp
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+
+            ReportFieldWithLabel(
+                label = "Correo electrónico (*)",
+                value = email,
+                placeholder = "correo@ejemplo.com",
+                onValueChange = onEmailChange
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+
+            ReportFieldWithLabel(
+                label = "Confirmar correo electrónico",
+                value = confirmEmail,
+                placeholder = "Confirma tu correo electrónico",
+                onValueChange = onConfirmEmailChange
+            )
+
+
+            // =====================================================
+            // VALIDACIÓN VISUAL TEMPORAL
+            // =====================================================
+
+            if (
+                confirmEmail.isNotEmpty() &&
+                !email.equals(
+                    confirmEmail,
+                    ignoreCase = true
+                )
+            ) {
+
+                Spacer(
+                    modifier = Modifier.height(7.dp)
+                )
+
+
+                Text(
+                    text =
+                        "Los correos electrónicos no coinciden.",
+
+                    color = colors.pinkPrincipal,
+
+                    fontSize = 12.sp
+                )
+            }
+        }
     }
 }
 
@@ -785,6 +1047,7 @@ private fun ReportLocationStep(
 
         StepTitle(
             title = "Ubicación del reporte",
+
             description =
                 "Indica el lugar donde ocurrió la situación. Puedes usar tu ubicación actual o proporcionar la dirección de forma manual."
         )
@@ -795,12 +1058,9 @@ private fun ReportLocationStep(
         )
 
 
-        // =========================================================
-        // MAPA TEMPORAL
-        // =========================================================
-
         MapPlaceholder(
-            onCurrentLocationClick = onCurrentLocationClick
+            onCurrentLocationClick =
+                onCurrentLocationClick
         )
 
 
@@ -826,7 +1086,8 @@ private fun ReportLocationStep(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement =
+                Arrangement.spacedBy(12.dp)
         ) {
 
             ReportFieldWithLabel(
@@ -901,6 +1162,7 @@ private fun ReportEvidenceStep(
 
         StepTitle(
             title = "Evidencia fotográfica",
+
             description =
                 "Puedes agregar fotografías que ayuden a documentar la situación. Este campo es opcional."
         )
@@ -910,10 +1172,6 @@ private fun ReportEvidenceStep(
             modifier = Modifier.height(28.dp)
         )
 
-
-        // =========================================================
-        // SELECTOR DE EVIDENCIAS
-        // =========================================================
 
         EvidenceSelector(
             onClick = onSelectFilesClick
@@ -925,16 +1183,15 @@ private fun ReportEvidenceStep(
         )
 
 
-        // =========================================================
-        // PLACEHOLDERS DE FOTOGRAFÍAS
-        //
-        // TODO:
-        // Después mostrar aquí las fotografías seleccionadas.
-        // =========================================================
+        /*
+         * TODO:
+         * Después mostrar aquí las fotografías seleccionadas.
+         */
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement =
+                Arrangement.spacedBy(10.dp)
         ) {
 
             repeat(4) { index ->
@@ -979,6 +1236,9 @@ private fun ReportEvidenceStep(
 
 @Composable
 private fun ReportReviewStep(
+    mode: ReportMode,
+    email: String,
+
     numberOfChildren: String,
     childrenAges: String,
     workType: String,
@@ -1014,6 +1274,7 @@ private fun ReportReviewStep(
 
         StepTitle(
             title = "Revisión del reporte",
+
             description =
                 "Verifica que la información sea correcta antes de enviarlo. Puedes editar los datos si es necesario."
         )
@@ -1021,6 +1282,42 @@ private fun ReportReviewStep(
 
         Spacer(
             modifier = Modifier.height(22.dp)
+        )
+
+
+        // =========================================================
+        // MODALIDAD
+        // =========================================================
+
+        ReviewCard(
+            title = "Modalidad del reporte",
+            onEditClick = onEditDetailsClick
+        ) {
+
+            ReviewRow(
+                label = "Modalidad",
+
+                value =
+                    if (mode == ReportMode.ANONYMOUS) {
+                        "Reporte anónimo"
+                    } else {
+                        "Reporte con seguimiento"
+                    }
+            )
+
+
+            if (mode == ReportMode.ANONYMOUS) {
+
+                ReviewRow(
+                    label = "Correo electrónico",
+                    value = valueOrEmpty(email)
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
         )
 
 
@@ -1129,11 +1426,16 @@ private fun ReportReviewStep(
         ) {
 
             Text(
-                text = "Las evidencias seleccionadas aparecerán aquí cuando se conecte el selector de archivos.",
-                color = AppTheme.colors.text.copy(
-                    alpha = 0.70f
-                ),
+                text =
+                    "Las evidencias seleccionadas aparecerán aquí cuando se conecte el selector de archivos.",
+
+                color =
+                    AppTheme.colors.text.copy(
+                        alpha = 0.70f
+                    ),
+
                 fontSize = 13.sp,
+
                 lineHeight = 18.sp
             )
         }
@@ -1162,6 +1464,7 @@ private fun ReportReviewStep(
             colors = ButtonDefaults.buttonColors(
                 containerColor =
                     AppTheme.colors.pinkPrincipal,
+
                 contentColor = Color.White
             )
         ) {
@@ -1184,9 +1487,10 @@ private fun ReportReviewStep(
             text =
                 "La información proporcionada será utilizada únicamente para atender el reporte.",
 
-            color = AppTheme.colors.text.copy(
-                alpha = 0.65f
-            ),
+            color =
+                AppTheme.colors.text.copy(
+                    alpha = 0.65f
+                ),
 
             fontSize = 12.sp,
 
@@ -1222,9 +1526,12 @@ private fun StepTitle(
 
     Text(
         text = description,
-        color = AppTheme.colors.text.copy(
-            alpha = 0.78f
-        ),
+
+        color =
+            AppTheme.colors.text.copy(
+                alpha = 0.78f
+            ),
+
         fontSize = 14.sp,
         lineHeight = 20.sp
     )
@@ -1323,9 +1630,12 @@ private fun RietiTextField(
             )
             .border(
                 width = 1.dp,
-                color = colors.text.copy(
-                    alpha = 0.18f
-                ),
+
+                color =
+                    colors.text.copy(
+                        alpha = 0.18f
+                    ),
+
                 shape = RoundedCornerShape(9.dp)
             ),
 
@@ -1351,9 +1661,12 @@ private fun RietiTextField(
 
                     Text(
                         text = placeholder,
-                        color = colors.text.copy(
-                            alpha = 0.45f
-                        ),
+
+                        color =
+                            colors.text.copy(
+                                alpha = 0.45f
+                            ),
+
                         fontSize = 14.sp
                     )
                 }
@@ -1392,23 +1705,24 @@ private fun MapPlaceholder(
             )
             .border(
                 width = 1.dp,
-                color = colors.blueDetails.copy(
-                    alpha = 0.35f
-                ),
+
+                color =
+                    colors.blueDetails.copy(
+                        alpha = 0.35f
+                    ),
+
                 shape = RoundedCornerShape(10.dp)
             )
     ) {
 
 
-        // =========================================================
-        // CONTENIDO TEMPORAL
-        // =========================================================
-
         Column(
             modifier = Modifier.align(
                 Alignment.Center
             ),
-            horizontalAlignment = Alignment.CenterHorizontally
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Icon(
@@ -1435,17 +1749,16 @@ private fun MapPlaceholder(
 
             Text(
                 text = "Se conectará posteriormente",
-                color = colors.text.copy(
-                    alpha = 0.55f
-                ),
+
+                color =
+                    colors.text.copy(
+                        alpha = 0.55f
+                    ),
+
                 fontSize = 11.sp
             )
         }
 
-
-        // =========================================================
-        // BOTÓN UBICACIÓN
-        // =========================================================
 
         Surface(
             modifier = Modifier
@@ -1463,9 +1776,11 @@ private fun MapPlaceholder(
 
             border = BorderStroke(
                 width = 1.dp,
-                color = colors.bluePrincipal.copy(
-                    alpha = 0.25f
-                )
+
+                color =
+                    colors.bluePrincipal.copy(
+                        alpha = 0.25f
+                    )
             )
         ) {
 
@@ -1475,13 +1790,18 @@ private fun MapPlaceholder(
                     vertical = 8.dp
                 ),
 
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Icon(
-                    imageVector = Icons.Default.LocationOn,
+                    imageVector =
+                        Icons.Default.LocationOn,
+
                     contentDescription = null,
+
                     tint = colors.bluePrincipal,
+
                     modifier = Modifier.size(17.dp)
                 )
 
@@ -1529,9 +1849,11 @@ private fun EvidenceSelector(
 
         border = BorderStroke(
             width = 1.dp,
-            color = colors.pinkPrincipal.copy(
-                alpha = 0.55f
-            )
+
+            color =
+                colors.pinkPrincipal.copy(
+                    alpha = 0.55f
+                )
         )
     ) {
 
@@ -1542,14 +1864,21 @@ private fun EvidenceSelector(
                     horizontal = 22.dp
                 ),
 
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            verticalAlignment =
+                Alignment.CenterVertically,
+
+            horizontalArrangement =
+                Arrangement.Center
         ) {
 
             Icon(
-                imageVector = Icons.Default.AddPhotoAlternate,
+                imageVector =
+                    Icons.Default.AddPhotoAlternate,
+
                 contentDescription = null,
+
                 tint = colors.pinkPrincipal,
+
                 modifier = Modifier.size(38.dp)
             )
 
@@ -1576,9 +1905,12 @@ private fun EvidenceSelector(
 
                 Text(
                     text = "Puedes subir hasta 5 imágenes.",
-                    color = colors.text.copy(
-                        alpha = 0.65f
-                    ),
+
+                    color =
+                        colors.text.copy(
+                            alpha = 0.65f
+                        ),
+
                     fontSize = 12.sp
                 )
             }
@@ -1652,6 +1984,7 @@ private fun NextButton(
         colors = ButtonDefaults.buttonColors(
             containerColor =
                 AppTheme.colors.pinkPrincipal,
+
             contentColor = Color.White
         )
     ) {
@@ -1665,6 +1998,7 @@ private fun NextButton(
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
+
                 modifier = Modifier.align(
                     Alignment.Center
                 )
@@ -1672,8 +2006,11 @@ private fun NextButton(
 
 
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                imageVector =
+                    Icons.AutoMirrored.Filled.ArrowForward,
+
                 contentDescription = null,
+
                 modifier = Modifier
                     .align(
                         Alignment.CenterEnd
@@ -1708,9 +2045,11 @@ private fun ReviewCard(
 
         border = BorderStroke(
             width = 1.dp,
-            color = colors.text.copy(
-                alpha = 0.14f
-            )
+
+            color =
+                colors.text.copy(
+                    alpha = 0.14f
+                )
         )
     ) {
 
@@ -1720,16 +2059,21 @@ private fun ReviewCard(
             )
         ) {
 
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Icon(
-                    imageVector = Icons.Default.Description,
+                    imageVector =
+                        Icons.Default.Description,
+
                     contentDescription = null,
+
                     tint = colors.titles,
+
                     modifier = Modifier.size(22.dp)
                 )
 
@@ -1753,8 +2097,11 @@ private fun ReviewCard(
                     text = "Editar",
                     color = colors.pinkPrincipal,
                     fontSize = 13.sp,
+
                     textDecoration =
-                        androidx.compose.ui.text.style.TextDecoration.Underline,
+                        androidx.compose.ui.text.style
+                            .TextDecoration.Underline,
+
                     modifier = Modifier.clickable {
                         onEditClick()
                     }
@@ -1793,10 +2140,14 @@ private fun ReviewRow(
 
         Text(
             text = label,
-            color = AppTheme.colors.text.copy(
-                alpha = 0.75f
-            ),
+
+            color =
+                AppTheme.colors.text.copy(
+                    alpha = 0.75f
+                ),
+
             fontSize = 12.sp,
+
             modifier = Modifier.weight(1.25f)
         )
 
@@ -1831,7 +2182,7 @@ private fun valueOrEmpty(
 
 
 // =================================================================
-// PREVIEW LIGHT
+// PREVIEW LIGHT - REPORTE CON SEGUIMIENTO
 // =================================================================
 
 @Preview(
@@ -1859,7 +2210,7 @@ private fun ReportScreenLightPreview() {
 
 
 // =================================================================
-// PREVIEW DARK
+// PREVIEW DARK - REPORTE CON SEGUIMIENTO
 // =================================================================
 
 @Preview(
@@ -1876,6 +2227,65 @@ private fun ReportScreenDarkPreview() {
     ) {
 
         ReportScreen(
+            onHomeClick = {},
+            onAboutUsClick = {},
+            onSettingsClick = {},
+            onCurrentLocationClick = {},
+            onSelectFilesClick = {},
+            onSendReportClick = {}
+        )
+    }
+}
+
+
+// =================================================================
+// PREVIEW LIGHT - REPORTE ANÓNIMO
+// =================================================================
+
+@Preview(
+    name = "Reporte anónimo - Light",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+private fun AnonymousReportFormLightPreview() {
+
+    RIETITheme(
+        darkTheme = false
+    ) {
+
+        ReportFormScreen(
+            mode = ReportMode.ANONYMOUS,
+            onHomeClick = {},
+            onAboutUsClick = {},
+            onSettingsClick = {},
+            onCurrentLocationClick = {},
+            onSelectFilesClick = {},
+            onSendReportClick = {}
+        )
+    }
+}
+
+
+// =================================================================
+// PREVIEW DARK - REPORTE ANÓNIMO
+// =================================================================
+
+@Preview(
+    name = "Reporte anónimo - Dark",
+    showBackground = true,
+    showSystemUi = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun AnonymousReportFormDarkPreview() {
+
+    RIETITheme(
+        darkTheme = true
+    ) {
+
+        ReportFormScreen(
+            mode = ReportMode.ANONYMOUS,
             onHomeClick = {},
             onAboutUsClick = {},
             onSettingsClick = {},

@@ -26,8 +26,8 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,6 +55,16 @@ import com.example.rieti.view.components.TopBar
 
 
 // =================================================================
+// TIPO DE REPORTE SELECCIONADO
+// =================================================================
+
+private enum class HomeReportType {
+    ANONYMOUS,
+    TRACKING
+}
+
+
+// =================================================================
 // HOME
 // =================================================================
 
@@ -72,15 +82,9 @@ fun HomeScreen(
     val colors = AppTheme.colors
     val isDarkTheme = AppTheme.isDarkTheme
 
-
-    // =================================================================
-    // ESTADO DEL MODAL PARA ELEGIR TIPO DE REPORTE
-    // =================================================================
-
     var showReportTypeSheet by remember {
         mutableStateOf(false)
     }
-
 
     val reportTypeSheetState =
         rememberModalBottomSheetState(
@@ -88,9 +92,9 @@ fun HomeScreen(
         )
 
 
-    // =================================================================
+    // =============================================================
     // COLORES
-    // =================================================================
+    // =============================================================
 
     val mainPink =
         if (isDarkTheme) {
@@ -99,14 +103,12 @@ fun HomeScreen(
             Color(0xFFD9165D)
         }
 
-
     val secondaryCard =
         if (isDarkTheme) {
             Color(0xFF211D20)
         } else {
             Color(0xFFF9F9F9)
         }
-
 
     val secondaryBorder =
         if (isDarkTheme) {
@@ -115,7 +117,6 @@ fun HomeScreen(
             Color(0xFFE1E1E1)
         }
 
-
     val primaryText =
         if (isDarkTheme) {
             Color(0xFFF8F5F6)
@@ -123,14 +124,12 @@ fun HomeScreen(
             Color(0xFF123E5B)
         }
 
-
     val secondaryText =
         if (isDarkTheme) {
             Color(0xFFC8BEC3)
         } else {
             Color(0xFF587081)
         }
-
 
     val sheetBackground =
         if (isDarkTheme) {
@@ -140,28 +139,17 @@ fun HomeScreen(
         }
 
 
-    // =================================================================
+    // =============================================================
     // PANTALLA
-    // =================================================================
+    // =============================================================
 
     Scaffold(
 
         containerColor = colors.surface,
 
-
-        // =============================================================
-        // TOP BAR
-        // =============================================================
-
         topBar = {
-
             TopBar()
         },
-
-
-        // =============================================================
-        // BOTTOM BAR
-        // =============================================================
 
         bottomBar = {
 
@@ -182,11 +170,6 @@ fun HomeScreen(
 
     ) { innerPadding ->
 
-
-        // =================================================================
-        // CONTENIDO
-        // =================================================================
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -198,9 +181,9 @@ fun HomeScreen(
         ) {
 
 
-            // =============================================================
+            // =====================================================
             // PRESENTACIÓN
-            // =============================================================
+            // =====================================================
 
             HomeHeroSection(
                 isDarkTheme = isDarkTheme,
@@ -214,9 +197,9 @@ fun HomeScreen(
             )
 
 
-            // =============================================================
+            // =====================================================
             // REALIZAR REPORTE
-            // =============================================================
+            // =====================================================
 
             HomeActionCard(
 
@@ -235,18 +218,13 @@ fun HomeScreen(
 
                 titleColor = Color.White,
 
-                subtitleColor =
-                    Color.White.copy(
-                        alpha = 0.92f
-                    ),
+                subtitleColor = Color.White.copy(
+                    alpha = 0.92f
+                ),
 
                 arrowColor = Color.White,
 
                 onClick = {
-
-                    // Abre el modal para seleccionar
-                    // el tipo de reporte.
-
                     showReportTypeSheet = true
                 }
             )
@@ -257,9 +235,9 @@ fun HomeScreen(
             )
 
 
-            // =============================================================
+            // =====================================================
             // SEGUIMIENTO
-            // =============================================================
+            // =====================================================
 
             HomeActionCard(
 
@@ -283,15 +261,6 @@ fun HomeScreen(
                 arrowColor = primaryText,
 
                 onClick = {
-
-                    /*
-                     * TODO(NAVIGATION):
-                     *
-                     * Cuando se implemente la pantalla
-                     * de seguimiento, este callback
-                     * llevará a dicha pantalla.
-                     */
-
                     onTrackingClick()
                 }
             )
@@ -302,14 +271,13 @@ fun HomeScreen(
             )
 
 
-            // =============================================================
+            // =====================================================
             // ORIENTACIÓN
-            // =============================================================
+            // =====================================================
 
             HomeActionCard(
 
-                icon =
-                    Icons.AutoMirrored.Filled.MenuBook,
+                icon = Icons.AutoMirrored.Filled.MenuBook,
 
                 title = "Orientación",
 
@@ -329,15 +297,6 @@ fun HomeScreen(
                 arrowColor = primaryText,
 
                 onClick = {
-
-                    /*
-                     * Navega a OrientationScreen.
-                     *
-                     * Las opciones internas de Orientación
-                     * serán las que posteriormente abran
-                     * sus respectivas pestañas informativas.
-                     */
-
                     onOrientationClick()
                 }
             )
@@ -350,9 +309,9 @@ fun HomeScreen(
     }
 
 
-    // =================================================================
+    // =============================================================
     // MODAL PARA ELEGIR TIPO DE REPORTE
-    // =================================================================
+    // =============================================================
 
     if (showReportTypeSheet) {
 
@@ -399,44 +358,38 @@ fun HomeScreen(
                     showReportTypeSheet = false
                 },
 
+                onContinue = { selectedType ->
 
-                // =========================================================
-                // REPORTE ANÓNIMO
-                // =========================================================
-
-                onAnonymousReportClick = {
-
+                    // Cerramos el modal antes de navegar
                     showReportTypeSheet = false
 
-                    /*
-                     * TODO(BACKEND):
-                     *
-                     * Al enviar el reporte, deberá indicarse
-                     * que la modalidad seleccionada corresponde
-                     * a un reporte ANÓNIMO.
-                     */
+                    when (selectedType) {
 
-                    onAnonymousReportClick()
-                },
+                        HomeReportType.ANONYMOUS -> {
 
+                            /*
+                             * TODO(BACKEND):
+                             *
+                             * Al enviar el reporte deberá
+                             * conservarse la modalidad ANÓNIMA.
+                             */
 
-                // =========================================================
-                // REPORTE CON SEGUIMIENTO
-                // =========================================================
+                            onAnonymousReportClick()
+                        }
 
-                onTrackingReportClick = {
+                        HomeReportType.TRACKING -> {
 
-                    showReportTypeSheet = false
+                            /*
+                             * TODO(BACKEND):
+                             *
+                             * Al enviar el reporte deberá
+                             * conservarse la modalidad
+                             * CON SEGUIMIENTO.
+                             */
 
-                    /*
-                     * TODO(BACKEND):
-                     *
-                     * Al enviar el reporte, deberá indicarse
-                     * que la modalidad seleccionada corresponde
-                     * a un reporte CON SEGUIMIENTO.
-                     */
-
-                    onReportClick()
+                            onReportClick()
+                        }
+                    }
                 }
             )
         }
@@ -462,9 +415,7 @@ private fun HomeHeroSection(
             Color(0xFFD9165D)
         }
 
-
-    val teal =
-        Color(0xFF16BFAF)
+    val teal = Color(0xFF16BFAF)
 
 
     Box(
@@ -474,118 +425,101 @@ private fun HomeHeroSection(
     ) {
 
 
-        // =============================================================
+        // =========================================================
         // CUADRADOS DECORATIVOS TRANSPARENTES
-        // =============================================================
-
+        // =========================================================
 
         // Rosa superior
-
         Box(
             modifier = Modifier
                 .size(155.dp)
-                .align(
-                    Alignment.TopEnd
-                )
+                .align(Alignment.TopEnd)
                 .offset(
                     x = 30.dp,
                     y = (-30).dp
                 )
                 .background(
-                    color =
-                        pink.copy(
-                            alpha =
-                                if (isDarkTheme) {
-                                    0.10f
-                                } else {
-                                    0.07f
-                                }
-                        )
+                    color = pink.copy(
+                        alpha =
+                            if (isDarkTheme) {
+                                0.10f
+                            } else {
+                                0.07f
+                            }
+                    )
                 )
         )
 
 
         // Rosa secundario
-
         Box(
             modifier = Modifier
                 .size(102.dp)
-                .align(
-                    Alignment.CenterEnd
-                )
+                .align(Alignment.CenterEnd)
                 .offset(
                     x = 20.dp,
                     y = (-14).dp
                 )
                 .background(
-                    color =
-                        pink.copy(
-                            alpha =
-                                if (isDarkTheme) {
-                                    0.07f
-                                } else {
-                                    0.045f
-                                }
-                        )
+                    color = pink.copy(
+                        alpha =
+                            if (isDarkTheme) {
+                                0.07f
+                            } else {
+                                0.045f
+                            }
+                    )
                 )
         )
 
 
         // Turquesa inferior
-
         Box(
             modifier = Modifier
                 .size(120.dp)
-                .align(
-                    Alignment.BottomEnd
-                )
+                .align(Alignment.BottomEnd)
                 .offset(
                     x = 32.dp,
                     y = 15.dp
                 )
                 .background(
-                    color =
-                        teal.copy(
-                            alpha =
-                                if (isDarkTheme) {
-                                    0.10f
-                                } else {
-                                    0.07f
-                                }
-                        )
+                    color = teal.copy(
+                        alpha =
+                            if (isDarkTheme) {
+                                0.10f
+                            } else {
+                                0.07f
+                            }
+                    )
                 )
         )
 
 
         // Turquesa pequeño superpuesto
-
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .align(
-                    Alignment.BottomEnd
-                )
+                .align(Alignment.BottomEnd)
                 .offset(
                     x = (-35).dp,
                     y = 28.dp
                 )
                 .background(
-                    color =
-                        teal.copy(
-                            alpha =
-                                if (isDarkTheme) {
-                                    0.06f
-                                } else {
-                                    0.04f
-                                }
-                        )
+                    color = teal.copy(
+                        alpha =
+                            if (isDarkTheme) {
+                                0.06f
+                            } else {
+                                0.04f
+                            }
+                    )
                 )
         )
 
 
-        // =============================================================
+        // =========================================================
         // CONTENIDO
-        // =============================================================
+        // =========================================================
 
         Column(
             modifier = Modifier
@@ -596,7 +530,6 @@ private fun HomeHeroSection(
                     top = 24.dp
                 )
         ) {
-
 
             Text(
                 text = "Por entornos",
@@ -708,9 +641,9 @@ private fun HomeActionCard(
         ) {
 
 
-            // =============================================================
+            // =====================================================
             // ICONO
-            // =============================================================
+            // =====================================================
 
             Icon(
                 imageVector = icon,
@@ -725,17 +658,14 @@ private fun HomeActionCard(
             )
 
 
-            // =============================================================
+            // =====================================================
             // TEXTO
-            // =============================================================
+            // =====================================================
 
             Column(
                 modifier = Modifier.weight(1f),
-
-                verticalArrangement =
-                    Arrangement.Center
+                verticalArrangement = Arrangement.Center
             ) {
-
 
                 Text(
                     text = title,
@@ -766,10 +696,6 @@ private fun HomeActionCard(
             )
 
 
-            // =============================================================
-            // FLECHA
-            // =============================================================
-
             Text(
                 text = "›",
                 color = arrowColor,
@@ -789,9 +715,13 @@ private fun HomeActionCard(
 private fun ReportTypeContent(
     isDarkTheme: Boolean,
     onClose: () -> Unit,
-    onAnonymousReportClick: () -> Unit,
-    onTrackingReportClick: () -> Unit
+    onContinue: (HomeReportType) -> Unit
 ) {
+
+    var selectedType by remember {
+        mutableStateOf<HomeReportType?>(null)
+    }
+
 
     val primaryText =
         if (isDarkTheme) {
@@ -825,8 +755,7 @@ private fun ReportTypeContent(
         }
 
 
-    val pink =
-        Color(0xFFFF0060)
+    val pink = Color(0xFFFF0060)
 
 
     Column(
@@ -843,44 +772,19 @@ private fun ReportTypeContent(
     ) {
 
 
-        // =============================================================
-        // CERRAR
-        // =============================================================
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-
-            horizontalArrangement =
-                Arrangement.End
-        ) {
-
-            Text(
-                text = "×",
-                color = secondaryText,
-                fontSize = 28.sp,
-
-                modifier = Modifier
-                    .clickable {
-                        onClose()
-                    }
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 2.dp
-                    )
-            )
-        }
+        // =========================================================
+        // YA NO HAY "X" AQUÍ
+        // =========================================================
 
 
-        // =============================================================
+        // =========================================================
         // INDICADOR SUPERIOR
-        // =============================================================
+        // =========================================================
 
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(
-                    CircleShape
-                )
+                .clip(CircleShape)
                 .background(
                     pink.copy(
                         alpha = 0.09f
@@ -904,9 +808,9 @@ private fun ReportTypeContent(
         )
 
 
-        // =============================================================
+        // =========================================================
         // TÍTULO
-        // =============================================================
+        // =========================================================
 
         Text(
             text =
@@ -956,9 +860,9 @@ private fun ReportTypeContent(
         )
 
 
-        // =============================================================
+        // =========================================================
         // REPORTE ANÓNIMO
-        // =============================================================
+        // =========================================================
 
         ReportTypeOption(
 
@@ -967,15 +871,25 @@ private fun ReportTypeContent(
             subtitle =
                 "Tu identidad se mantendrá confidencial.",
 
+            selected =
+                selectedType ==
+                        HomeReportType.ANONYMOUS,
+
             backgroundColor = cardBackground,
 
             borderColor = cardBorder,
+
+            selectedColor = pink,
 
             titleColor = primaryText,
 
             subtitleColor = secondaryText,
 
-            onClick = onAnonymousReportClick
+            onClick = {
+
+                selectedType =
+                    HomeReportType.ANONYMOUS
+            }
         )
 
 
@@ -984,9 +898,9 @@ private fun ReportTypeContent(
         )
 
 
-        // =============================================================
+        // =========================================================
         // REPORTE CON SEGUIMIENTO
-        // =============================================================
+        // =========================================================
 
         ReportTypeOption(
 
@@ -995,31 +909,66 @@ private fun ReportTypeContent(
             subtitle =
                 "Podrás dar seguimiento al estado de tu reporte con un folio.",
 
+            selected =
+                selectedType ==
+                        HomeReportType.TRACKING,
+
             backgroundColor = cardBackground,
 
             borderColor = cardBorder,
+
+            selectedColor = pink,
 
             titleColor = primaryText,
 
             subtitleColor = secondaryText,
 
-            onClick = onTrackingReportClick
+            onClick = {
+
+                selectedType =
+                    HomeReportType.TRACKING
+            }
         )
 
 
         Spacer(
-            modifier = Modifier.height(12.dp)
+            modifier = Modifier.height(16.dp)
         )
 
 
-        // =============================================================
+        // =========================================================
+        // CONTINUAR
+        // =========================================================
+
+        ContinueReportButton(
+
+            enabled = selectedType != null,
+
+            pink = pink,
+
+            onClick = {
+
+                selectedType?.let { type ->
+
+                    onContinue(type)
+                }
+            }
+        )
+
+
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
+
+
+        // =========================================================
         // CANCELAR
-        // =============================================================
+        // =========================================================
 
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(46.dp)
                 .clickable {
                     onClose()
                 },
@@ -1037,9 +986,7 @@ private fun ReportTypeContent(
 
             Box(
                 modifier = Modifier.fillMaxSize(),
-
-                contentAlignment =
-                    Alignment.Center
+                contentAlignment = Alignment.Center
             ) {
 
                 Text(
@@ -1063,12 +1010,35 @@ private fun ReportTypeContent(
 private fun ReportTypeOption(
     title: String,
     subtitle: String,
+    selected: Boolean,
     backgroundColor: Color,
     borderColor: Color,
+    selectedColor: Color,
     titleColor: Color,
     subtitleColor: Color,
     onClick: () -> Unit
 ) {
+
+    val finalBorderColor =
+        if (selected) {
+            selectedColor
+        } else {
+            borderColor
+        }
+
+
+    val finalBackgroundColor =
+        if (selected) {
+
+            selectedColor.copy(
+                alpha = 0.07f
+            )
+
+        } else {
+
+            backgroundColor
+        }
+
 
     Surface(
         modifier = Modifier
@@ -1078,13 +1048,19 @@ private fun ReportTypeOption(
                 onClick()
             },
 
-        color = backgroundColor,
+        color = finalBackgroundColor,
 
         shape = RoundedCornerShape(12.dp),
 
         border = BorderStroke(
-            width = 1.dp,
-            color = borderColor
+            width =
+                if (selected) {
+                    1.5.dp
+                } else {
+                    1.dp
+                },
+
+            color = finalBorderColor
         )
 
     ) {
@@ -1106,11 +1082,8 @@ private fun ReportTypeOption(
 
             Column(
                 modifier = Modifier.weight(1f),
-
-                verticalArrangement =
-                    Arrangement.Center
+                verticalArrangement = Arrangement.Center
             ) {
-
 
                 Text(
                     text = title,
@@ -1141,14 +1114,110 @@ private fun ReportTypeOption(
             )
 
 
+            // =====================================================
+            // CÍRCULO DE SELECCIÓN
+            // =====================================================
+
             Box(
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(21.dp)
                     .border(
-                        width = 1.5.dp,
-                        color = Color(0xFFB5C7D1),
+                        width =
+                            if (selected) {
+                                2.dp
+                            } else {
+                                1.5.dp
+                            },
+
+                        color =
+                            if (selected) {
+                                selectedColor
+                            } else {
+                                Color(0xFFB5C7D1)
+                            },
+
                         shape = CircleShape
+                    ),
+
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                if (selected) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(11.dp)
+                            .clip(CircleShape)
+                            .background(
+                                selectedColor
+                            )
                     )
+                }
+            }
+        }
+    }
+}
+
+
+// =================================================================
+// BOTÓN CONTINUAR
+// =================================================================
+
+@Composable
+private fun ContinueReportButton(
+    enabled: Boolean,
+    pink: Color,
+    onClick: () -> Unit
+) {
+
+    val backgroundColor =
+        if (enabled) {
+            pink
+        } else {
+            pink.copy(
+                alpha = 0.25f
+            )
+        }
+
+
+    val textColor =
+        if (enabled) {
+            Color.White
+        } else {
+            Color.White.copy(
+                alpha = 0.70f
+            )
+        }
+
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clickable(
+                enabled = enabled
+            ) {
+                onClick()
+            },
+
+        color = backgroundColor,
+
+        shape = RoundedCornerShape(8.dp)
+
+    ) {
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Text(
+                text = "Continuar",
+                color = textColor,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
         }
     }
@@ -1173,17 +1242,11 @@ private fun HomeScreenDarkPreview() {
     ) {
 
         HomeScreen(
-
             onAnonymousReportClick = {},
-
             onReportClick = {},
-
             onAboutUsClick = {},
-
             onTrackingClick = {},
-
             onOrientationClick = {},
-
             onSettingsClick = {}
         )
     }
@@ -1207,17 +1270,11 @@ private fun HomeScreenLightPreview() {
     ) {
 
         HomeScreen(
-
             onAnonymousReportClick = {},
-
             onReportClick = {},
-
             onAboutUsClick = {},
-
             onTrackingClick = {},
-
             onOrientationClick = {},
-
             onSettingsClick = {}
         )
     }

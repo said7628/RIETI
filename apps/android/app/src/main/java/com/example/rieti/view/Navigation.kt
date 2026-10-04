@@ -12,33 +12,41 @@ import androidx.navigation.compose.rememberNavController
 
 object Routes {
 
+    // =============================================================
     // CUENTA
+    // =============================================================
+
     const val START = "start"
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val RECOVER_PASSWORD = "recover_password"
     const val RESET_PASSWORD = "reset_password"
 
+
+    // =============================================================
     // APP PRINCIPAL
+    // =============================================================
+
     const val HOME = "home"
     const val ABOUT_US = "about_us"
     const val ORIENTATION = "orientation"
     const val SETTINGS = "settings"
 
+
+    // =============================================================
     // REPORTES
+    // =============================================================
+
     const val REPORT = "report"
     const val ANONYMOUS_REPORT = "anonymous_report"
     const val REPORT_SUCCESS = "report_success"
+    const val TRACKING = "tracking"
 
-    /*
-     * TODO(NAVIGATION):
-     *
-     * Cuando creemos TrackingScreen agregaremos:
-     *
-     * const val TRACKING = "tracking"
-     */
 
+    // =============================================================
     // CONFIGURACIÓN
+    // =============================================================
+
     const val CHANGE_PASSWORD = "change_password"
     const val ACCOUNT_DELETED = "account_deleted"
 }
@@ -281,10 +289,8 @@ fun AppNavigation(
                     /*
                      * TODO(BACKEND):
                      *
-                     * El ViewModel/API deberá validar el código
-                     * y realizar el cambio de contraseña.
-                     *
-                     * Por ahora simulamos éxito.
+                     * Validar el código de recuperación
+                     * y actualizar la contraseña.
                      */
 
                     navController.navigate(
@@ -334,6 +340,10 @@ fun AppNavigation(
 
             HomeScreen(
 
+                // -------------------------------------------------
+                // REPORTE ANÓNIMO
+                // -------------------------------------------------
+
                 onAnonymousReportClick = {
 
                     navController.navigate(
@@ -342,6 +352,11 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // REPORTE CON SEGUIMIENTO
+                // -------------------------------------------------
 
                 onReportClick = {
 
@@ -352,6 +367,11 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS
+                // -------------------------------------------------
+
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -361,25 +381,24 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // SEGUIMIENTO
+                // -------------------------------------------------
+
                 onTrackingClick = {
 
-                    /*
-                     * TODO(NAVIGATION):
-                     *
-                     * Cuando exista TrackingScreen:
-                     *
-                     * navController.navigate(
-                     *     Routes.TRACKING
-                     * ) {
-                     *     launchSingleTop = true
-                     * }
-                     */
+                    navController.navigate(
+                        Routes.TRACKING
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
 
 
-                // =====================================================
+                // -------------------------------------------------
                 // ORIENTACIÓN
-                // =====================================================
+                // -------------------------------------------------
 
                 onOrientationClick = {
 
@@ -390,6 +409,10 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // CONFIGURACIÓN
+                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -498,6 +521,10 @@ fun AppNavigation(
 
             ReportScreen(
 
+                // -------------------------------------------------
+                // INICIO
+                // -------------------------------------------------
+
                 onHomeClick = {
 
                     navController.navigate(
@@ -514,6 +541,11 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS
+                // -------------------------------------------------
+
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -522,6 +554,11 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // CONFIGURACIÓN
+                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -532,23 +569,45 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // UBICACIÓN ACTUAL
+                // -------------------------------------------------
+
                 onCurrentLocationClick = {
 
-                    // TODO: Conectar ubicación
+                    /*
+                     * TODO:
+                     * Conectar ubicación posteriormente.
+                     */
                 },
+
+
+                // -------------------------------------------------
+                // SELECCIONAR EVIDENCIA
+                // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    // TODO: Conectar selector de evidencia
+                    /*
+                     * TODO:
+                     * Conectar selector de evidencia.
+                     */
                 },
+
+
+                // -------------------------------------------------
+                // ENVIAR REPORTE
+                // -------------------------------------------------
 
                 onSendReportClick = {
 
                     /*
                      * TODO(BACKEND):
                      *
-                     * Navegar únicamente cuando el backend
-                     * confirme el registro del reporte.
+                     * Posteriormente se navegará únicamente
+                     * cuando el backend confirme que el
+                     * reporte fue registrado correctamente.
                      */
 
                     navController.navigate(
@@ -571,6 +630,10 @@ fun AppNavigation(
 
             AnonymousReportScreen(
 
+                // -------------------------------------------------
+                // INICIO
+                // -------------------------------------------------
+
                 onHomeClick = {
 
                     navController.navigate(
@@ -587,6 +650,11 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS
+                // -------------------------------------------------
+
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -595,6 +663,11 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // CONFIGURACIÓN
+                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -605,23 +678,44 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // UBICACIÓN ACTUAL
+                // -------------------------------------------------
+
                 onCurrentLocationClick = {
 
-                    // TODO: Conectar ubicación
+                    /*
+                     * TODO:
+                     * Conectar ubicación posteriormente.
+                     */
                 },
+
+
+                // -------------------------------------------------
+                // SELECCIONAR ARCHIVOS
+                // -------------------------------------------------
 
                 onSelectFilesClick = {
 
-                    // TODO: Conectar selector de evidencia
+                    /*
+                     * TODO:
+                     * Conectar selector de evidencia.
+                     */
                 },
+
+
+                // -------------------------------------------------
+                // ENVIAR REPORTE
+                // -------------------------------------------------
 
                 onSendReportClick = {
 
                     /*
                      * TODO(BACKEND):
                      *
-                     * Esperar confirmación del backend antes
-                     * de navegar.
+                     * Esperar la respuesta exitosa del
+                     * ViewModel/API antes de navegar.
                      */
 
                     navController.navigate(
@@ -646,20 +740,36 @@ fun AppNavigation(
 
                 /*
                  * TODO(BACKEND):
+                 *
                  * Folio temporal.
+                 *
+                 * Posteriormente deberá recibirse el folio
+                 * generado realmente por el backend.
                  */
 
                 folio = "261908-1017S",
 
+
+                // -------------------------------------------------
+                // CONSULTAR ESTADO
+                //
+                // VA A LA MISMA PANTALLA QUE
+                // HOME -> SEGUIMIENTO
+                // -------------------------------------------------
+
                 onTrackingClick = {
 
-                    /*
-                     * TODO(NAVIGATION):
-                     *
-                     * Debe ir al mismo TrackingScreen que
-                     * el botón Seguimiento de HomeScreen.
-                     */
+                    navController.navigate(
+                        Routes.TRACKING
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
+
+
+                // -------------------------------------------------
+                // VOLVER AL INICIO
+                // -------------------------------------------------
 
                 onMainMenuClick = {
 
@@ -677,6 +787,11 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // HOME - BOTTOM BAR
+                // -------------------------------------------------
+
                 onHomeClick = {
 
                     navController.navigate(
@@ -693,6 +808,11 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS - BOTTOM BAR
+                // -------------------------------------------------
+
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -701,6 +821,72 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // CONFIGURACIÓN - BOTTOM BAR
+                // -------------------------------------------------
+
+                onSettingsClick = {
+
+                    navController.navigate(
+                        Routes.SETTINGS
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+
+        // =========================================================
+        // SEGUIMIENTO
+        // =========================================================
+
+        composable(
+            route = Routes.TRACKING
+        ) {
+
+            TrackingScreen(
+
+                // -------------------------------------------------
+                // HOME
+                // -------------------------------------------------
+
+                onHomeClick = {
+
+                    navController.navigate(
+                        Routes.HOME
+                    ) {
+
+                        popUpTo(
+                            Routes.HOME
+                        ) {
+                            inclusive = false
+                        }
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS
+                // -------------------------------------------------
+
+                onAboutUsClick = {
+
+                    navController.navigate(
+                        Routes.ABOUT_US
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // CONFIGURACIÓN
+                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -724,7 +910,19 @@ fun AppNavigation(
 
             SettingsScreen(
 
+                /*
+                 * TODO(BACKEND):
+                 *
+                 * Reemplazar por el correo real
+                 * del usuario autenticado.
+                 */
+
                 email = "correo@gmail.com",
+
+
+                // -------------------------------------------------
+                // CAMBIAR CONTRASEÑA
+                // -------------------------------------------------
 
                 onChangePasswordClick = {
 
@@ -734,6 +932,11 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // CERRAR SESIÓN
+                // -------------------------------------------------
 
                 onLogoutClick = {
 
@@ -751,16 +954,19 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // BORRAR CUENTA
+                // -------------------------------------------------
+
                 onDeleteAccountClick = {
 
                     /*
                      * TODO(BACKEND):
                      *
-                     * Primero eliminar la cuenta mediante
+                     * Posteriormente primero deberá
+                     * eliminarse la cuenta mediante
                      * ViewModel/API.
-                     *
-                     * Navegar únicamente cuando el backend
-                     * confirme la eliminación.
                      */
 
                     navController.navigate(
@@ -770,10 +976,20 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // CAMBIAR TEMA
+                // -------------------------------------------------
+
                 onToggleThemeClick = {
 
                     onThemeChange()
                 },
+
+
+                // -------------------------------------------------
+                // HOME
+                // -------------------------------------------------
 
                 onHomeClick = {
 
@@ -790,6 +1006,11 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS
+                // -------------------------------------------------
 
                 onAboutUsClick = {
 
@@ -813,7 +1034,19 @@ fun AppNavigation(
 
             ChangePasswordScreen(
 
+                /*
+                 * TODO(BACKEND):
+                 *
+                 * Reemplazar posteriormente por
+                 * el correo del usuario autenticado.
+                 */
+
                 email = "correo@gmail.com",
+
+
+                // -------------------------------------------------
+                // ACTUALIZAR CONTRASEÑA
+                // -------------------------------------------------
 
                 onChangePasswordClick = {
                         currentPassword,
@@ -823,22 +1056,20 @@ fun AppNavigation(
                     /*
                      * TODO(BACKEND):
                      *
-                     * Aquí irá la llamada real para cambiar
-                     * la contraseña.
+                     * Enviar:
+                     * - contraseña actual
+                     * - nueva contraseña
                      *
-                     * El backend deberá validar:
-                     *
-                     * - currentPassword
-                     * - newPassword
-                     * - confirmPassword
-                     *
-                     * Sólo después de una respuesta exitosa
-                     * deberá mostrarse confirmación o regresar
-                     * a Configuración.
+                     * y esperar confirmación del backend.
                      */
 
                     navController.popBackStack()
                 },
+
+
+                // -------------------------------------------------
+                // HOME
+                // -------------------------------------------------
 
                 onHomeClick = {
 
@@ -849,6 +1080,11 @@ fun AppNavigation(
                     }
                 },
 
+
+                // -------------------------------------------------
+                // QUIÉNES SOMOS
+                // -------------------------------------------------
+
                 onAboutUsClick = {
 
                     navController.navigate(
@@ -857,6 +1093,11 @@ fun AppNavigation(
                         launchSingleTop = true
                     }
                 },
+
+
+                // -------------------------------------------------
+                // SETTINGS
+                // -------------------------------------------------
 
                 onSettingsClick = {
 
@@ -878,14 +1119,33 @@ fun AppNavigation(
             route = Routes.ACCOUNT_DELETED
         ) {
 
+            /*
+             * IMPORTANTE:
+             *
+             * AccountDeletedScreen NO recibe:
+             *
+             * onHomeClick
+             * onAboutUsClick
+             * onSettingsClick
+             *
+             * Su callback correcto es:
+             *
+             * onBackToStartClick
+             */
+
             AccountDeletedScreen(
 
                 onBackToStartClick = {
 
                     /*
-                     * Después de borrar la cuenta regresamos
-                     * a WelcomeScreen y eliminamos el historial
-                     * de la sesión anterior.
+                     * Después de eliminar una cuenta,
+                     * regresamos al inicio y limpiamos
+                     * el historial de navegación.
+                     *
+                     * TODO(BACKEND):
+                     *
+                     * También deberá limpiarse la sesión
+                     * real del usuario.
                      */
 
                     navController.navigate(
