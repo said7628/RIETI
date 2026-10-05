@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.sp
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
+import com.example.rieti.view.components.ReportLocationMap
+import com.google.android.gms.maps.model.LatLng
 
 
 // =================================================================
@@ -179,6 +181,22 @@ fun ReportFormScreen(
 
     var municipality by rememberSaveable {
         mutableStateOf("")
+    }
+
+    /*
+ * Ubicación seleccionada temporalmente en el mapa.
+ *
+ * TODO(VIEWMODEL):
+ * En el siguiente paso este estado será administrado
+ * por ReportViewModel mediante ReportUiState.selectedLocation.
+ */
+    var selectedLocation by rememberSaveable {
+        mutableStateOf(
+            LatLng(
+                19.4326,
+                -99.1332
+            )
+        )
     }
 
 
@@ -324,6 +342,12 @@ fun ReportFormScreen(
                     2 -> {
 
                         ReportLocationStep(
+                            selectedLocation = selectedLocation,
+
+                            onLocationSelected = { newLocation ->
+                                selectedLocation = newLocation
+                            },
+
                             fullAddress = fullAddress,
 
                             onFullAddressChange = {
@@ -356,7 +380,7 @@ fun ReportFormScreen(
                                 currentStep = 3
                             }
                         )
-                    }
+                        }
 
 
                     // =================================================
@@ -1014,6 +1038,9 @@ private fun AnonymousModeCard(
 
 @Composable
 private fun ReportLocationStep(
+    selectedLocation: LatLng,
+    onLocationSelected: (LatLng) -> Unit,
+
     fullAddress: String,
     onFullAddressChange: (String) -> Unit,
 
@@ -1044,30 +1071,28 @@ private fun ReportLocationStep(
             )
     ) {
 
-
         StepTitle(
             title = "Ubicación del reporte",
-
             description =
-                "Indica el lugar donde ocurrió la situación. Puedes usar tu ubicación actual o proporcionar la dirección de forma manual."
+                "Indica el lugar donde ocurrió la situación. Puedes seleccionar un punto en el mapa o proporcionar la dirección de forma manual."
         )
-
 
         Spacer(
             modifier = Modifier.height(22.dp)
         )
 
+        // =========================================================
+        // MAPA INTERACTIVO
+        // =========================================================
 
-        MapPlaceholder(
-            onCurrentLocationClick =
-                onCurrentLocationClick
+        ReportLocationMap(
+            selectedLocation = selectedLocation,
+            onLocationSelected = onLocationSelected
         )
-
 
         Spacer(
             modifier = Modifier.height(20.dp)
         )
-
 
         ReportFieldWithLabel(
             label = "Dirección completa",
@@ -1078,11 +1103,9 @@ private fun ReportLocationStep(
             singleLine = false
         )
 
-
         Spacer(
             modifier = Modifier.height(18.dp)
         )
-
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1098,7 +1121,6 @@ private fun ReportLocationStep(
                 modifier = Modifier.weight(1.2f)
             )
 
-
             ReportFieldWithLabel(
                 label = "Código postal",
                 value = postalCode,
@@ -1108,11 +1130,9 @@ private fun ReportLocationStep(
             )
         }
 
-
         Spacer(
             modifier = Modifier.height(18.dp)
         )
-
 
         ReportFieldWithLabel(
             label = "Municipio",
@@ -1121,11 +1141,9 @@ private fun ReportLocationStep(
             onValueChange = onMunicipalityChange
         )
 
-
         Spacer(
             modifier = Modifier.height(28.dp)
         )
-
 
         NextButton(
             text = "Siguiente",
@@ -1133,7 +1151,6 @@ private fun ReportLocationStep(
         )
     }
 }
-
 
 // =================================================================
 // PASO 3 - EVIDENCIA
