@@ -1,5 +1,4 @@
 import { semaforoByStatus } from '../shared/catalogs'
-import { currentUser } from '../shared/currentUser'
 import type { Report } from '../shared/reportsData'
 
 export type TrackingView =
@@ -22,12 +21,16 @@ export function parseTrackingView(value: string | null): TrackingView {
   return view ? view.id : 'mis-reportes'
 }
 
-export function matchesView(report: Report, view: TrackingView) {
+export function matchesView(
+  report: Report,
+  view: TrackingView,
+  userName: string | null,
+) {
   const semaforo = semaforoByStatus[report.status]
 
   switch (view) {
     case 'mis-reportes':
-      return report.caseHolder === currentUser.name
+      return userName !== null && report.caseHolder === userName
     case 'sin-asignar':
       return semaforo === 'SIN_ATENDER'
     case 'en-atencion':

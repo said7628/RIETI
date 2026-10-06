@@ -1,12 +1,14 @@
 import { Link, NavLink } from 'react-router-dom'
 import rietiLogo from '../../assets/rieti-logo.png'
-import { currentUser } from '../../data/shared/currentUser'
+import { useSessionUser } from '../../data/shared/session'
 
 interface TopBarProps {
   showLogo?: boolean
 }
 
 function TopBar({ showLogo = true }: TopBarProps) {
+  const user = useSessionUser()
+
   return (
     <header className={`topbar ${showLogo ? '' : 'topbar-compact'}`}>
       {showLogo && (
@@ -23,8 +25,8 @@ function TopBar({ showLogo = true }: TopBarProps) {
         <NavLink to="/seguimiento">Seguimiento</NavLink>
       </nav>
 
-      <NavLink to="/perfil" className="user-button">
-        {currentUser.name}
+      <NavLink to="/login" className="user-button">
+        {user?.name ?? 'Iniciar sesión'}
       </NavLink>
     </header>
   )

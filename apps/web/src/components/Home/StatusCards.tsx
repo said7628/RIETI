@@ -1,30 +1,31 @@
 import { Link } from 'react-router-dom'
 import dashboardIcon from '../../assets/dashboard-icon.png'
 import { semaforoByStatus, type Semaforo } from '../../data/shared/catalogs'
-import { reportsData } from '../../data/shared/reportsData'
+import type { Report } from '../../data/shared/reportsData'
+import { useReports } from '../../data/shared/session'
 
-function countBySemaforo(semaforo: Semaforo) {
-  return reportsData.filter(
+function countBySemaforo(reports: Report[], semaforo: Semaforo) {
+  return reports.filter(
     (report) => semaforoByStatus[report.status] === semaforo,
   ).length
 }
 
 function StatusCards() {
-  // Por ahora uso datos de prueba. Después estos números van a venir del backend.
+  const reports = useReports()
   const statusData = [
     {
       title: 'Reportes sin asignar',
-      value: countBySemaforo('SIN_ATENDER'),
+      value: countBySemaforo(reports, 'SIN_ATENDER'),
       path: '/seguimiento?vista=sin-asignar',
     },
     {
       title: 'Reportes en atención',
-      value: countBySemaforo('ATENDIENDO'),
+      value: countBySemaforo(reports, 'ATENDIENDO'),
       path: '/seguimiento?vista=en-atencion',
     },
     {
       title: 'Casos cerrados',
-      value: countBySemaforo('ATENDIDO'),
+      value: countBySemaforo(reports, 'ATENDIDO'),
       path: '/seguimiento?vista=cerrados',
     },
   ]

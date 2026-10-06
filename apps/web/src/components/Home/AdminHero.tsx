@@ -1,6 +1,8 @@
-import { currentUser } from '../../data/shared/currentUser'
+import { useSessionUser } from '../../data/shared/session'
 
 function AdminHero() {
+  const user = useSessionUser()
+
   return (
     <section className="admin-hero">
       <div className="admin-hero-content">
@@ -10,7 +12,7 @@ function AdminHero() {
           administración de RIETI
         </h1>
         <hr className="linea"></hr>
-        <p>“{currentUser.name}”</p>
+        {user && <p>“{user.name}”</p>}
       </div>
     </section>
   )

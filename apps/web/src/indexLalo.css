@@ -257,6 +257,9 @@ a {
 
   width: 100%;
   height: auto;
+
+  /* El borde del SVG deja una línea; lo solapo con la sección de abajo. */
+  margin-bottom: -2px;
 }
 
 .wave-back {

@@ -1,0 +1,573 @@
+/* ==========================================
+   RESET
+========================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* ==========================================
+   PÁGINA
+========================================== */
+
+.login-page {
+    position: relative;
+
+    width: 100%;
+    min-height: 100vh;
+
+    background-color: #000;
+
+    overflow: hidden;
+}
+
+
+/* ==========================================
+   FONDO DE OLAS
+========================================== */
+
+.login-background {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+
+    width: clamp(48%, 55vw, 58%);
+    height: 100%;
+
+    overflow: hidden;
+
+    z-index: 1;
+}
+
+
+.login-page .waves {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+}
+
+
+.wave-dark {
+    fill: #D10073;
+}
+
+
+.wave-medium {
+    fill: #FF008C;
+}
+
+
+.wave-light {
+    fill: #FF8ACA;
+}
+
+
+/* ==========================================
+   CONTENIDO
+========================================== */
+
+.login-content {
+    position: relative;
+
+    z-index: 10;
+
+    width: 52%;
+
+    /* Dejo espacio para que el footer no choque con el formulario. */
+    min-height: calc(100vh - clamp(75px, 9vh, 105px));
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding:
+        clamp(30px, 5vh, 60px)
+        clamp(30px, 5vw, 100px);
+}
+
+
+/* ==========================================
+   FORMULARIO
+========================================== */
+
+.login-form {
+    width: 100%;
+    max-width: 430px;
+}
+
+
+/* ==========================================
+   TÍTULO
+========================================== */
+
+.login-title {
+    width: 100%;
+
+    margin-bottom: clamp(30px, 4.5vh, 47px);
+}
+
+
+.login-title h1 {
+    color: #FF2EA1;
+
+    font-family: Georgia, "Times New Roman", serif;
+
+    font-size: clamp(32px, 2vw, 40px);
+
+    font-weight: 400;
+
+    line-height: 1.1;
+
+    margin-bottom: clamp(9px, 1.2vh, 14px);
+}
+
+
+.title-line {
+    width: 100%;
+
+    height: clamp(3px, 0.3vw, 5px);
+
+    background-color: #FF2EA1;
+
+    border-radius: 10px;
+}
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.form-group {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: clamp(30px, 5vh, 54px);
+}
+
+
+.form-group label {
+    color: #FFDCE6;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 16px;
+
+    font-weight: 400;
+
+    margin-bottom: clamp(6px, 0.8vh, 10px);
+}
+
+
+/* ==========================================
+   INPUTS
+========================================== */
+
+.form-group input {
+    width: 100%;
+
+    height: clamp(48px, 5.5vh, 59px);
+
+    padding:
+        clamp(7px, 1vh, 10px)
+        clamp(12px, 1vw, 16px);
+
+    border: none;
+
+    border-radius: 11px;
+
+    background-color: #BFF8F2;
+
+    color: #000;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 16px;
+
+    outline: none;
+
+    transition:
+        outline-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.form-group input:focus {
+    outline: 3px solid #FF8ACA;
+
+    box-shadow: 0 0 0 2px rgba(255, 138, 202, 0.15);
+}
+
+
+/* ==========================================
+   CONTRASEÑA
+========================================== */
+
+.password-group {
+    margin-bottom: clamp(18px, 2.5vh, 27px);
+}
+
+
+/* ==========================================
+   OLVIDÉ MI CONTRASEÑA
+========================================== */
+
+.forgot-button {
+    display: block;
+
+
+    margin:
+        0
+        0
+        clamp(30px, 4.8vh, 52px)
+        auto;
+
+    padding:
+        clamp(7px, 0.8vh, 9px)
+        clamp(11px, 1vw, 15px);
+
+    background-color: transparent;
+
+    border: 1px solid #FFDCE6;
+
+    border-radius: 20px;
+
+    color: #FFDCE6;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 15px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.forgot-button:hover {
+    background-color: #FFDCE6;
+
+    color: #000;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================
+   BOTÓN INICIAR SESIÓN
+========================================== */
+
+.login-button {
+    display: block;
+
+    width: min(100%, 350px);
+
+    min-height: clamp(60px, 8vh, 90px);
+
+    margin: 0 auto;
+
+    padding: 12px 20px;
+
+    border: none;
+
+    border-radius: 11px;
+
+    background-color: #95E3EA;
+
+    color: #000;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.login-button:hover {
+    background-color: #1FC5B4;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+}
+
+
+.login-message {
+    width: min(100%, 350px);
+
+    margin: 0 auto 16px;
+
+    color: #ffb4dc;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 15px;
+
+    line-height: 1.4;
+
+    text-align: center;
+}
+
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+.login-footer {
+    position: absolute;
+
+    bottom: 0;
+    left: 0;
+
+    z-index: 20;
+
+    width: 100%;
+
+    min-height: clamp(75px, 9vh, 100px);
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    padding:
+        10px
+        clamp(20px, 2.5vw, 45px);
+
+    color: #FFFFFF;
+}
+
+
+/* ==========================================
+   SPINNA
+========================================== */
+
+.spinna {
+    display: flex;
+
+    align-items: center;
+
+    gap: clamp(8px, 0.8vw, 14px);
+
+    font-family: Georgia, "Times New Roman", serif;
+
+    font-size: 16px;
+}
+
+
+.spinna-logo {
+    width: clamp(75px, 6vw, 110px);
+
+    height: clamp(45px, 6vh, 65px);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+.spinna-image {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+
+    display: block;
+}
+
+
+/* ==========================================
+   WORLD VISION
+========================================== */
+
+.world-vision {
+    display: flex;
+
+    align-items: center;
+
+    gap: clamp(10px, 1vw, 18px);
+
+    font-family: Georgia, "Times New Roman", serif;
+
+    font-size: 16px;
+}
+
+
+.world-vision-icon {
+    width: clamp(50px, 4vw, 72px);
+
+    aspect-ratio: 1 / 1;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background-color: #FF641C;
+
+    color: #FFFFFF;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: clamp(34px, 3vw, 52px);
+}
+
+
+/* ==========================================
+   LAPTOPS MEDIANAS
+   1440px - 1600px
+========================================== */
+
+@media (max-width: 1600px) {
+
+    .login-content {
+        width: 54%;
+
+        padding-left: clamp(35px, 6vw, 85px);
+        padding-right: clamp(35px, 6vw, 85px);
+    }
+
+
+    .login-background {
+        width: 54%;
+    }
+
+
+    .login-form {
+        max-width: 410px;
+    }
+
+}
+
+
+/* ==========================================
+   LAPTOPS
+   1280px - 1440px
+========================================== */
+
+@media (max-width: 1440px) {
+
+    .login-content {
+        width: 55%;
+
+        padding-left: clamp(30px, 5vw, 70px);
+        padding-right: clamp(30px, 5vw, 70px);
+    }
+
+
+    .login-background {
+        width: 52%;
+    }
+
+
+    .login-form {
+        max-width: 390px;
+    }
+
+}
+
+
+/* ==========================================
+   LAPTOPS PEQUEÑAS
+========================================== */
+
+@media (max-width: 1280px) {
+
+    .login-content {
+        width: 57%;
+
+        padding-left: 45px;
+        padding-right: 45px;
+    }
+
+
+    .login-background {
+        width: 50%;
+    }
+
+
+    .login-form {
+        max-width: 370px;
+    }
+
+}
+
+
+/* ==========================================
+   PANTALLAS CON POCA ALTURA
+========================================== */
+
+@media (max-height: 800px) {
+
+    .login-content {
+        align-items: flex-start;
+
+        padding-top: 40px;
+        padding-bottom: 90px;
+    }
+
+
+    .login-title {
+        margin-bottom: 25px;
+    }
+
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+
+    .password-group {
+        margin-bottom: 16px;
+    }
+
+
+    .forgot-button {
+        margin-bottom: 25px;
+    }
+
+
+    .login-button {
+        min-height: 60px;
+    }
+
+}
+
+
+/* ==========================================
+   ALTURA MUY REDUCIDA
+========================================== */
+
+@media (max-height: 650px) {
+
+    .login-page {
+        min-height: 650px;
+
+        overflow-y: auto;
+    }
+
+}

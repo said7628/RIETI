@@ -6,11 +6,28 @@ import Sidebar from './components/tracking/Sidebar'
 import HomePage from './pages/HomePage'
 import PendingPage from './pages/PendingPage'
 import TrackingPage from './pages/TrackingPage'
+import CrearReporte from './pagesMarco/CrearReporte'
+import Login from './pagesMarco/Login'
+import ReporteEnviado from './pagesMarco/ReporteEnviado'
 
 function AppLalo() {
   const location = useLocation()
   const isTracking = location.pathname === '/seguimiento'
+  const isMarcoPage =
+    location.pathname === '/login' ||
+    location.pathname === '/crear-reporte' ||
+    location.pathname === '/reporte-enviado'
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  if (isMarcoPage) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/crear-reporte" element={<CrearReporte />} />
+        <Route path="/reporte-enviado" element={<ReporteEnviado />} />
+      </Routes>
+    )
+  }
 
   return (
     <div
@@ -30,7 +47,6 @@ function AppLalo() {
 
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/crear-reporte" element={<PendingPage title="Crear reporte" />} />
           <Route path="/seguimiento" element={<TrackingPage />} />
           <Route path="/perfil" element={<PendingPage title="Perfil" />} />
           <Route path="*" element={<PendingPage title="Página no encontrada" />} />

@@ -1,9 +1,9 @@
-import { reportsData } from '../../data/shared/reportsData'
 import { sortReports } from '../../data/shared/reportUtils'
+import { useReports } from '../../data/shared/session'
 import StatusBadge from '../shared/StatusBadge'
 
 function RecentReports() {
-  const recentReports = sortReports(reportsData, 'recientes').slice(0, 10)
+  const recentReports = sortReports(useReports(), 'recientes').slice(0, 10)
 
   return (
     <div className="recent-reports-card">

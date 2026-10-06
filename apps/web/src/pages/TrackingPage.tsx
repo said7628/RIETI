@@ -7,21 +7,23 @@ import ReportDetailsModal from '../components/tracking/ReportDetailsModal'
 import ReportsTable from '../components/tracking/ReportsTable'
 import UpdateStatusModal from '../components/tracking/UpdateStatusModal'
 import { priorities, type Priority, type ReportStatus } from '../data/shared/catalogs'
-import { reportsData, type Report } from '../data/shared/reportsData'
+import type { Report } from '../data/shared/reportsData'
 import { sortOptions, sortReports, type SortOption } from '../data/shared/reportUtils'
+import { useReports, useSessionUser } from '../data/shared/session'
 import { matchesView, parseTrackingView } from '../data/tracking/trackingViews'
 import './TrackingPage.css'
 
 function TrackingPage() {
   const [searchParams] = useSearchParams()
   const view = parseTrackingView(searchParams.get('vista'))
+  const user = useSessionUser()
 
   // Solo guarda cambios de sesión; el resto siempre viene del mock (evita campos vacíos con HMR).
   const [reportOverrides, setReportOverrides] = useState<
     Record<string, Partial<Report>>
   >({})
 
-  const reports = reportsData.map((report) => ({
+  const reports = useReports().map((report) => ({
     ...report,
     ...reportOverrides[report.folio],
   }))
@@ -41,7 +43,7 @@ function TrackingPage() {
 
   const filteredReports = reports.filter(
     (report) =>
-      matchesView(report, view) &&
+      matchesView(report, view, user?.name ?? null) &&
       report.folio.toLowerCase().includes(folioSearch.trim().toLowerCase()) &&
       (priorityFilter === '' || report.priority === priorityFilter) &&
       (coloniaFilter === '' || report.colonia === coloniaFilter),
