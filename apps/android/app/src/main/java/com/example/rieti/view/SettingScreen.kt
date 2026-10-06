@@ -391,48 +391,42 @@ fun SettingsScreen(
                                 vertical = 13.dp
                             ),
 
-                        verticalAlignment =
-                            Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
 
                         Icon(
-                            imageVector =
-                                Icons.Default.DarkMode,
+                            imageVector = Icons.Default.DarkMode,
                             contentDescription = null,
                             tint = navy,
                             modifier = Modifier.size(29.dp)
                         )
 
-
                         Spacer(
                             modifier = Modifier.width(18.dp)
                         )
-
 
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
 
                             Text(
-                                text = "Modo oscuro",
+                                text = "Apariencia",
                                 color = navy,
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 16.sp
                             )
 
-
                             Spacer(
                                 modifier = Modifier.height(1.dp)
                             )
 
-
                             Text(
                                 text =
                                     if (isDarkTheme) {
-                                        "Oscuro"
+                                        "Modo oscuro"
                                     } else {
-                                        "Claro"
+                                        "Modo claro"
                                     },
 
                                 color = secondaryText,
@@ -440,7 +434,6 @@ fun SettingsScreen(
                                 fontSize = 13.sp
                             )
                         }
-
 
                         Switch(
                             checked = isDarkTheme,
@@ -450,20 +443,11 @@ fun SettingsScreen(
                             },
 
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor =
-                                    Color.White,
-
-                                checkedTrackColor =
-                                    colors.pinkPrincipal,
-
-                                uncheckedThumbColor =
-                                    Color.White,
-
-                                uncheckedTrackColor =
-                                    Color(0xFFD4D7DA),
-
-                                uncheckedBorderColor =
-                                    Color.Transparent
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = colors.pinkPrincipal,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFD4D7DA),
+                                uncheckedBorderColor = Color.Transparent
                             )
                         )
                     }
