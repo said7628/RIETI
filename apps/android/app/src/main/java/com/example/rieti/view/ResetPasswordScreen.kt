@@ -3,10 +3,8 @@ package com.example.rieti.view
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +43,10 @@ import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 
 
+// =====================================================================
+// RESTABLECER CONTRASEÑA
+// =====================================================================
+
 @Composable
 fun ResetPasswordScreen(
     onResetPasswordClick: (
@@ -52,7 +54,7 @@ fun ResetPasswordScreen(
         newPassword: String,
         confirmPassword: String
     ) -> Unit,
-    onLoginClick: () -> Unit,
+
     darkTheme: Boolean,
     onThemeChange: () -> Unit
 ) {
@@ -85,6 +87,7 @@ fun ResetPasswordScreen(
         mutableStateOf<String?>(null)
     }
 
+
     val colors = AppTheme.colors
 
 
@@ -97,20 +100,6 @@ fun ResetPasswordScreen(
             Color(0xFF24A194)
         } else {
             Color(0xFF16BFAF)
-        }
-
-    val secondaryButtonBackground =
-        if (darkTheme) {
-            Color(0xFFFFEEF4)
-        } else {
-            Color(0xFFFFF3F7)
-        }
-
-    val secondaryButtonContent =
-        if (darkTheme) {
-            Color(0xFF160A10)
-        } else {
-            Color(0xFF131026)
         }
 
 
@@ -127,27 +116,41 @@ fun ResetPasswordScreen(
         var formularioValido = true
 
 
+        // ---------------------------------------------------------
         // CÓDIGO
+        // ---------------------------------------------------------
 
         if (recoveryCode.isBlank()) {
-            errorCode = "Ingresa el código de recuperación."
+
+            errorCode =
+                "Ingresa el código de recuperación."
+
             formularioValido = false
         }
 
 
+        // ---------------------------------------------------------
         // NUEVA CONTRASEÑA
+        // ---------------------------------------------------------
 
         if (newPassword.isBlank()) {
-            errorNewPassword = "Ingresa una nueva contraseña."
+
+            errorNewPassword =
+                "Ingresa una nueva contraseña."
+
             formularioValido = false
         }
 
 
+        // ---------------------------------------------------------
         // CONFIRMAR CONTRASEÑA
+        // ---------------------------------------------------------
 
         if (confirmPassword.isBlank()) {
 
-            errorConfirmPassword = "Confirma tu nueva contraseña."
+            errorConfirmPassword =
+                "Confirma tu nueva contraseña."
+
             formularioValido = false
 
         } else if (
@@ -155,7 +158,9 @@ fun ResetPasswordScreen(
             newPassword != confirmPassword
         ) {
 
-            errorConfirmPassword = "Las contraseñas no coinciden."
+            errorConfirmPassword =
+                "Las contraseñas no coinciden."
+
             formularioValido = false
         }
 
@@ -164,33 +169,40 @@ fun ResetPasswordScreen(
     }
 
 
+    // =============================================================
+    // PANTALLA
+    // =============================================================
+
     Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing
+        contentWindowInsets =
+            WindowInsets.safeDrawing
     ) { innerPadding ->
 
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
+
             color = colors.surface
         ) {
 
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier =
+                    Modifier.fillMaxSize()
             ) {
 
-                // =====================================================
+                // =================================================
                 // CABECERA
-                // =====================================================
+                // =================================================
 
                 ResetPasswordHeader(
                     darkTheme = darkTheme
                 )
 
 
-                // =====================================================
+                // =================================================
                 // CONTENIDO
-                // =====================================================
+                // =================================================
 
                 Column(
                     modifier = Modifier
@@ -199,158 +211,228 @@ fun ResetPasswordScreen(
                 ) {
 
                     Spacer(
-                        modifier = Modifier.height(8.dp)
+                        modifier =
+                            Modifier.height(8.dp)
                     )
 
 
-                    // =================================================
+                    // =============================================
                     // TÍTULO
-                    // =================================================
+                    // =============================================
 
                     Text(
-                        text = "Restablecer Contraseña",
-                        modifier = Modifier.fillMaxWidth(),
+                        text =
+                            "Restablecer Contraseña",
+
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
                         fontSize = 30.sp,
-                        fontFamily = FontFamily.Serif,
-                        textAlign = TextAlign.Center,
+
+                        fontFamily =
+                            FontFamily.Serif,
+
+                        textAlign =
+                            TextAlign.Center,
+
                         color = colors.titles
                     )
 
+
                     Spacer(
-                        modifier = Modifier.height(5.dp)
+                        modifier =
+                            Modifier.height(5.dp)
                     )
+
 
                     HorizontalDivider(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 80.dp),
+                            .padding(
+                                horizontal = 80.dp
+                            ),
+
                         thickness = 2.dp,
-                        color = Color(0xFFFF0060)
+
+                        color =
+                            Color(0xFFFF0060)
                     )
+
 
                     Spacer(
-                        modifier = Modifier.height(8.dp)
+                        modifier =
+                            Modifier.height(8.dp)
                     )
 
 
-                    // =================================================
+                    // =============================================
                     // TEXTO DE APOYO
-                    // =================================================
+                    // =============================================
 
                     Text(
-                        text = "Ingresa el código que recibiste y establece una nueva contraseña.",
-                        modifier = Modifier.padding(
-                            horizontal = 32.dp
-                        ),
+                        text =
+                            "Ingresa el código que recibiste " +
+                                    "y establece una nueva contraseña.",
+
+                        modifier =
+                            Modifier.padding(
+                                horizontal = 32.dp
+                            ),
+
                         fontSize = 13.sp,
+
                         lineHeight = 16.sp,
-                        fontFamily = FontFamily.Serif,
-                        textAlign = TextAlign.Center,
+
+                        fontFamily =
+                            FontFamily.Serif,
+
+                        textAlign =
+                            TextAlign.Center,
+
                         color = colors.text
                     )
 
+
                     Spacer(
-                        modifier = Modifier.height(8.dp)
+                        modifier =
+                            Modifier.height(8.dp)
                     )
 
 
-                    // =================================================
-                    // CÓDIGO
-                    // =================================================
+                    // =============================================
+                    // CÓDIGO DE RECUPERACIÓN
+                    // =============================================
 
                     ResetPasswordField(
-                        label = "Código de recuperación",
-                        value = recoveryCode,
+                        label =
+                            "Código de recuperación",
+
+                        value =
+                            recoveryCode,
 
                         onValueChange = {
+
                             recoveryCode = it
                             errorCode = null
                         },
 
-                        error = errorCode,
-                        darkTheme = darkTheme,
-                        keyboardType = KeyboardType.Number
+                        error =
+                            errorCode,
+
+                        darkTheme =
+                            darkTheme,
+
+                        keyboardType =
+                            KeyboardType.Number
                     )
 
 
                     Spacer(
-                        modifier = Modifier.height(3.dp)
+                        modifier =
+                            Modifier.height(3.dp)
                     )
 
 
-                    // =================================================
+                    // =============================================
                     // NUEVA CONTRASEÑA
-                    // =================================================
+                    // =============================================
 
                     ResetPasswordField(
-                        label = "Nueva contraseña",
-                        value = newPassword,
+                        label =
+                            "Nueva contraseña",
+
+                        value =
+                            newPassword,
 
                         onValueChange = {
+
                             newPassword = it
+
                             errorNewPassword = null
+
 
                             if (
                                 errorConfirmPassword ==
                                 "Las contraseñas no coinciden."
                             ) {
+
                                 errorConfirmPassword = null
                             }
                         },
 
-                        error = errorNewPassword,
-                        darkTheme = darkTheme,
+                        error =
+                            errorNewPassword,
+
+                        darkTheme =
+                            darkTheme,
+
                         isPassword = true
                     )
 
 
                     Spacer(
-                        modifier = Modifier.height(3.dp)
+                        modifier =
+                            Modifier.height(3.dp)
                     )
 
 
-                    // =================================================
+                    // =============================================
                     // CONFIRMAR CONTRASEÑA
-                    // =================================================
+                    // =============================================
 
                     ResetPasswordField(
-                        label = "Confirmar contraseña",
-                        value = confirmPassword,
+                        label =
+                            "Confirmar contraseña",
+
+                        value =
+                            confirmPassword,
 
                         onValueChange = {
+
                             confirmPassword = it
+
                             errorConfirmPassword = null
                         },
 
-                        error = errorConfirmPassword,
-                        darkTheme = darkTheme,
+                        error =
+                            errorConfirmPassword,
+
+                        darkTheme =
+                            darkTheme,
+
                         isPassword = true
                     )
 
 
                     Spacer(
-                        modifier = Modifier.height(8.dp)
+                        modifier =
+                            Modifier.height(8.dp)
                     )
 
 
-                    // =================================================
+                    // =============================================
                     // RESTABLECER CONTRASEÑA
-                    // =================================================
+                    // =============================================
 
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
+                            .padding(
+                                horizontal = 32.dp
+                            )
                             .height(62.dp)
                             .clickable {
 
-                                if (validarFormulario()) {
+                                if (
+                                    validarFormulario()
+                                ) {
 
                                     /*
                                      * TODO(BACKEND):
                                      *
-                                     * REEMPLAZAR esta ejecución temporal
-                                     * por la integración con ViewModel/API.
+                                     * REEMPLAZAR esta ejecución
+                                     * temporal por la integración
+                                     * con ViewModel/API.
                                      *
                                      * Datos disponibles:
                                      *
@@ -358,36 +440,50 @@ fun ResetPasswordScreen(
                                      * newPassword
                                      * confirmPassword
                                      *
+                                     *
                                      * El backend deberá:
                                      *
-                                     * 1. Validar que el código de recuperación
-                                     *    sea correcto y siga vigente.
+                                     * 1. Validar que el código de
+                                     *    recuperación sea correcto
+                                     *    y siga vigente.
                                      *
-                                     * 2. Procesar el cambio de contraseña.
+                                     * 2. Validar la nueva contraseña.
                                      *
-                                     * 3. Informar si la operación fue exitosa.
+                                     * 3. Actualizar la contraseña.
                                      *
-                                     * Si el código es inválido o expiró:
+                                     * 4. Invalidar cualquier sesión
+                                     *    activa asociada al usuario.
                                      *
-                                     * errorCode = mensaje recibido del backend
+                                     * 5. Informar si la operación
+                                     *    fue exitosa.
                                      *
-                                     * Si existe un problema con la contraseña:
                                      *
-                                     * errorNewPassword = mensaje correspondiente
+                                     * Si el código es inválido
+                                     * o expiró:
+                                     *
+                                     * errorCode =
+                                     *     mensaje del backend
+                                     *
+                                     *
+                                     * Si existe un problema con
+                                     * la contraseña:
+                                     *
+                                     * errorNewPassword =
+                                     *     mensaje correspondiente
+                                     *
                                      *
                                      * IMPORTANTE:
                                      *
-                                     * Utilizar estos estados de error.
-                                     * NO agregar Text nuevos debajo de los
-                                     * campos.
+                                     * Utilizar los estados de error
+                                     * existentes.
                                      *
-                                     * Cada campo ya reserva permanentemente
-                                     * 16.dp para mostrar su mensaje de error.
-                                     * De esta forma ningún componente cambia
-                                     * de posición cuando aparece una alerta.
+                                     * NO agregar Text nuevos debajo
+                                     * de los campos.
                                      *
-                                     * SOLO si el backend confirma que el
-                                     * cambio fue exitoso ejecutar:
+                                     *
+                                     * SOLO si el backend confirma
+                                     * que el restablecimiento fue
+                                     * exitoso ejecutar:
                                      *
                                      * onResetPasswordClick(
                                      *     recoveryCode,
@@ -395,9 +491,16 @@ fun ResetPasswordScreen(
                                      *     confirmPassword
                                      * )
                                      *
+                                     * AppNavigation será responsable
+                                     * de limpiar la navegación y
+                                     * regresar a WelcomeScreen.
+                                     *
+                                     *
                                      * TEMPORAL:
-                                     * Actualmente se ejecuta directamente
-                                     * para probar el flujo sin backend.
+                                     *
+                                     * Actualmente se ejecuta
+                                     * directamente para probar
+                                     * el flujo sin backend.
                                      */
 
                                     onResetPasswordClick(
@@ -407,88 +510,57 @@ fun ResetPasswordScreen(
                                     )
                                 }
                             },
-                        shape = RoundedCornerShape(15.dp),
-                        color = primaryButtonColor
+
+                        shape =
+                            RoundedCornerShape(15.dp),
+
+                        color =
+                            primaryButtonColor
                     ) {
 
                         Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            modifier =
+                                Modifier.fillMaxSize(),
+
+                            contentAlignment =
+                                Alignment.Center
                         ) {
 
                             Text(
-                                text = "RESTABLECER CONTRASEÑA",
-                                color = Color.White,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Serif,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
+                                text =
+                                    "RESTABLECER CONTRASEÑA",
 
+                                color =
+                                    Color.White,
 
-                    // MÁS ESPACIO ENTRE LOS DOS BOTONES
+                                fontSize =
+                                    17.sp,
 
-                    Spacer(
-                        modifier = Modifier.height(22.dp)
-                    )
+                                fontWeight =
+                                    FontWeight.Bold,
 
+                                fontFamily =
+                                    FontFamily.Serif,
 
-                    // =================================================
-                    // INICIAR SESIÓN
-                    // =================================================
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
-                            .height(58.dp)
-                            .clickable {
-                                onLoginClick()
-                            },
-                        shape = RoundedCornerShape(15.dp),
-                        color = secondaryButtonBackground
-                    ) {
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            Text(
-                                text = "INICIAR SESIÓN",
-                                color = secondaryButtonContent,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Serif
-                            )
-
-                            Text(
-                                text = "›",
-                                color = Color(0xFFFF0060),
-                                fontSize = 30.sp,
-                                fontFamily = FontFamily.Serif
+                                textAlign =
+                                    TextAlign.Center
                             )
                         }
                     }
                 }
 
 
-                // =====================================================
+                // =================================================
                 // SELECTOR DE TEMA
-                //
-                // Está FUERA de la Column con weight(1f), por lo que
-                // tiene su propio espacio al final de la pantalla.
-                // =====================================================
+                // =================================================
 
                 HorizontalDivider(
                     thickness = 2.dp,
-                    color = Color(0xFFFF0060)
+
+                    color =
+                        Color(0xFFFF0060)
                 )
+
 
                 Text(
                     text =
@@ -503,12 +575,19 @@ fun ResetPasswordScreen(
                         .clickable {
                             onThemeChange()
                         }
-                        .padding(vertical = 14.dp),
+                        .padding(
+                            vertical = 14.dp
+                        ),
 
                     fontSize = 18.sp,
-                    fontFamily = FontFamily.Serif,
+
+                    fontFamily =
+                        FontFamily.Serif,
+
                     color = colors.text,
-                    textAlign = TextAlign.Center
+
+                    textAlign =
+                        TextAlign.Center
                 )
             }
         }
@@ -516,9 +595,9 @@ fun ResetPasswordScreen(
 }
 
 
-// =================================================================
+// =====================================================================
 // CAMPO REUTILIZABLE
-// =================================================================
+// =====================================================================
 
 @Composable
 private fun ResetPasswordField(
@@ -528,10 +607,13 @@ private fun ResetPasswordField(
     error: String?,
     darkTheme: Boolean,
     isPassword: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType =
+        KeyboardType.Text
 ) {
 
-    val colors = AppTheme.colors
+    val colors =
+        AppTheme.colors
+
 
     val unfocusedFieldColor =
         if (darkTheme) {
@@ -540,100 +622,153 @@ private fun ResetPasswordField(
             Color(0xFF16BFAF)
         }
 
+
     val focusedFieldColor =
         Color(0xFFFF0060)
+
 
     val errorColor =
         Color(0xFFD32F2F)
 
 
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier =
+            Modifier.fillMaxWidth()
     ) {
 
         Text(
             text = label,
-            modifier = Modifier.padding(
-                horizontal = 32.dp
-            ),
-            color = colors.text,
-            fontSize = 14.sp,
-            fontFamily = FontFamily.Serif
+
+            modifier =
+                Modifier.padding(
+                    horizontal = 32.dp
+                ),
+
+            color =
+                colors.text,
+
+            fontSize =
+                14.sp,
+
+            fontFamily =
+                FontFamily.Serif
         )
 
+
         Spacer(
-            modifier = Modifier.height(4.dp)
+            modifier =
+                Modifier.height(4.dp)
         )
+
 
         OutlinedTextField(
             value = value,
 
-            onValueChange = onValueChange,
+            onValueChange =
+                onValueChange,
 
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp)
+                .padding(
+                    horizontal = 32.dp
+                )
                 .height(54.dp),
 
             singleLine = true,
 
-            isError = error != null,
+            isError =
+                error != null,
 
             visualTransformation =
                 if (isPassword) {
+
                     PasswordVisualTransformation()
+
                 } else {
+
                     VisualTransformation.None
                 },
 
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType
-            ),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType =
+                        keyboardType
+                ),
 
-            shape = RoundedCornerShape(14.dp),
+            shape =
+                RoundedCornerShape(14.dp),
 
-            colors = OutlinedTextFieldDefaults.colors(
+            colors =
+                OutlinedTextFieldDefaults.colors(
 
-                focusedTextColor = colors.text,
-                unfocusedTextColor = colors.text,
+                    focusedTextColor =
+                        colors.text,
 
-                cursorColor = focusedFieldColor,
+                    unfocusedTextColor =
+                        colors.text,
 
-                focusedBorderColor = focusedFieldColor,
-                unfocusedBorderColor = unfocusedFieldColor,
+                    cursorColor =
+                        focusedFieldColor,
 
-                errorBorderColor = focusedFieldColor,
-                errorCursorColor = focusedFieldColor,
+                    focusedBorderColor =
+                        focusedFieldColor,
 
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                errorContainerColor = Color.Transparent
-            )
+                    unfocusedBorderColor =
+                        unfocusedFieldColor,
+
+                    errorBorderColor =
+                        focusedFieldColor,
+
+                    errorCursorColor =
+                        focusedFieldColor,
+
+                    focusedContainerColor =
+                        Color.Transparent,
+
+                    unfocusedContainerColor =
+                        Color.Transparent,
+
+                    errorContainerColor =
+                        Color.Transparent
+                )
         )
 
 
-        // =============================================================
+        // =========================================================
         // ESPACIO FIJO PARA ERROR
         //
-        // SIEMPRE mide 16.dp, exista o no un mensaje.
-        // Por eso ningún componente inferior cambia de posición.
-        // =============================================================
+        // Siempre ocupa el mismo espacio para evitar que los
+        // componentes inferiores cambien de posición.
+        // =========================================================
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(16.dp)
-                .padding(horizontal = 32.dp),
-            contentAlignment = Alignment.CenterStart
+                .padding(
+                    horizontal = 32.dp
+                ),
+
+            contentAlignment =
+                Alignment.CenterStart
         ) {
 
-            if (error != null) {
+            if (
+                error != null
+            ) {
 
                 Text(
                     text = error,
-                    color = errorColor,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Serif,
+
+                    color =
+                        errorColor,
+
+                    fontSize =
+                        10.sp,
+
+                    fontFamily =
+                        FontFamily.Serif,
+
                     maxLines = 1
                 )
             }
@@ -642,9 +777,9 @@ private fun ResetPasswordField(
 }
 
 
-// =================================================================
+// =====================================================================
 // CABECERA
-// =================================================================
+// =====================================================================
 
 @Composable
 private fun ResetPasswordHeader(
@@ -675,41 +810,60 @@ private fun ResetPasswordHeader(
             .fillMaxWidth()
             .height(180.dp)
             .background(
-                brush = Brush.verticalGradient(
-                    colors = gradientColors
-                )
+                brush =
+                    Brush.verticalGradient(
+                        colors =
+                            gradientColors
+                    )
             ),
-        contentAlignment = Alignment.Center
+
+        contentAlignment =
+            Alignment.Center
     ) {
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Text(
                 text = "RIETI",
-                color = Color.White,
-                fontFamily = FontFamily.Serif,
-                fontSize = 55.sp
+
+                color =
+                    Color.White,
+
+                fontFamily =
+                    FontFamily.Serif,
+
+                fontSize =
+                    55.sp
             )
+
 
             Spacer(
-                modifier = Modifier.height(4.dp)
+                modifier =
+                    Modifier.height(4.dp)
             )
 
+
             HorizontalDivider(
-                modifier = Modifier.width(90.dp),
-                thickness = 3.dp,
-                color = Color(0xFFE770A0)
+                modifier =
+                    Modifier.width(90.dp),
+
+                thickness =
+                    3.dp,
+
+                color =
+                    Color(0xFFE770A0)
             )
         }
     }
 }
 
 
-// =================================================================
+// =====================================================================
 // PREVIEW LIGHT
-// =================================================================
+// =====================================================================
 
 @Preview(
     name = "Reset Password - Light",
@@ -724,24 +878,31 @@ private fun ResetPasswordScreenLightPreview() {
     ) {
 
         ResetPasswordScreen(
-            onResetPasswordClick = { _, _, _ -> },
-            onLoginClick = {},
+
+            onResetPasswordClick = {
+                    _,
+                    _,
+                    _ ->
+            },
+
             darkTheme = false,
+
             onThemeChange = {}
         )
     }
 }
 
 
-// =================================================================
+// =====================================================================
 // PREVIEW DARK
-// =================================================================
+// =====================================================================
 
 @Preview(
     name = "Reset Password - Dark",
     showBackground = true,
     showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode =
+        Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 private fun ResetPasswordScreenDarkPreview() {
@@ -751,9 +912,15 @@ private fun ResetPasswordScreenDarkPreview() {
     ) {
 
         ResetPasswordScreen(
-            onResetPasswordClick = { _, _, _ -> },
-            onLoginClick = {},
+
+            onResetPasswordClick = {
+                    _,
+                    _,
+                    _ ->
+            },
+
             darkTheme = true,
+
             onThemeChange = {}
         )
     }

@@ -272,8 +272,8 @@ fun AppNavigation(
 
 
         // =========================================================
-        // RESET PASSWORD
-        // =========================================================
+// RESET PASSWORD
+// =========================================================
 
         composable(
             route = Routes.RESET_PASSWORD
@@ -289,32 +289,47 @@ fun AppNavigation(
                     /*
                      * TODO(BACKEND):
                      *
-                     * Validar el código de recuperación
-                     * y actualizar la contraseña.
+                     * Enviar al backend:
+                     *
+                     * - recoveryCode
+                     * - newPassword
+                     * - confirmPassword
+                     *
+                     * El backend deberá:
+                     *
+                     * 1. Validar que el código de recuperación
+                     *    sea correcto y siga vigente.
+                     *
+                     * 2. Validar la nueva contraseña.
+                     *
+                     * 3. Actualizar la contraseña.
+                     *
+                     * 4. Invalidar cualquier sesión activa
+                     *    asociada al usuario.
+                     *
+                     * IMPORTANTE:
+                     *
+                     * La navegación hacia START deberá
+                     * realizarse únicamente cuando el backend
+                     * confirme que el restablecimiento fue exitoso.
+                     */
+
+                    /*
+                     * TEMPORAL:
+                     *
+                     * Mientras todavía no se conecta el backend,
+                     * simulamos que el restablecimiento fue exitoso.
+                     *
+                     * Después regresamos a WelcomeScreen
+                     * y eliminamos el historial anterior.
                      */
 
                     navController.navigate(
-                        Routes.LOGIN
+                        Routes.START
                     ) {
 
                         popUpTo(
-                            Routes.RECOVER_PASSWORD
-                        ) {
-                            inclusive = true
-                        }
-
-                        launchSingleTop = true
-                    }
-                },
-
-                onLoginClick = {
-
-                    navController.navigate(
-                        Routes.LOGIN
-                    ) {
-
-                        popUpTo(
-                            Routes.RECOVER_PASSWORD
+                            navController.graph.id
                         ) {
                             inclusive = true
                         }
@@ -328,7 +343,6 @@ fun AppNavigation(
                 onThemeChange = onThemeChange
             )
         }
-
 
         // =========================================================
         // HOME
@@ -1025,8 +1039,8 @@ fun AppNavigation(
 
 
         // =========================================================
-        // CAMBIAR CONTRASEÑA
-        // =========================================================
+// CAMBIAR CONTRASEÑA
+// =========================================================
 
         composable(
             route = Routes.CHANGE_PASSWORD
@@ -1056,14 +1070,83 @@ fun AppNavigation(
                     /*
                      * TODO(BACKEND):
                      *
-                     * Enviar:
+                     * Enviar al backend:
+                     *
                      * - contraseña actual
                      * - nueva contraseña
+                     * - confirmación de contraseña
                      *
-                     * y esperar confirmación del backend.
+                     * El backend deberá:
+                     *
+                     * 1. Verificar que la contraseña actual
+                     *    sea correcta.
+                     *
+                     * 2. Validar la nueva contraseña.
+                     *
+                     * 3. Actualizar la contraseña.
+                     *
+                     * 4. Invalidar/cerrar la sesión actual.
+                     *
+                     * IMPORTANTE:
+                     *
+                     * La navegación hacia START deberá
+                     * ejecutarse ÚNICAMENTE cuando el backend
+                     * confirme que el cambio fue exitoso.
+                     *
+                     * Si la contraseña actual es incorrecta,
+                     * NO se debe cerrar la sesión ni navegar.
                      */
 
-                    navController.popBackStack()
+                    /*
+                     * TEMPORAL:
+                     *
+                     * Mientras todavía no se conecta el backend,
+                     * simulamos que el cambio fue exitoso.
+                     *
+                     * Regresamos a WelcomeScreen y eliminamos
+                     * el historial de navegación anterior.
+                     */
+
+                    navController.navigate(
+                        Routes.START
+                    ) {
+
+                        popUpTo(
+                            navController.graph.id
+                        ) {
+                            inclusive = true
+                        }
+
+                        launchSingleTop = true
+                    }
+                },
+
+
+                // -------------------------------------------------
+                // ¿OLVIDASTE TU CONTRASEÑA?
+                // -------------------------------------------------
+
+                onForgotPasswordClick = {
+
+                    /*
+                     * Reutilizamos el flujo de recuperación
+                     * existente.
+                     *
+                     * El usuario pasará por:
+                     *
+                     * 1. Solicitud del código.
+                     * 2. Ingreso del código.
+                     * 3. Creación de una nueva contraseña.
+                     *
+                     * Cuando termine correctamente,
+                     * RESET_PASSWORD lo regresará a START.
+                     */
+
+                    navController.navigate(
+                        Routes.RECOVER_PASSWORD
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
 
 
@@ -1109,7 +1192,6 @@ fun AppNavigation(
                 }
             )
         }
-
 
         // =========================================================
         // CUENTA BORRADA

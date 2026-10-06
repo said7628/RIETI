@@ -63,11 +63,15 @@ import com.example.rieti.view.components.TopBar
 @Composable
 fun ChangePasswordScreen(
     email: String,
+
     onChangePasswordClick: (
         currentPassword: String,
         newPassword: String,
         confirmPassword: String
     ) -> Unit,
+
+    onForgotPasswordClick: () -> Unit,
+
     onHomeClick: () -> Unit,
     onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit
@@ -309,19 +313,17 @@ fun ChangePasswordScreen(
 
 
             // =========================================================
-            // CONTRASEÑA ACTUAL
-            // =========================================================
+// CONTRASEÑA ACTUAL
+// =========================================================
 
             PasswordFieldLabel(
                 text = "Contraseña actual",
                 navy = navy
             )
 
-
             Spacer(
                 modifier = Modifier.height(5.dp)
             )
-
 
             PasswordInputField(
                 value = currentPassword,
@@ -344,11 +346,46 @@ fun ChangePasswordScreen(
                 borderColor = borderColor
             )
 
+            Spacer(
+                modifier = Modifier.height(7.dp)
+            )
+
+// =========================================================
+// OLVIDÉ MI CONTRASEÑA
+// =========================================================
+
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = "¿Olvidaste tu contraseña?",
+
+                    color = colors.pinkPrincipal,
+
+                    fontFamily = FontFamily.Serif,
+
+                    fontWeight = FontWeight.Medium,
+
+                    fontSize = 12.sp,
+
+                    modifier = Modifier
+                        .clickable {
+                            onForgotPasswordClick()
+                        }
+                        .padding(
+                            vertical = 3.dp
+                        )
+                )
+            }
 
             Spacer(
                 modifier = Modifier.height(12.dp)
             )
-
 
             // =========================================================
             // NUEVA CONTRASEÑA
@@ -820,6 +857,7 @@ private fun ChangePasswordLightPreview() {
                     _,
                     _ ->
             },
+            onForgotPasswordClick = {},
 
             onHomeClick = {},
 
@@ -856,6 +894,7 @@ private fun ChangePasswordDarkPreview() {
                     _,
                     _ ->
             },
+            onForgotPasswordClick = {},
 
             onHomeClick = {},
 
