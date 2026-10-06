@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForwardIos
@@ -24,12 +25,14 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -43,9 +46,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -220,7 +227,8 @@ fun SettingsScreen(
 
                 SettingsSectionHeader(
                     title = "Cuenta",
-                    description = "Administra la información de tu cuenta.",
+                    description =
+                        "Administra la información de tu cuenta.",
                     navy = navy,
                     secondaryText = secondaryText
                 )
@@ -232,11 +240,12 @@ fun SettingsScreen(
 
 
                 // =====================================================
-                // TARJETA CUENTA
+                // TARJETA DE CUENTA
                 // =====================================================
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+
                     shape = RoundedCornerShape(10.dp),
 
                     colors = CardDefaults.cardColors(
@@ -252,6 +261,13 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
 
+                        // =================================================
+                        // CORREO ELECTRÓNICO
+                        //
+                        // Solo se muestra como información.
+                        // No puede modificarse desde Configuración.
+                        // =================================================
+
                         SettingsInformationRow(
                             icon = Icons.Default.Email,
                             title = "Correo electrónico",
@@ -266,19 +282,9 @@ fun SettingsScreen(
                         )
 
 
-                        SettingsInformationRow(
-                            icon = Icons.Default.Lock,
-                            title = "Contraseña",
-                            value = "************",
-                            navy = navy,
-                            secondaryText = secondaryText
-                        )
-
-
-                        SettingsDivider(
-                            color = divider
-                        )
-
+                        // =================================================
+                        // CAMBIAR CONTRASEÑA
+                        // =================================================
 
                         SettingsActionRow(
                             icon = Icons.Default.Key,
@@ -296,6 +302,10 @@ fun SettingsScreen(
                         )
 
 
+                        // =================================================
+                        // SALIR DE LA CUENTA
+                        // =================================================
+
                         SettingsActionRow(
                             icon = Icons.Default.Logout,
                             title = "Salir de la cuenta",
@@ -311,6 +321,10 @@ fun SettingsScreen(
                             color = divider
                         )
 
+
+                        // =================================================
+                        // BORRAR CUENTA
+                        // =================================================
 
                         SettingsActionRow(
                             icon = Icons.Default.DeleteOutline,
@@ -336,7 +350,8 @@ fun SettingsScreen(
 
                 SettingsSectionHeader(
                     title = "Visualización",
-                    description = "Personaliza tu experiencia en la aplicación.",
+                    description =
+                        "Personaliza tu experiencia en la aplicación.",
                     navy = navy,
                     secondaryText = secondaryText
                 )
@@ -353,6 +368,7 @@ fun SettingsScreen(
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+
                     shape = RoundedCornerShape(10.dp),
 
                     colors = CardDefaults.cardColors(
@@ -375,11 +391,13 @@ fun SettingsScreen(
                                 vertical = 13.dp
                             ),
 
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment =
+                            Alignment.CenterVertically
                     ) {
 
                         Icon(
-                            imageVector = Icons.Default.DarkMode,
+                            imageVector =
+                                Icons.Default.DarkMode,
                             contentDescription = null,
                             tint = navy,
                             modifier = Modifier.size(29.dp)
@@ -432,11 +450,20 @@ fun SettingsScreen(
                             },
 
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = colors.pinkPrincipal,
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color(0xFFD4D7DA),
-                                uncheckedBorderColor = Color.Transparent
+                                checkedThumbColor =
+                                    Color.White,
+
+                                checkedTrackColor =
+                                    colors.pinkPrincipal,
+
+                                uncheckedThumbColor =
+                                    Color.White,
+
+                                uncheckedTrackColor =
+                                    Color(0xFFD4D7DA),
+
+                                uncheckedBorderColor =
+                                    Color.Transparent
                             )
                         )
                     }
@@ -452,7 +479,7 @@ fun SettingsScreen(
 
 
     // =================================================================
-    // ALERTA BORRAR CUENTA
+    // CONFIRMACIÓN PARA BORRAR CUENTA
     // =================================================================
 
     if (showDeleteAccountDialog) {
@@ -466,18 +493,46 @@ fun SettingsScreen(
                 showDeleteAccountDialog = false
             },
 
-            onConfirm = {
-
-                showDeleteAccountDialog = false
+            onConfirm = { password ->
 
                 /*
                  * TODO(BACKEND):
                  *
-                 * Navigation recibe este evento.
-                 * Más adelante el backend deberá eliminar realmente
-                 * la cuenta antes de mostrar la pantalla de éxito.
+                 * Antes de eliminar la cuenta se deberá enviar
+                 * la contraseña actual al backend para volver
+                 * a autenticar al usuario.
+                 *
+                 * Si la contraseña es correcta:
+                 *
+                 * 1. El backend elimina la cuenta.
+                 * 2. Se invalida/cierra la sesión.
+                 * 3. Se ejecuta onDeleteAccountClick().
+                 * 4. Se navega a AccountDeletedScreen.
+                 *
+                 * Si la contraseña es incorrecta:
+                 *
+                 * 1. NO se elimina la cuenta.
+                 * 2. El diálogo permanece abierto.
+                 * 3. Se muestra el error correspondiente.
+                 *
+                 * La contraseña NO debe validarse localmente.
                  */
-                onDeleteAccountClick()
+
+                if (password.isNotBlank()) {
+
+                    /*
+                     * TEMPORAL:
+                     *
+                     * Hasta conectar el backend, solamente se
+                     * comprueba que exista texto.
+                     *
+                     * Esto NO comprueba que la contraseña sea correcta.
+                     */
+
+                    showDeleteAccountDialog = false
+
+                    onDeleteAccountClick()
+                }
             }
         )
     }
@@ -520,6 +575,8 @@ private fun SettingsSectionHeader(
 
 // =====================================================================
 // FILA DE INFORMACIÓN
+//
+// No incluye flecha porque no representa una acción.
 // =====================================================================
 
 @Composable
@@ -539,7 +596,8 @@ private fun SettingsInformationRow(
                 vertical = 11.dp
             ),
 
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         Icon(
@@ -577,20 +635,14 @@ private fun SettingsInformationRow(
                 overflow = TextOverflow.Ellipsis
             )
         }
-
-
-        Icon(
-            imageVector = Icons.Default.ArrowForwardIos,
-            contentDescription = null,
-            tint = navy,
-            modifier = Modifier.size(15.dp)
-        )
     }
 }
 
 
 // =====================================================================
 // FILA DE ACCIÓN
+//
+// Las opciones que navegan o realizan una acción conservan la flecha.
 // =====================================================================
 
 @Composable
@@ -612,7 +664,8 @@ private fun SettingsActionRow(
                 vertical = 14.dp
             ),
 
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         Icon(
@@ -638,7 +691,8 @@ private fun SettingsActionRow(
 
 
         Icon(
-            imageVector = Icons.Default.ArrowForwardIos,
+            imageVector =
+                Icons.Default.ArrowForwardIos,
             contentDescription = null,
             tint = navy,
             modifier = Modifier.size(15.dp)
@@ -661,14 +715,16 @@ private fun SettingsDivider(
             start = 60.dp,
             end = 16.dp
         ),
+
         thickness = 0.7.dp,
+
         color = color
     )
 }
 
 
 // =====================================================================
-// ALERTA DE CONFIRMACIÓN
+// DIÁLOGO PARA BORRAR CUENTA
 // =====================================================================
 
 @Composable
@@ -677,10 +733,18 @@ private fun DeleteAccountDialog(
     cardBackground: Color,
     secondaryText: Color,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: (String) -> Unit
 ) {
 
     val colors = AppTheme.colors
+
+    var password by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var passwordVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
 
 
     Dialog(
@@ -703,11 +767,12 @@ private fun DeleteAccountDialog(
                     vertical = 20.dp
                 ),
 
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             // =========================================================
-            // ICONO DE PAPELERA
+            // ICONO
             // =========================================================
 
             Box(
@@ -718,17 +783,24 @@ private fun DeleteAccountDialog(
                             colors.pinkPrincipal.copy(
                                 alpha = 0.11f
                             ),
+
                         shape = CircleShape
                     ),
 
-                contentAlignment = Alignment.Center
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Icon(
-                    imageVector = Icons.Default.DeleteOutline,
+                    imageVector =
+                        Icons.Default.DeleteOutline,
+
                     contentDescription = null,
+
                     tint = colors.pinkPrincipal,
-                    modifier = Modifier.size(28.dp)
+
+                    modifier =
+                        Modifier.size(28.dp)
                 )
             }
 
@@ -739,11 +811,11 @@ private fun DeleteAccountDialog(
 
 
             // =========================================================
-            // PREGUNTA
+            // TÍTULO
             // =========================================================
 
             Text(
-                text = "¿Estás seguro de\nborrar tu cuenta?",
+                text = "Confirma tu identidad",
                 color = navy,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
@@ -764,14 +836,18 @@ private fun DeleteAccountDialog(
 
             Text(
                 text =
-                    "Esta acción eliminará permanentemente\n" +
-                            "tu cuenta y toda la información asociada.\n" +
-                            "No podrás recuperarla.",
+                    "Para borrar tu cuenta, ingresa tu contraseña actual. " +
+                            "Esta acción eliminará permanentemente tu cuenta " +
+                            "y la información asociada. No podrás recuperarla.",
 
                 color = secondaryText,
+
                 fontFamily = FontFamily.Serif,
+
                 fontSize = 12.sp,
-                lineHeight = 16.sp,
+
+                lineHeight = 17.sp,
+
                 textAlign = TextAlign.Center
             )
 
@@ -782,7 +858,157 @@ private fun DeleteAccountDialog(
 
 
             // =========================================================
-            // SÍ, BORRAR CUENTA
+            // CONTRASEÑA ACTUAL
+            // =========================================================
+
+            Column(
+                modifier =
+                    Modifier.fillMaxWidth()
+            ) {
+
+                Text(
+                    text = "Contraseña actual",
+                    color = navy,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 13.sp
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(7.dp)
+                )
+
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .clip(
+                            RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+
+                            color =
+                                navy.copy(
+                                    alpha = 0.20f
+                                ),
+
+                            shape =
+                                RoundedCornerShape(8.dp)
+                        )
+                        .padding(
+                            start = 13.dp,
+                            end = 4.dp
+                        ),
+
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    BasicTextField(
+                        value = password,
+
+                        onValueChange = {
+                            password = it
+                        },
+
+                        singleLine = true,
+
+                        visualTransformation =
+                            if (passwordVisible) {
+                                VisualTransformation.None
+                            } else {
+                                PasswordVisualTransformation()
+                            },
+
+                        textStyle =
+                            TextStyle(
+                                color = navy,
+                                fontSize = 14.sp
+                            ),
+
+                        cursorBrush =
+                            SolidColor(
+                                colors.pinkPrincipal
+                            ),
+
+                        modifier =
+                            Modifier.weight(1f),
+
+                        decorationBox = { innerTextField ->
+
+                            Box(
+                                contentAlignment =
+                                    Alignment.CenterStart
+                            ) {
+
+                                if (password.isEmpty()) {
+
+                                    Text(
+                                        text =
+                                            "Ingresa tu contraseña",
+
+                                        color =
+                                            secondaryText.copy(
+                                                alpha = 0.65f
+                                            ),
+
+                                        fontSize = 13.sp
+                                    )
+                                }
+
+
+                                innerTextField()
+                            }
+                        }
+                    )
+
+
+                    // =================================================
+                    // MOSTRAR / OCULTAR CONTRASEÑA
+                    // =================================================
+
+                    IconButton(
+                        onClick = {
+                            passwordVisible =
+                                !passwordVisible
+                        }
+                    ) {
+
+                        Icon(
+                            imageVector =
+                                if (passwordVisible) {
+                                    Icons.Default.VisibilityOff
+                                } else {
+                                    Icons.Default.Visibility
+                                },
+
+                            contentDescription =
+                                if (passwordVisible) {
+                                    "Ocultar contraseña"
+                                } else {
+                                    "Mostrar contraseña"
+                                },
+
+                            tint = navy,
+
+                            modifier =
+                                Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+
+            // =========================================================
+            // BOTÓN BORRAR CUENTA
             // =========================================================
 
             Box(
@@ -793,17 +1019,31 @@ private fun DeleteAccountDialog(
                         RoundedCornerShape(6.dp)
                     )
                     .background(
-                        colors.pinkPrincipal
+                        if (password.isNotBlank()) {
+
+                            colors.pinkPrincipal
+
+                        } else {
+
+                            colors.pinkPrincipal.copy(
+                                alpha = 0.40f
+                            )
+                        }
                     )
-                    .clickable {
-                        onConfirm()
+                    .clickable(
+                        enabled =
+                            password.isNotBlank()
+                    ) {
+
+                        onConfirm(password)
                     },
 
-                contentAlignment = Alignment.Center
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Text(
-                    text = "Sí, borrar cuenta",
+                    text = "Borrar cuenta",
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
@@ -836,7 +1076,8 @@ private fun DeleteAccountDialog(
                         onDismiss()
                     },
 
-                contentAlignment = Alignment.Center
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Text(
