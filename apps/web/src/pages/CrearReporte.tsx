@@ -16,6 +16,7 @@ import "./report.css";
 function CrearReporte() {
     const navigate = useNavigate();
     const [draft, setDraft] = useState<ReportDraft>(emptyReportDraft);
+    const [fileNames, setFileNames] = useState<string[]>([]);
     const [error, setError] = useState("");
 
     function updateDraft(field: keyof ReportDraft, value: string) {
@@ -41,7 +42,7 @@ function CrearReporte() {
 
         const folio = createFolio();
         addReport(draftToReport(draft, folio));
-        navigate("/reporte-enviado", { state: { folio, draft } });
+        navigate("/reporte-enviado", { state: { folio, draft, fileNames } });
     }
 
     return (
@@ -102,6 +103,7 @@ function CrearReporte() {
                     draft={draft}
                     error={error}
                     onChange={updateDraft}
+                    onFilesChange={setFileNames}
                     onSubmit={handleSubmit}
                 />
             </main>
@@ -111,12 +113,12 @@ function CrearReporte() {
                     <div className="report-spinna-logo">
                         <img
                             src={spinnaLogo}
-                            alt="Spinna Logo"
+                            alt="SIPINNA"
                             className="report-spinna-image"
                         />
                     </div>
 
-                    <span>Spinna</span>
+                    <span>SIPINNA</span>
                 </div>
 
                 <div className="report-world-vision">

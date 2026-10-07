@@ -3,6 +3,7 @@ import dashboardIcon from '../../assets/dashboard-icon.png'
 import { semaforoByStatus, type Semaforo } from '../../data/shared/catalogs'
 import type { Report } from '../../data/shared/reportsData'
 import { useReports } from '../../data/shared/session'
+import { matchesView } from '../../data/tracking/trackingViews'
 
 function countBySemaforo(reports: Report[], semaforo: Semaforo) {
   return reports.filter(
@@ -15,7 +16,9 @@ function StatusCards() {
   const statusData = [
     {
       title: 'Reportes sin asignar',
-      value: countBySemaforo(reports, 'SIN_ATENDER'),
+      value: reports.filter((report) =>
+        matchesView(report, 'sin-asignar', null),
+      ).length,
       path: '/seguimiento?vista=sin-asignar',
     },
     {

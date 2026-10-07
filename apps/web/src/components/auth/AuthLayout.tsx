@@ -55,11 +55,11 @@ function AuthLayout({ children }: { children: ReactNode }) {
                     <div className="spinna-logo">
                         <img
                             src={spinnaLogo}
-                            alt="Spinna"
+                            alt="SIPINNA"
                             className="spinna-image"
                         />
                     </div>
-                    <span>Spinna</span>
+                    <span>SIPINNA</span>
                 </div>
 
                 <div className="world-vision">

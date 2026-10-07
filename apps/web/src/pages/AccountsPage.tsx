@@ -3,12 +3,13 @@ import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   createAccount,
-  setAccountActive,
+  deleteAccount,
   updateAccountRole,
   useAccounts,
 } from '../data/shared/accounts'
-import { roleLabels, userRoles, type UserRole } from '../data/shared/catalogs'
-import { syncSessionFromAccount, useSessionUser } from '../data/shared/session'
+import { roleLabels, semaforoByStatus, userRoles, type UserRole } from '../data/shared/catalogs'
+import type { Report } from '../data/shared/reportsData'
+import { syncSessionFromAccount, useReports, useSessionUser } from '../data/shared/session'
 import './AccountsPage.css'
 
 type AccountsView = 'crear' | 'administrar'
@@ -179,24 +180,66 @@ function CreateAccount({ onCreated }: { onCreated: () => void }) {
   )
 }
 
+type AccountSort = 'nombre-az' | 'nombre-za' | 'reportes'
+
+function countActiveReports(reports: Report[], name: string) {
+  return reports.filter((report) => {
+    const semaforo = semaforoByStatus[report.status]
+    return (
+      report.caseHolder === name &&
+      (semaforo === 'SIN_ATENDER' || semaforo === 'ATENDIENDO')
+    )
+  }).length
+}
+
 function ManageAccounts({ currentEmail }: { currentEmail: string }) {
   const accounts = useAccounts()
+  const reports = useReports()
+  const [sort, setSort] = useState<AccountSort>('nombre-az')
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const selected = accounts.find((account) => account.email === selectedEmail) ?? null
+
+  const rows = accounts
+    .map((account) => ({
+      account,
+      activeReports: countActiveReports(reports, account.name),
+    }))
+    .sort((a, b) => {
+      if (sort === 'reportes') {
+        return b.activeReports - a.activeReports || a.account.name.localeCompare(b.account.name, 'es')
+      }
+
+      const byName = a.account.name.localeCompare(b.account.name, 'es')
+      return sort === 'nombre-za' ? -byName : byName
+    })
 
   function changeRole(email: string, role: UserRole) {
     const account = updateAccountRole(email, role)
     if (account) syncSessionFromAccount(account)
   }
 
-  function changeActive(email: string, active: boolean) {
-    const account = setAccountActive(email, active)
-    if (account) syncSessionFromAccount(account)
+  function removeAccount(email: string) {
+    deleteAccount(email)
+    setSelectedEmail(null)
+    setConfirmDelete(false)
   }
 
   return (
     <section className="accounts-panel">
-      <div className="accounts-title">
-        <h1>Administrar cuentas</h1>
-        <div className="accounts-title-line"></div>
+      <div className="accounts-toolbar">
+        <label>
+          Ordenar por:
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as AccountSort)}
+          >
+            <option value="nombre-az">Nombre (a-z)</option>
+            <option value="nombre-za">Nombre (z-a)</option>
+            <option value="reportes">Cantidad de reportes</option>
+          </select>
+        </label>
       </div>
 
       <div className="accounts-table-wrap">
@@ -204,53 +247,133 @@ function ManageAccounts({ currentEmail }: { currentEmail: string }) {
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Correo</th>
+              <th>Correo electrónico</th>
               <th>Tipo de cuenta</th>
-              <th>Estado</th>
+              <th>Cantidad de reportes activos</th>
             </tr>
           </thead>
           <tbody>
-            {accounts.map((account) => {
-              const isCurrent = account.email === currentEmail
-
-              return (
-                <tr key={account.email} className={account.active ? '' : 'accounts-row-inactive'}>
-                  <td>{account.name}</td>
-                  <td>{account.email}</td>
-                  <td>
-                    <select
-                      aria-label={`Tipo de cuenta de ${account.name}`}
-                      value={account.role}
-                      onChange={(event) =>
-                        changeRole(account.email, event.target.value as UserRole)
-                      }
-                    >
-                      {userRoles.map((option) => (
-                        <option key={option} value={option}>
-                          {roleLabels[option]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      disabled={isCurrent}
-                      onClick={() => changeActive(account.email, !account.active)}
-                    >
-                      {isCurrent
-                        ? 'Sesión actual'
-                        : account.active
-                          ? 'Desactivar'
-                          : 'Activar'}
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
+            {rows.map(({ account, activeReports }) => (
+              <tr
+                key={account.email}
+                className="accounts-row"
+                tabIndex={0}
+                onClick={() => {
+                  setSelectedEmail(account.email)
+                  setConfirmDelete(false)
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setSelectedEmail(account.email)
+                    setConfirmDelete(false)
+                  }
+                }}
+              >
+                <td>{account.name}</td>
+                <td>{account.email}</td>
+                <td>{roleLabels[account.role]}</td>
+                <td>{activeReports}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
+
+      {selected && !confirmDelete && (
+        <div
+          className="accounts-overlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setSelectedEmail(null)
+          }}
+        >
+          <div className="accounts-dialog" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title">
+            <button
+              type="button"
+              className="accounts-dialog-close"
+              onClick={() => setSelectedEmail(null)}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+
+            <h2 id="account-dialog-title">{selected.name}</h2>
+            <div className="accounts-dialog-line"></div>
+
+            <p>
+              <strong>Correo electrónico:</strong> {selected.email}
+            </p>
+            <p>
+              <strong>Contraseña:</strong> {selected.password}
+            </p>
+            <p>
+              <strong>Cantidad de reportes activos:</strong>{' '}
+              {countActiveReports(reports, selected.name)}
+            </p>
+            <p>
+              <strong>Tipo de cuenta:</strong> {roleLabels[selected.role]}
+            </p>
+
+            <div className="accounts-dialog-actions">
+              <button
+                type="button"
+                className="accounts-dialog-primary"
+                onClick={() =>
+                  changeRole(
+                    selected.email,
+                    selected.role === 'ADMINISTRADOR' ? 'EMPLEADO' : 'ADMINISTRADOR',
+                  )
+                }
+              >
+                {selected.role === 'ADMINISTRADOR'
+                  ? 'Convertir en empleado'
+                  : 'Convertir en administrador'}
+              </button>
+
+              <button
+                type="button"
+                className="accounts-dialog-secondary"
+                disabled={selected.email === currentEmail}
+                onClick={() => setConfirmDelete(true)}
+              >
+                {selected.email === currentEmail ? 'Sesión actual' : 'Eliminar cuenta'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selected && confirmDelete && (
+        <div className="accounts-overlay">
+          <div className="accounts-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+            <button
+              type="button"
+              className="accounts-dialog-close"
+              onClick={() => setConfirmDelete(false)}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+
+            <h2 id="delete-dialog-title" className="accounts-delete-title">
+              La cuenta de <span>{selected.name}</span> se eliminará completamente del sistema
+            </h2>
+
+            <div className="accounts-confirm-actions">
+              <button type="button" className="accounts-dialog-primary" onClick={() => setConfirmDelete(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="accounts-dialog-secondary"
+                onClick={() => removeAccount(selected.email)}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

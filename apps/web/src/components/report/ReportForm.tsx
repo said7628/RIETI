@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import type { ReportDraft } from "../../data/shared/createReport";
 
@@ -5,7 +6,9 @@ interface ReportFormProps {
     draft: ReportDraft;
     readOnly?: boolean;
     error?: string;
+    fileNames?: string[];
     onChange?: (field: keyof ReportDraft, value: string) => void;
+    onFilesChange?: (names: string[]) => void;
     onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
 }
 
@@ -13,9 +16,13 @@ function ReportForm({
     draft,
     readOnly = false,
     error,
+    fileNames = [],
     onChange,
+    onFilesChange,
     onSubmit,
 }: ReportFormProps) {
+    const [files, setFiles] = useState<File[]>([]);
+
     function update(field: keyof ReportDraft) {
         return (
             event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -23,6 +30,36 @@ function ReportForm({
             onChange?.(field, event.target.value);
         };
     }
+
+    function addFiles(event: ChangeEvent<HTMLInputElement>) {
+        const selected = Array.from(event.target.files ?? []);
+        const next = [...files];
+
+        for (const file of selected) {
+            const alreadyAdded = next.some(
+                (item) =>
+                    item.name === file.name &&
+                    item.size === file.size &&
+                    item.lastModified === file.lastModified,
+            );
+
+            if (!alreadyAdded) {
+                next.push(file);
+            }
+        }
+
+        setFiles(next);
+        onFilesChange?.(next.map((file) => file.name));
+        event.target.value = "";
+    }
+
+    function removeFile(index: number) {
+        const next = files.filter((_, itemIndex) => itemIndex !== index);
+        setFiles(next);
+        onFilesChange?.(next.map((file) => file.name));
+    }
+
+    const visibleNames = readOnly ? fileNames : files.map((file) => file.name);
 
     return (
         <form className="report-form" onSubmit={onSubmit}>
@@ -95,7 +132,43 @@ function ReportForm({
                     </div>
 
                     <div className="file-field">
-                        <input id="reportFiles" type="file" multiple disabled={readOnly} />
+                        {!readOnly && (
+                            <label className="file-picker">
+                                Agregar archivos
+                                <input
+                                    id="reportFiles"
+                                    type="file"
+                                    multiple
+                                    onChange={addFiles}
+                                />
+                            </label>
+                        )}
+
+                        {visibleNames.length > 0 && (
+                            <>
+                                <p className="file-list-label">
+                                    {visibleNames.length === 1
+                                        ? "1 archivo agregado"
+                                        : `${visibleNames.length} archivos agregados`}
+                                </p>
+                                <ul className="file-list">
+                                {visibleNames.map((name, index) => (
+                                    <li key={`${name}-${index}`}>
+                                        <span>{name}</span>
+                                        {!readOnly && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                aria-label={`Quitar ${name}`}
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                            </>
+                        )}
                     </div>
                 </div>
 

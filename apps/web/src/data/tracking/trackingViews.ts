@@ -7,6 +7,7 @@ export type TrackingView =
   | 'sin-asignar'
   | 'en-atencion'
   | 'cerrados'
+  | 'cancelados'
 
 export const trackingViews: { id: TrackingView; label: string }[] = [
   { id: 'mis-reportes', label: 'Mis reportes' },
@@ -14,6 +15,7 @@ export const trackingViews: { id: TrackingView; label: string }[] = [
   { id: 'sin-asignar', label: 'Reportes sin asignar' },
   { id: 'en-atencion', label: 'En atención' },
   { id: 'cerrados', label: 'Casos cerrados' },
+  { id: 'cancelados', label: 'Cancelados' },
 ]
 
 export function parseTrackingView(value: string | null): TrackingView {
@@ -32,11 +34,13 @@ export function matchesView(
     case 'mis-reportes':
       return userName !== null && report.caseHolder === userName
     case 'sin-asignar':
-      return semaforo === 'SIN_ATENDER'
+      return semaforo === 'SIN_ATENDER' && report.caseHolder === null
     case 'en-atencion':
       return semaforo === 'ATENDIENDO'
     case 'cerrados':
       return semaforo === 'ATENDIDO'
+    case 'cancelados':
+      return report.status === 'Cancelado'
     case 'todos':
       return true
   }

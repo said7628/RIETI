@@ -97,12 +97,9 @@ export function updateAccountRole(email: string, role: UserRole) {
   return accounts.find((account) => account.email === email) ?? null
 }
 
-export function setAccountActive(email: string, active: boolean) {
-  accounts = accounts.map((account) =>
-    account.email === email ? { ...account, active } : account,
-  )
+export function deleteAccount(email: string) {
+  accounts = accounts.filter((account) => account.email !== email)
   emit()
-  return accounts.find((account) => account.email === email) ?? null
 }
 
 let recoveryCode: { email: string; code: string } | null = null

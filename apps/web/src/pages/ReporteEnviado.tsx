@@ -9,6 +9,7 @@ import "./report.css";
 interface SuccessState {
     folio: string;
     draft: ReportDraft;
+    fileNames?: string[];
 }
 
 function ReporteEnviado() {
@@ -80,7 +81,11 @@ function ReporteEnviado() {
                     <div className="report-title-line"></div>
                 </div>
 
-                <ReportForm draft={state.draft} readOnly />
+                <ReportForm
+                    draft={state.draft}
+                    readOnly
+                    fileNames={state.fileNames ?? []}
+                />
             </main>
 
             <footer className="report-footer">
@@ -88,12 +93,12 @@ function ReporteEnviado() {
                     <div className="report-spinna-logo">
                         <img
                             src={spinnaLogo}
-                            alt="Spinna Logo"
+                            alt="SIPINNA"
                             className="report-spinna-image"
                         />
                     </div>
 
-                    <span>Spinna</span>
+                    <span>SIPINNA</span>
                 </div>
 
                 <div className="report-world-vision">
