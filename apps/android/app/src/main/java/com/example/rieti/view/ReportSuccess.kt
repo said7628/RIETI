@@ -83,7 +83,7 @@ fun ReportSuccessScreen(
 
         // =========================================================
         // BOTTOM BAR
-        // Inicio | Quiénes somos | Configuración
+        // Quiénes somos | Inicio | Configuración
         // =========================================================
 
         bottomBar = {
@@ -360,9 +360,22 @@ private fun FolioCard(
                 modifier = Modifier.weight(1f)
             ) {
 
+                // =================================================
+                // FOLIO DE SEGUIMIENTO
+                //
+                // IMPORTANTE:
+                // Antes estaba forzado a Color.White.
+                //
+                // Eso provocaba que el texto prácticamente
+                // desapareciera sobre el fondo rosa en modo claro.
+                //
+                // Ahora utiliza colors.text para adaptarse
+                // automáticamente al tema claro u oscuro.
+                // =================================================
+
                 Text(
                     text = "Folio de seguimiento",
-                    color = Color.White,
+                    color = colors.text,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
@@ -544,6 +557,7 @@ private fun FolioInformationCard() {
 private fun TrackingButton(
     onClick: () -> Unit
 ) {
+
     val strongPink = Color(0xFFD10A5A)
 
 

@@ -570,9 +570,9 @@ fun ResetPasswordScreen(
                 Text(
                     text =
                         if (darkTheme) {
-                            "Modo claro"
+                            "Modo oscuro"
                         } else {
-                            "Modo obscuro"
+                            "Modo claro"
                         },
 
                     modifier = Modifier

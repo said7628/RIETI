@@ -1212,9 +1212,9 @@ private fun SelectorTemaLogin(
         Text(
             text =
                 if (darkTheme) {
-                    "Modo claro"
-                } else {
                     "Modo oscuro"
+                } else {
+                    "Modo claro"
                 },
 
             fontSize =

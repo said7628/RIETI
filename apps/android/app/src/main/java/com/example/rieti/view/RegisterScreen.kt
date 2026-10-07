@@ -1001,9 +1001,9 @@ private fun SelectorTemaCrearCuenta(
         Text(
             text =
                 if (darkTheme) {
-                    "Modo claro"
-                } else {
                     "Modo oscuro"
+                } else {
+                    "Modo claro"
                 },
             fontSize = 12.sp,
             fontFamily = FontFamily.Serif,

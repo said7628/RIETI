@@ -53,36 +53,8 @@ fun BottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp),
-
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-
-            // =====================================================
-            // INICIO
-            // =====================================================
-
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-
-                IconButton(
-                    onClick = {
-                        onHomeClick()
-                    },
-
-                    modifier = Modifier.size(64.dp)
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Default.Home,
-                        contentDescription = "Inicio",
-                        tint = navigationColor,
-                        modifier = Modifier.size(42.dp)
-                    )
-                }
-            }
 
 
             // =====================================================
@@ -98,7 +70,6 @@ fun BottomBar(
                     onClick = {
                         onAboutUsClick()
                     },
-
                     modifier = Modifier.size(64.dp)
                 ) {
 
@@ -107,6 +78,32 @@ fun BottomBar(
                         contentDescription = "Quiénes somos",
                         tint = navigationColor,
                         modifier = Modifier.size(45.dp)
+                    )
+                }
+            }
+
+
+            // =====================================================
+            // INICIO
+            // =====================================================
+
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+
+                IconButton(
+                    onClick = {
+                        onHomeClick()
+                    },
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = "Inicio",
+                        tint = navigationColor,
+                        modifier = Modifier.size(42.dp)
                     )
                 }
             }
@@ -125,7 +122,6 @@ fun BottomBar(
                     onClick = {
                         onSettingsClick()
                     },
-
                     modifier = Modifier.size(64.dp)
                 ) {
 
