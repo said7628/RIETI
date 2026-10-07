@@ -24,7 +24,7 @@ function TopBar({ showLogo = true }: TopBarProps) {
       <nav className="topbar-nav">
         <NavLink to="/crear-reporte">Crear reporte</NavLink>
         <NavLink to="/seguimiento">Seguimiento</NavLink>
-        {user?.role === 'ADMINISTRADOR_FUNDACION' && (
+        {user?.roleCode === 'ADMINISTRADOR_FUNDACION' && (
           <NavLink to="/cuentas">Cuentas</NavLink>
         )}
       </nav>
@@ -35,4 +35,5 @@ function TopBar({ showLogo = true }: TopBarProps) {
 }
 
 export default TopBar
+
 
