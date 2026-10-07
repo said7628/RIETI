@@ -20,7 +20,7 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
   const isAdmin =
     user?.roleCode === 'ADMINISTRADOR_FUNDACION' ||
-    user?.role === 'ADMINISTRADOR_FUNDACION'
+    user?.roleCode === 'ADMINISTRADOR_FUNDACION'
 
   function selectView(view: TrackingView) {
     setSearchParams({ vista: view })
@@ -88,3 +88,4 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
 }
 
 export default Sidebar
+

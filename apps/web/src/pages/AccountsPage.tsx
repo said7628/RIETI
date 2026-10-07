@@ -44,7 +44,7 @@ function AccountsPage() {
       : 'crear'
 
   const isAdmin =
-    user?.role === 'ADMINISTRADOR_FUNDACION'
+    user?.roleCode === 'ADMINISTRADOR_FUNDACION'
 
   if (!isAdmin) {
     return (
@@ -847,4 +847,5 @@ function ManageAccounts({
 }
 
 export default AccountsPage
+
 
