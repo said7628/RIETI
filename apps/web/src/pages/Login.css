@@ -610,3 +610,112 @@
     }
 
 }
+/* =========================================================
+   RIETI - RECUPERACION DE CONTRASEÑA
+   ========================================================= */
+
+.recovery-form {
+  max-width: 470px;
+}
+
+.recovery-description {
+  margin: 0 0 24px;
+
+  color: #444;
+
+  font-size: 14px;
+  line-height: 1.55;
+
+  text-align: center;
+}
+
+.recovery-sent-box {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  margin-bottom: 22px;
+  padding: 16px 18px;
+
+  border: 1px solid #95e3ea;
+  border-radius: 13px;
+
+  background: #f5ffff;
+
+  text-align: center;
+}
+
+.recovery-sent-box strong {
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 18px;
+}
+
+.recovery-sent-box span {
+  font-size: 13px;
+}
+
+.recovery-email {
+  color: #d10073;
+
+  font-weight: 700;
+
+  word-break: break-word;
+}
+
+.recovery-sent-box small {
+  margin-top: 4px;
+
+  color: #666;
+}
+
+.recovery-code-input {
+  text-align: center;
+
+  font-size: 25px !important;
+  font-weight: 700;
+
+  letter-spacing: 9px;
+}
+
+.password-hint {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #666;
+
+  font-size: 11px;
+}
+
+.recovery-resend-button {
+  width: 100%;
+
+  margin-top: 10px;
+  padding: 11px 16px;
+
+  border: 1px solid #1fc5b4;
+  border-radius: 12px;
+
+  background: transparent;
+
+  color: #000;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.recovery-resend-button:hover {
+  background: #1fc5b4;
+}
+
+.recovery-resend-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+

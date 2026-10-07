@@ -1,65 +1,133 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import AuthLayout from "../components/auth/AuthLayout";
-import { requestPasswordCode } from "../data/shared/accounts";
+﻿import {
+  useState,
+  type FormEvent,
+} from 'react'
+
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom'
+
+import AuthLayout from '../components/auth/AuthLayout'
+import { requestPasswordRecovery } from '../api/recovery'
 
 function RecuperarContrasena() {
-    const navigate = useNavigate();
-    const [email, setEmail] = useState("");
-    const [message, setMessage] = useState("");
+  const navigate = useNavigate()
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+  const [email, setEmail] =
+    useState('')
 
-        if (!email.trim()) {
-            setMessage("Escribe el correo de tu cuenta.");
-            return;
-        }
+  const [message, setMessage] =
+    useState('')
 
-        const code = requestPasswordCode(email);
+  const [loading, setLoading] =
+    useState(false)
 
-        if (!code) {
-            setMessage("No hay una cuenta activa con ese correo.");
-            return;
-        }
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault()
 
-        navigate("/recuperar/codigo", {
-            state: { email: email.trim().toLowerCase(), code },
-        });
+    const normalized =
+      email.trim().toLowerCase()
+
+    if (!normalized) {
+      setMessage(
+        'Escribe el correo de tu cuenta.',
+      )
+      return
     }
 
-    return (
-        <AuthLayout>
-            <form className="login-form" onSubmit={handleSubmit}>
-                <div className="login-title">
-                    <h1>Recuperar contraseña</h1>
-                    <div className="title-line"></div>
-                </div>
+    try {
+      setLoading(true)
+      setMessage('')
 
-                <div className="form-group">
-                    <label htmlFor="recovery-email">Correo electrónico</label>
-                    <input
-                        id="recovery-email"
-                        type="email"
-                        autoComplete="username"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                    />
-                </div>
+      await requestPasswordRecovery(
+        normalized,
+      )
 
-                {message && <p className="login-message">{message}</p>}
+      navigate(
+        '/recuperar/codigo',
+        {
+          state: {
+            email: normalized,
+          },
+        },
+      )
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible enviar el código.',
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
-                <button type="submit" className="login-button">
-                    Enviar código
-                </button>
+  return (
+    <AuthLayout>
+      <form
+        className="login-form recovery-form"
+        onSubmit={handleSubmit}
+      >
+        <div className="login-title">
+          <h1>
+            Recuperar contraseña
+          </h1>
 
-                <Link to="/login" className="login-back-button">
-                    Iniciar sesión
-                </Link>
-            </form>
-        </AuthLayout>
-    );
+          <div className="title-line" />
+        </div>
+
+        <p className="recovery-description">
+          Escribe el correo asociado a tu
+          cuenta. Te enviaremos un código
+          temporal para cambiar tu contraseña.
+        </p>
+
+        <div className="form-group">
+          <label htmlFor="recovery-email">
+            Correo electrónico
+          </label>
+
+          <input
+            id="recovery-email"
+            type="email"
+            autoComplete="email"
+            placeholder="correo@ejemplo.com"
+            value={email}
+            disabled={loading}
+            onChange={(event) =>
+              setEmail(event.target.value)
+            }
+          />
+        </div>
+
+        {message && (
+          <p className="login-message">
+            {message}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="login-button"
+          disabled={loading}
+        >
+          {loading
+            ? 'Enviando código...'
+            : 'Enviar código'}
+        </button>
+
+        <Link
+          to="/login"
+          className="login-back-button"
+        >
+          Volver a iniciar sesión
+        </Link>
+      </form>
+    </AuthLayout>
+  )
 }
 
-export default RecuperarContrasena;
+export default RecuperarContrasena
