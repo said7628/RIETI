@@ -206,26 +206,26 @@ function CreateAccount({
       !confirmPassword
     ) {
       setError(
-        'Completa nombre, correo y las dos contraseÃ±as.',
+        'Completa nombre, correo y las dos contraseñas.',
       )
       return
     }
 
     if (!email.includes('@')) {
-      setError('Escribe un correo vÃ¡lido.')
+      setError('Escribe un correo válido.')
       return
     }
 
     if (password.length < 8) {
       setError(
-        'La contraseÃ±a debe tener al menos 8 caracteres.',
+        'La contraseña debe tener al menos 8 caracteres.',
       )
       return
     }
 
     if (password !== confirmPassword) {
       setError(
-        'Las contraseÃ±as no coinciden.',
+        'Las contraseñas no coinciden.',
       )
       return
     }
@@ -283,7 +283,7 @@ function CreateAccount({
         </label>
 
         <label className="accounts-field">
-          Correo electrÃ³nico
+          Correo electrónico
 
           <input
             type="email"
@@ -298,7 +298,7 @@ function CreateAccount({
 
         <div className="accounts-password-row">
           <label className="accounts-field">
-            ContraseÃ±a
+            Contraseña
 
             <input
               type="password"
@@ -314,7 +314,7 @@ function CreateAccount({
           </label>
 
           <label className="accounts-field">
-            Confirmar contraseÃ±a
+            Confirmar contraseña
 
             <input
               type="password"
@@ -595,7 +595,7 @@ function ManageAccounts({
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Correo electrÃ³nico</th>
+              <th>Correo electrónico</th>
               <th>Tipo de cuenta</th>
               <th>Estado</th>
               <th>
@@ -685,7 +685,7 @@ function ManageAccounts({
               }
               aria-label="Cerrar"
             >
-              Ã—
+              ×
             </button>
 
             <h2 id="account-dialog-title">
@@ -696,7 +696,7 @@ function ManageAccounts({
 
             <p>
               <strong>
-                Correo electrÃ³nico:
+                Correo electrónico:
               </strong>{' '}
               {selected.email}
             </p>
@@ -771,7 +771,7 @@ function ManageAccounts({
               >
                 {selected.id ===
                 currentUserId
-                  ? 'SesiÃ³n actual'
+                  ? 'Sesión actual'
                   : selected.active
                     ? 'Desactivar cuenta'
                     : 'Cuenta inactiva'}
@@ -797,7 +797,7 @@ function ManageAccounts({
               }
               aria-label="Cerrar"
             >
-              Ã—
+              ×
             </button>
 
             <h2
@@ -806,12 +806,12 @@ function ManageAccounts({
             >
               La cuenta de{' '}
               <span>{selected.name}</span>{' '}
-              serÃ¡ desactivada
+              será desactivada
             </h2>
 
             <p>
               El historial y las acciones realizadas
-              por esta cuenta se conservarÃ¡n.
+              por esta cuenta se conservarán.
             </p>
 
             <div className="accounts-confirm-actions">
@@ -847,5 +847,6 @@ function ManageAccounts({
 }
 
 export default AccountsPage
+
 
 

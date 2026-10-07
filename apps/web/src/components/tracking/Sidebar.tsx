@@ -1,6 +1,5 @@
 ﻿import { Link, useSearchParams } from 'react-router-dom'
 import rietiLogo from '../../assets/rieti-logo.png'
-import { useSessionUser } from '../../data/shared/session'
 import {
   parseTrackingView,
   trackingViews,
@@ -14,13 +13,7 @@ interface SidebarProps {
 
 function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const user = useSessionUser()
-
   const activeView = parseTrackingView(searchParams.get('vista'))
-
-  const isAdmin =
-    user?.roleCode === 'ADMINISTRADOR_FUNDACION' ||
-    user?.roleCode === 'ADMINISTRADOR_FUNDACION'
 
   function selectView(view: TrackingView) {
     setSearchParams({ vista: view })
@@ -62,30 +55,9 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
             {view.label}
           </button>
         ))}
-
-        {isAdmin && (
-          <>
-            <div className="sidebar-divider" />
-
-            <Link
-              to="/cuentas"
-              className="sidebar-item sidebar-link"
-            >
-              Crear cuenta
-            </Link>
-
-            <Link
-              to="/cuentas?vista=administrar"
-              className="sidebar-item sidebar-link"
-            >
-              Administrar cuentas
-            </Link>
-          </>
-        )}
       </nav>
     </aside>
   )
 }
 
 export default Sidebar
-
