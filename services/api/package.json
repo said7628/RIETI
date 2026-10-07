@@ -1,0 +1,16 @@
+{
+  "name": "rieti-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "check": "node --check index.mjs"
+  },
+  "dependencies": {
+    "mysql2": "^3.15.3",
+    "bcryptjs": "^3.0.2",
+    "@aws-sdk/client-s3": "^3.922.0",
+    "@aws-sdk/s3-request-presigner": "^3.922.0"
+  }
+}
