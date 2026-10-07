@@ -2422,7 +2422,17 @@ function match(path,re){const m=re.exec(path);return m?m.slice(1).map(decodeURIC
 
 async function router(req){
   if(req.method==="GET"&&(req.path==="/"||req.path==="/health"))return health();
-  if(req.method==="POST"&&req.path==="/setup/bootstrap-admin")return bootstrapAdmin(req);
+  if(req.method==="POST"&&req.path==="/setup/bootstrap-admin"){
+    if(process.env.BOOTSTRAP_ENABLED!=="true"){
+      throw httpError(
+        404,
+        "NOT_FOUND",
+        "Ruta no encontrada"
+      )
+    }
+
+    return bootstrapAdmin(req)
+  }
   if(req.method==="POST"&&req.path==="/auth/login")return login(req);
   if(req.method==="POST"&&req.path==="/auth/refresh")return refreshSession(req);
   if(req.method==="POST"&&req.path==="/auth/logout")return logout(req);
@@ -2461,4 +2471,5 @@ export const handler=async(event)=>{
     return response(e.status||500,{ok:false,error:{code:e.code||"INTERNAL_ERROR",message:e.status?e.message:"Error interno del servidor",details:e.details}});
   }
 };
+
 
