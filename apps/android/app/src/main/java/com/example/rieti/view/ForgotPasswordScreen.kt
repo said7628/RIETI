@@ -560,15 +560,17 @@ private fun ForgotPasswordHeader(
 
 
             Spacer(
-                modifier = Modifier.height(4.dp)
+                modifier = Modifier.height(14.dp)
             )
 
 
-            HorizontalDivider(
-                modifier = Modifier.width(90.dp),
-                thickness = 3.dp,
+            Surface(
+                modifier = Modifier
+                    .width(90.dp)
+                    .height(3.dp),
+                shape = RoundedCornerShape(50),
                 color = Color(0xFFE770A0)
-            )
+            ) {}
         }
     }
 }
