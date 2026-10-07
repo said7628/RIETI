@@ -11,7 +11,9 @@ import {
 } from '../api/users'
 
 import {
+  getMunicipalities,
   getRoles,
+  type MunicipalityCatalog,
   type RoleCatalog,
 } from '../api/catalogs'
 
@@ -131,6 +133,9 @@ function CreateAccount({
   const [roles, setRoles] =
     useState<RoleCatalog[]>([])
 
+  const [municipalities, setMunicipalities] =
+    useState<MunicipalityCatalog[]>([])
+
   const [loadingRoles, setLoadingRoles] =
     useState(true)
 
@@ -150,26 +155,39 @@ function CreateAccount({
   const [roleId, setRoleId] =
     useState<number | null>(null)
 
+  const [municipalityId, setMunicipalityId] =
+    useState<number | null>(null)
+
   const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
 
-    getRoles()
-      .then((data) => {
+    Promise.all([
+      getRoles(),
+      getMunicipalities(),
+    ])
+      .then(([rolesData, municipalitiesData]) => {
         if (!active) return
 
-        setRoles(data)
+        setRoles(rolesData)
+        setMunicipalities(municipalitiesData)
 
         const defaultRole =
-          data.find(
+          rolesData.find(
             (role) =>
               role.codigo ===
               'GESTOR_MUNICIPAL',
-          ) ?? data[0]
+          ) ?? rolesData[0]
 
         if (defaultRole) {
           setRoleId(defaultRole.id)
+        }
+
+        if (municipalitiesData[0]) {
+          setMunicipalityId(
+            municipalitiesData[0].id,
+          )
         }
       })
       .catch((err) => {
@@ -216,9 +234,9 @@ function CreateAccount({
       return
     }
 
-    if (password.length < 8) {
+    if (password.length < 10) {
       setError(
-        'La contraseña debe tener al menos 8 caracteres.',
+        'La contraseña debe tener al menos 10 caracteres.',
       )
       return
     }
@@ -237,6 +255,27 @@ function CreateAccount({
       return
     }
 
+    const selectedRole =
+      roles.find(
+        (role) => role.id === roleId,
+      )
+
+    const requiresMunicipality =
+      selectedRole?.codigo ===
+        'GESTOR_MUNICIPAL' ||
+      selectedRole?.codigo ===
+        'PROCURADOR'
+
+    if (
+      requiresMunicipality &&
+      !municipalityId
+    ) {
+      setError(
+        'Selecciona el municipio asignado a la cuenta.',
+      )
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -245,6 +284,14 @@ function CreateAccount({
         email: email.trim().toLowerCase(),
         password,
         roleId,
+        municipalityId:
+          roles.find(
+            (role) =>
+              role.id === roleId,
+          )?.codigo ===
+            'ADMINISTRADOR_FUNDACION'
+            ? null
+            : municipalityId,
       })
 
       onCreated()
@@ -258,6 +305,17 @@ function CreateAccount({
       setSubmitting(false)
     }
   }
+
+  const selectedRole =
+    roles.find(
+      (role) => role.id === roleId,
+    )
+
+  const requiresMunicipality =
+    selectedRole?.codigo ===
+      'GESTOR_MUNICIPAL' ||
+    selectedRole?.codigo ===
+      'PROCURADOR'
 
   return (
     <section className="accounts-panel">
@@ -354,6 +412,37 @@ function CreateAccount({
             ))}
           </select>
         </label>
+
+        {requiresMunicipality && (
+          <label className="accounts-field">
+            Municipio asignado
+
+            <select
+              value={municipalityId ?? ''}
+              disabled={submitting}
+              onChange={(event) =>
+                setMunicipalityId(
+                  Number(event.target.value),
+                )
+              }
+            >
+              <option value="">
+                Selecciona un municipio
+              </option>
+
+              {municipalities.map(
+                (municipality) => (
+                  <option
+                    key={municipality.id}
+                    value={municipality.id}
+                  >
+                    {municipality.nombre}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+        )}
 
         {error && (
           <p className="accounts-error">
@@ -847,6 +936,10 @@ function ManageAccounts({
 }
 
 export default AccountsPage
+
+
+
+
 
 
 

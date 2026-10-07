@@ -1,6 +1,6 @@
 ﻿export type ReportStatus =
   | 'Registrado'
-  | 'En revisiÃ³n'
+  | 'En revisión'
   | 'En seguimiento'
   | 'Canalizado'
   | 'Concluido'
@@ -35,7 +35,7 @@ export const roleLabels: Record<UserRole, string> = {
 
 export const reportStatuses: ReportStatus[] = [
   'Registrado',
-  'En revisiÃ³n',
+  'En revisión',
   'En seguimiento',
   'Canalizado',
   'Concluido',
@@ -50,7 +50,7 @@ export const priorities: Priority[] = ['URGENTE', 'ALTA', 'MEDIA']
 export const semaforoByStatus: Record<ReportStatus, Semaforo> = {
   Registrado: 'SIN_ATENDER',
   Reincidente: 'SIN_ATENDER',
-  'En revisiÃ³n': 'ATENDIENDO',
+  'En revisión': 'ATENDIENDO',
   'En seguimiento': 'ATENDIENDO',
   Canalizado: 'ATENDIENDO',
   Concluido: 'ATENDIDO',
@@ -64,4 +64,7 @@ export const semaforoLabels: Record<Semaforo, string> = {
   ATENDIDO: 'Atendido',
   INACTIVO: 'Inactivo',
 }
+
+
+
 
