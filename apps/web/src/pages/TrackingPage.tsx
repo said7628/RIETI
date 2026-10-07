@@ -1,92 +1,239 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+
 import ReportDetail from '../components/shared/ReportDetail'
 import AssignSelect from '../components/tracking/AssignSelect'
 import Pagination from '../components/tracking/Pagination'
 import ReportDetailsModal from '../components/tracking/ReportDetailsModal'
 import ReportsTable from '../components/tracking/ReportsTable'
 import UpdateStatusModal from '../components/tracking/UpdateStatusModal'
-import { priorities, type Priority, type ReportStatus } from '../data/shared/catalogs'
-import type { Report } from '../data/shared/reportsData'
-import { sortOptions, sortReports, type SortOption } from '../data/shared/reportUtils'
-import { useReports, useSessionUser } from '../data/shared/session'
-import { matchesView, parseTrackingView } from '../data/tracking/trackingViews'
+
+import {
+  priorities,
+  type Priority,
+  type ReportStatus,
+} from '../data/shared/catalogs'
+
+import {
+  sortOptions,
+  sortReports,
+  type SortOption,
+} from '../data/shared/reportUtils'
+
+import {
+  refreshReports,
+  useReports,
+  useSessionUser,
+} from '../data/shared/session'
+
+import {
+  assignReport,
+  updateReport as updateReportApi,
+} from '../api/reports'
+
+import type { ApiUser } from '../api/users'
+
+import {
+  matchesView,
+  parseTrackingView,
+} from '../data/tracking/trackingViews'
+
 import './TrackingPage.css'
 
 function TrackingPage() {
   const [searchParams] = useSearchParams()
-  const view = parseTrackingView(searchParams.get('vista'))
+
+  const view = parseTrackingView(
+    searchParams.get('vista'),
+  )
+
   const user = useSessionUser()
+  const reports = useReports()
 
-  // Solo guarda cambios de sesión; el resto siempre viene del mock (evita campos vacíos con HMR).
-  const [reportOverrides, setReportOverrides] = useState<
-    Record<string, Partial<Report>>
-  >({})
+  const [sort, setSort] =
+    useState<SortOption>('recientes')
 
-  const reports = useReports().map((report) => ({
-    ...report,
-    ...reportOverrides[report.folio],
-  }))
+  const [folioSearch, setFolioSearch] =
+    useState('')
 
-  const [sort, setSort] = useState<SortOption>('recientes')
-  const [folioSearch, setFolioSearch] = useState('')
-  const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('')
-  const [coloniaFilter, setColoniaFilter] = useState('')
-  const [pagination, setPagination] = useState({ view, page: 1 })
-  const [pageSize, setPageSize] = useState(10)
-  const page = pagination.view === view ? pagination.page : 1
-  const [selectedFolio, setSelectedFolio] = useState<string | null>(null)
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [priorityFilter, setPriorityFilter] =
+    useState<Priority | ''>('')
 
-  const colonias = [...new Set(reports.map((report) => report.colonia))].sort()
+  const [coloniaFilter, setColoniaFilter] =
+    useState('')
+
+  const [pagination, setPagination] =
+    useState({
+      view,
+      page: 1,
+    })
+
+  const [pageSize, setPageSize] =
+    useState(10)
+
+  const page =
+    pagination.view === view
+      ? pagination.page
+      : 1
+
+  const [
+    selectedFolio,
+    setSelectedFolio,
+  ] = useState<string | null>(null)
+
+  const [
+    isStatusModalOpen,
+    setIsStatusModalOpen,
+  ] = useState(false)
+
+  const [
+    isDetailsModalOpen,
+    setIsDetailsModalOpen,
+  ] = useState(false)
+
+  const [actionError, setActionError] =
+    useState('')
+
+  const colonias = [
+    ...new Set(
+      reports.map(
+        (report) => report.colonia,
+      ),
+    ),
+  ].sort()
 
   const filteredReports = reports.filter(
     (report) =>
-      matchesView(report, view, user?.name ?? null) &&
-      report.folio.toLowerCase().includes(folioSearch.trim().toLowerCase()) &&
-      (priorityFilter === '' || report.priority === priorityFilter) &&
-      (coloniaFilter === '' || report.colonia === coloniaFilter),
+      matchesView(
+        report,
+        view,
+        user?.name ?? null,
+      ) &&
+      report.folio
+        .toLowerCase()
+        .includes(
+          folioSearch
+            .trim()
+            .toLowerCase(),
+        ) &&
+      (priorityFilter === '' ||
+        report.priority ===
+          priorityFilter) &&
+      (coloniaFilter === '' ||
+        report.colonia ===
+          coloniaFilter),
   )
-  const sortedReports = sortReports(filteredReports, sort)
 
-  const totalPages = Math.max(1, Math.ceil(sortedReports.length / pageSize))
-  const currentPage = Math.min(page, totalPages)
-  const pageReports = sortedReports.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+  const sortedReports =
+    sortReports(filteredReports, sort)
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      sortedReports.length / pageSize,
+    ),
   )
+
+  const currentPage = Math.min(
+    page,
+    totalPages,
+  )
+
+  const pageReports =
+    sortedReports.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize,
+    )
 
   const selectedReport =
-    sortedReports.find((report) => report.folio === selectedFolio) ?? pageReports[0]
+    sortedReports.find(
+      (report) =>
+        report.folio ===
+        selectedFolio,
+    ) ??
+    pageReports[0] ??
+    null
 
-  function updateReport(folio: string, changes: Partial<Report>) {
-    setReportOverrides((current) => ({
-      ...current,
-      [folio]: { ...current[folio], ...changes },
-    }))
+  async function assignCaseHolder(
+    assignedUser: ApiUser,
+  ) {
+    if (!selectedReport) return
+
+    setActionError('')
+
+    try {
+      await assignReport(
+        selectedReport.folio,
+        {
+          userId: assignedUser.id,
+        },
+      )
+
+      await refreshReports()
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible asignar el reporte.',
+      )
+
+      throw error
+    }
   }
 
-  function assignCaseHolder(caseHolder: string) {
-    updateReport(selectedReport.folio, { caseHolder, status: 'En revisión' })
-  }
+  async function updateStatus(
+    status: ReportStatus,
+    solution: string | null,
+  ) {
+    if (!selectedReport) return
 
-  function updateStatus(status: ReportStatus, solution: string | null) {
-    updateReport(selectedReport.folio, { status, solution })
-    setIsStatusModalOpen(false)
+    setActionError('')
+
+    try {
+      await updateReportApi(
+        selectedReport.folio,
+        {
+          status,
+          solution,
+        },
+      )
+
+      await refreshReports()
+
+      setIsStatusModalOpen(false)
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible actualizar el estatus.',
+      )
+    }
   }
 
   function renderActions() {
+    if (!selectedReport) {
+      return null
+    }
+
     return (
       <>
         {!selectedReport.caseHolder && (
-          <AssignSelect folio={selectedReport.folio} onConfirm={assignCaseHolder} />
+          <AssignSelect
+            folio={
+              selectedReport.folio
+            }
+            onConfirm={
+              assignCaseHolder
+            }
+          />
         )}
 
         <button
           type="button"
           className="button-primary"
-          onClick={() => setIsStatusModalOpen(true)}
+          onClick={() =>
+            setIsStatusModalOpen(true)
+          }
         >
           Actualizar estatus
         </button>
@@ -94,7 +241,9 @@ function TrackingPage() {
         <button
           type="button"
           className="button-primary"
-          onClick={() => setIsDetailsModalOpen(true)}
+          onClick={() =>
+            setIsDetailsModalOpen(true)
+          }
         >
           Ver detalles
         </button>
@@ -113,8 +262,14 @@ function TrackingPage() {
               aria-label="Buscar por folio"
               value={folioSearch}
               onChange={(event) => {
-                setFolioSearch(event.target.value)
-                setPagination({ view, page: 1 })
+                setFolioSearch(
+                  event.target.value,
+                )
+
+                setPagination({
+                  view,
+                  page: 1,
+                })
               }}
             />
 
@@ -122,86 +277,166 @@ function TrackingPage() {
               aria-label="Filtrar por prioridad"
               value={priorityFilter}
               onChange={(event) => {
-                setPriorityFilter(event.target.value as Priority | '')
-                setPagination({ view, page: 1 })
+                setPriorityFilter(
+                  event.target
+                    .value as
+                    | Priority
+                    | '',
+                )
+
+                setPagination({
+                  view,
+                  page: 1,
+                })
               }}
             >
-              <option value="">Todas las prioridades</option>
-              {priorities.map((priority) => (
-                <option key={priority} value={priority}>
-                  {priority}
-                </option>
-              ))}
+              <option value="">
+                Todas las prioridades
+              </option>
+
+              {priorities.map(
+                (priority) => (
+                  <option
+                    key={priority}
+                    value={priority}
+                  >
+                    {priority}
+                  </option>
+                ),
+              )}
             </select>
 
             <select
               aria-label="Filtrar por colonia"
               value={coloniaFilter}
               onChange={(event) => {
-                setColoniaFilter(event.target.value)
-                setPagination({ view, page: 1 })
+                setColoniaFilter(
+                  event.target.value,
+                )
+
+                setPagination({
+                  view,
+                  page: 1,
+                })
               }}
             >
-              <option value="">Todas las colonias</option>
-              {colonias.map((colonia) => (
-                <option key={colonia} value={colonia}>
-                  {colonia}
-                </option>
-              ))}
+              <option value="">
+                Todas las colonias
+              </option>
+
+              {colonias.map(
+                (colonia) => (
+                  <option
+                    key={colonia}
+                    value={colonia}
+                  >
+                    {colonia}
+                  </option>
+                ),
+              )}
             </select>
 
             <label className="tracking-sort">
               Ordenar por:{' '}
+
               <select
                 value={sort}
-                onChange={(event) => setSort(event.target.value as SortOption)}
+                onChange={(event) =>
+                  setSort(
+                    event.target
+                      .value as SortOption,
+                  )
+                }
               >
-                {sortOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
+                {sortOptions.map(
+                  (option) => (
+                    <option
+                      key={option.id}
+                      value={option.id}
+                    >
+                      {option.label}
+                    </option>
+                  ),
+                )}
               </select>
             </label>
           </div>
 
+          {actionError && (
+            <p className="modal-error">
+              {actionError}
+            </p>
+          )}
+
           <ReportsTable
             reports={pageReports}
-            selectedFolio={selectedReport?.folio}
-            onSelect={setSelectedFolio}
+            selectedFolio={
+              selectedReport?.folio
+            }
+            onSelect={
+              setSelectedFolio
+            }
           />
 
           <Pagination
             page={currentPage}
             totalPages={totalPages}
             pageSize={pageSize}
-            onPageChange={(nextPage) => setPagination({ view, page: nextPage })}
-            onPageSizeChange={(size) => {
+            onPageChange={(
+              nextPage,
+            ) =>
+              setPagination({
+                view,
+                page: nextPage,
+              })
+            }
+            onPageSizeChange={(
+              size,
+            ) => {
               setPageSize(size)
-              setPagination({ view, page: 1 })
+
+              setPagination({
+                view,
+                page: 1,
+              })
             }}
           />
         </section>
 
         {selectedReport && (
-          <ReportDetail report={selectedReport} actions={renderActions()} />
+          <ReportDetail
+            report={selectedReport}
+            actions={renderActions()}
+          />
         )}
       </main>
 
-      {isStatusModalOpen && selectedReport && (
-        <UpdateStatusModal
-          report={selectedReport}
-          onCancel={() => setIsStatusModalOpen(false)}
-          onConfirm={updateStatus}
-        />
-      )}
+      {isStatusModalOpen &&
+        selectedReport && (
+          <UpdateStatusModal
+            report={selectedReport}
+            onCancel={() =>
+              setIsStatusModalOpen(
+                false,
+              )
+            }
+            onConfirm={
+              updateStatus
+            }
+          />
+        )}
 
-      {isDetailsModalOpen && selectedReport && (
-        <ReportDetailsModal
-          report={selectedReport}
-          onClose={() => setIsDetailsModalOpen(false)}
-        />
-      )}
+      {isDetailsModalOpen &&
+        selectedReport && (
+          <ReportDetailsModal
+            report={selectedReport}
+            onClose={() =>
+              setIsDetailsModalOpen(
+                false,
+              )
+            }
+          />
+        )}
     </div>
   )
 }

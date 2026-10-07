@@ -1,17 +1,48 @@
 import { useSyncExternalStore } from 'react'
-import { findActiveAccount, type Account } from './accounts'
+import { apiRequest, setAccessToken } from '../../api/api'
 import type { UserRole } from './catalogs'
-import { currentUser } from './currentUser'
-import { reportsData, type Report } from './reportsData'
+import type { Report } from './reportsData'
 
 export interface SessionUser {
+  id: number
   name: string
   email: string
   role: UserRole
+  roleCode: string
+  roleName: string
+  municipalityId: number | null
+  dependencyId: number | null
 }
 
-let user: SessionUser | null = currentUser
-let reports: Report[] = [...reportsData]
+interface LoginResponse {
+  ok: boolean
+  user: {
+    id: number
+    name: string
+    email: string
+    role: UserRole
+    roleCode: string
+    roleName: string
+    municipalityId: number | null
+    dependencyId: number | null
+  }
+  accessToken: string
+  refreshToken: string
+}
+
+interface ReportsResponse {
+  ok: boolean
+  reports: Report[]
+}
+
+const savedUser = sessionStorage.getItem('rieti_user')
+
+let user: SessionUser | null = savedUser
+  ? JSON.parse(savedUser)
+  : null
+
+let reports: Report[] = []
+
 const listeners = new Set<() => void>()
 
 function emit() {
@@ -39,38 +70,90 @@ export function useReports() {
   return useSyncExternalStore(subscribeSession, getReports)
 }
 
-export function logout() {
-  user = null
-  emit()
+export async function login(email: string, password: string) {
+  try {
+    const response = await apiRequest<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password,
+      }),
+    })
+
+    setAccessToken(response.accessToken)
+
+    sessionStorage.setItem(
+      'rieti_refresh_token',
+      response.refreshToken,
+    )
+
+    user = response.user
+
+    sessionStorage.setItem(
+      'rieti_user',
+      JSON.stringify(user),
+    )
+
+    await refreshReports()
+
+    emit()
+
+    return null
+  } catch (error) {
+    return error instanceof Error
+      ? error.message
+      : 'No fue posible iniciar sesión.'
+  }
 }
 
-export function login(email: string, password: string) {
-  const account = findActiveAccount(email, password)
+export async function refreshSession() {
+  try {
+    const response = await apiRequest<{
+      ok: boolean
+      user: SessionUser
+    }>('/auth/me')
 
-  if (!account) {
+    user = response.user
+
+    sessionStorage.setItem(
+      'rieti_user',
+      JSON.stringify(user),
+    )
+
+    await refreshReports()
+
+    emit()
+
+    return true
+  } catch {
+    logout()
     return false
   }
-
-  user = toSessionUser(account)
-  emit()
-  return true
 }
 
-export function syncSessionFromAccount(account: Account) {
-  if (user?.email !== account.email) {
+export async function refreshReports() {
+  if (!user) {
+    reports = []
+    emit()
     return
   }
 
-  user = account.active ? toSessionUser(account) : null
+  const response = await apiRequest<ReportsResponse>('/reportes')
+
+  reports = response.reports
   emit()
 }
 
-function toSessionUser(account: Account): SessionUser {
-  return {
-    name: account.name,
-    email: account.email,
-    role: account.role,
-  }
+export function logout() {
+  user = null
+  reports = []
+
+  setAccessToken(null)
+
+  sessionStorage.removeItem('rieti_user')
+  sessionStorage.removeItem('rieti_refresh_token')
+
+  emit()
 }
 
 export function addReport(report: Report) {

@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router-dom'
+﻿import { Link, NavLink } from 'react-router-dom'
 import rietiLogo from '../../assets/rieti-logo.png'
 import { useSessionUser } from '../../data/shared/session'
 import UserMenu from './UserMenu'
@@ -16,7 +16,7 @@ function TopBar({ showLogo = true }: TopBarProps) {
         <Link to="/" className="topbar-logo">
           <img src={rietiLogo} alt="Logo RIETI" />
 
-          {/* Yo agrego el nombre porque la imagen solo contiene el símbolo. */}
+          {/* Yo agrego el nombre porque la imagen solo contiene el sÃ­mbolo. */}
           <span>RIETI</span>
         </Link>
       )}
@@ -24,7 +24,7 @@ function TopBar({ showLogo = true }: TopBarProps) {
       <nav className="topbar-nav">
         <NavLink to="/crear-reporte">Crear reporte</NavLink>
         <NavLink to="/seguimiento">Seguimiento</NavLink>
-        {user?.role === 'ADMINISTRADOR' && (
+        {user?.role === 'ADMINISTRADOR_FUNDACION' && (
           <NavLink to="/cuentas">Cuentas</NavLink>
         )}
       </nav>
@@ -35,3 +35,4 @@ function TopBar({ showLogo = true }: TopBarProps) {
 }
 
 export default TopBar
+

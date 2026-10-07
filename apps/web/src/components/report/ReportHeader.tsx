@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+﻿import { Link, useLocation } from "react-router-dom";
 import spinnaLogo from "../../assets/spinna-logo.png";
 import { useSessionUser } from "../../data/shared/session";
 import UserMenu from "../shared/UserMenu";
@@ -41,7 +41,7 @@ function ReportHeader() {
                     Seguimiento
                 </Link>
 
-                {user?.role === "ADMINISTRADOR" && (
+                {user?.role === "ADMINISTRADOR_FUNDACION" && (
                     <Link to="/cuentas" className="nav-option">
                         Cuentas
                     </Link>
@@ -55,3 +55,4 @@ function ReportHeader() {
 }
 
 export default ReportHeader;
+

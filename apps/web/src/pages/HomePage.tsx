@@ -1,18 +1,16 @@
-import AdminHero from '../components/home/AdminHero'
-import Waves from '../components/home/Waves'
-import StatusCards from '../components/home/StatusCards'
-import RecentReports from '../components/home/RecentReports'
-import HeatMapSection from '../components/home/HeatMapSection'
-import StatisticsSection from '../components/home/StatisticsSection'
+﻿import AdminHero from '../components/Home/AdminHero'
+import Waves from '../components/Home/Waves'
+import StatusCards from '../components/Home/StatusCards'
+import RecentReports from '../components/Home/RecentReports'
+import HeatMapSection from '../components/Home/HeatMapSection'
+import StatisticsSection from '../components/Home/StatisticsSection'
 import ReportDetail from '../components/shared/ReportDetail'
 import { sortReports } from '../data/shared/reportUtils'
 import { useReports, useSessionUser } from '../data/shared/session'
 
 function HomePage() {
-  // El análisis regional es exclusivo del administrador (RN-008).
   const user = useSessionUser()
   const reports = useReports()
-  const isAdmin = user?.role === 'ADMINISTRADOR'
   const latestReport = sortReports(reports, 'recientes')[0]
 
   return (
@@ -30,11 +28,13 @@ function HomePage() {
         </div>
       </section>
 
-      {isAdmin && <HeatMapSection />}
+      {user && <HeatMapSection />}
 
-      {isAdmin && <StatisticsSection />}
+      {user && <StatisticsSection />}
     </>
   )
 }
 
 export default HomePage
+
+

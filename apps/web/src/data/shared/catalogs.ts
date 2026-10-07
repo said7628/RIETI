@@ -1,6 +1,6 @@
-export type ReportStatus =
+﻿export type ReportStatus =
   | 'Registrado'
-  | 'En revisión'
+  | 'En revisiÃ³n'
   | 'En seguimiento'
   | 'Canalizado'
   | 'Concluido'
@@ -16,18 +16,26 @@ export type AgeRange = '0-5' | '6-11' | '12-14' | '15-17'
 
 export type Priority = 'MEDIA' | 'ALTA' | 'URGENTE'
 
-export type UserRole = 'ADMINISTRADOR' | 'EMPLEADO'
+export type UserRole =
+  | 'ADMINISTRADOR_FUNDACION'
+  | 'GESTOR_MUNICIPAL'
+  | 'PROCURADOR'
 
-export const userRoles: UserRole[] = ['ADMINISTRADOR', 'EMPLEADO']
+export const userRoles: UserRole[] = [
+  'ADMINISTRADOR_FUNDACION',
+  'GESTOR_MUNICIPAL',
+  'PROCURADOR',
+]
 
 export const roleLabels: Record<UserRole, string> = {
-  ADMINISTRADOR: 'Administrador',
-  EMPLEADO: 'Empleado',
+  ADMINISTRADOR_FUNDACION: 'Administrador Fundación',
+  GESTOR_MUNICIPAL: 'Gestor Municipal',
+  PROCURADOR: 'Procurador',
 }
 
 export const reportStatuses: ReportStatus[] = [
   'Registrado',
-  'En revisión',
+  'En revisiÃ³n',
   'En seguimiento',
   'Canalizado',
   'Concluido',
@@ -42,7 +50,7 @@ export const priorities: Priority[] = ['URGENTE', 'ALTA', 'MEDIA']
 export const semaforoByStatus: Record<ReportStatus, Semaforo> = {
   Registrado: 'SIN_ATENDER',
   Reincidente: 'SIN_ATENDER',
-  'En revisión': 'ATENDIENDO',
+  'En revisiÃ³n': 'ATENDIENDO',
   'En seguimiento': 'ATENDIENDO',
   Canalizado: 'ATENDIENDO',
   Concluido: 'ATENDIDO',
@@ -56,3 +64,4 @@ export const semaforoLabels: Record<Semaforo, string> = {
   ATENDIDO: 'Atendido',
   INACTIVO: 'Inactivo',
 }
+

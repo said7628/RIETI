@@ -1,229 +1,557 @@
-import { useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+
 import {
-  createAccount,
-  deleteAccount,
-  updateAccountRole,
-  useAccounts,
-} from '../data/shared/accounts'
-import { roleLabels, semaforoByStatus, userRoles, type UserRole } from '../data/shared/catalogs'
+  createUser,
+  deactivateUser,
+  getUsers,
+  updateUser,
+  type ApiUser,
+} from '../api/users'
+
+import {
+  getRoles,
+  type RoleCatalog,
+} from '../api/catalogs'
+
 import type { Report } from '../data/shared/reportsData'
-import { syncSessionFromAccount, useReports, useSessionUser } from '../data/shared/session'
+import {
+  useReports,
+  useSessionUser,
+} from '../data/shared/session'
+
+import { semaforoByStatus } from '../data/shared/catalogs'
+
 import './AccountsPage.css'
 
 type AccountsView = 'crear' | 'administrar'
 
+type AccountSort =
+  | 'nombre-az'
+  | 'nombre-za'
+  | 'reportes'
+
 function AccountsPage() {
   const user = useSessionUser()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const view: AccountsView =
-    searchParams.get('vista') === 'administrar' ? 'administrar' : 'crear'
 
-  if (user?.role !== 'ADMINISTRADOR') {
+  const [searchParams, setSearchParams] =
+    useSearchParams()
+
+  const view: AccountsView =
+    searchParams.get('vista') === 'administrar'
+      ? 'administrar'
+      : 'crear'
+
+  const isAdmin =
+    user?.role === 'ADMINISTRADOR_FUNDACION'
+
+  if (!isAdmin) {
     return (
       <main className="accounts-page">
         <div className="accounts-denied">
           <h1>Cuentas</h1>
-          <p>Solo un administrador puede crear y administrar cuentas.</p>
-          <Link to="/">Volver al inicio</Link>
+
+          <p>
+            Solo un administrador puede crear y
+            administrar cuentas.
+          </p>
+
+          <Link to="/">
+            Volver al inicio
+          </Link>
         </div>
       </main>
     )
   }
 
   function openView(nextView: AccountsView) {
-    setSearchParams(nextView === 'administrar' ? { vista: 'administrar' } : {})
+    setSearchParams(
+      nextView === 'administrar'
+        ? { vista: 'administrar' }
+        : {},
+    )
   }
 
   return (
     <main className="accounts-page">
       <div className="accounts-layout">
-        <nav className="accounts-side" aria-label="Secciones de cuentas">
+        <nav
+          className="accounts-side"
+          aria-label="Secciones de cuentas"
+        >
           <button
             type="button"
-            className={view === 'crear' ? 'accounts-side-active' : ''}
+            className={
+              view === 'crear'
+                ? 'accounts-side-active'
+                : ''
+            }
             onClick={() => openView('crear')}
           >
             Crear cuenta
           </button>
+
           <button
             type="button"
-            className={view === 'administrar' ? 'accounts-side-active' : ''}
-            onClick={() => openView('administrar')}
+            className={
+              view === 'administrar'
+                ? 'accounts-side-active'
+                : ''
+            }
+            onClick={() =>
+              openView('administrar')
+            }
           >
             Administrar
           </button>
         </nav>
 
         {view === 'crear' ? (
-          <CreateAccount onCreated={() => openView('administrar')} />
+          <CreateAccount
+            onCreated={() =>
+              openView('administrar')
+            }
+          />
         ) : (
-          <ManageAccounts currentEmail={user.email} />
+          <ManageAccounts
+            currentUserId={user.id}
+          />
         )}
       </div>
     </main>
   )
 }
 
-function CreateAccount({ onCreated }: { onCreated: () => void }) {
+function CreateAccount({
+  onCreated,
+}: {
+  onCreated: () => void
+}) {
+  const [roles, setRoles] =
+    useState<RoleCatalog[]>([])
+
+  const [loadingRoles, setLoadingRoles] =
+    useState(true)
+
+  const [submitting, setSubmitting] =
+    useState(false)
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole] = useState<UserRole>('EMPLEADO')
+  const [password, setPassword] =
+    useState('')
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] = useState('')
+
+  const [roleId, setRoleId] =
+    useState<number | null>(null)
+
   const [error, setError] = useState('')
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    let active = true
+
+    getRoles()
+      .then((data) => {
+        if (!active) return
+
+        setRoles(data)
+
+        const defaultRole =
+          data.find(
+            (role) =>
+              role.codigo ===
+              'GESTOR_MUNICIPAL',
+          ) ?? data[0]
+
+        if (defaultRole) {
+          setRoleId(defaultRole.id)
+        }
+      })
+      .catch((err) => {
+        if (!active) return
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'No fue posible cargar los roles.',
+        )
+      })
+      .finally(() => {
+        if (active) {
+          setLoadingRoles(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault()
 
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      setError('Completa nombre, correo y las dos contraseñas.')
+    setError('')
+
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !password ||
+      !confirmPassword
+    ) {
+      setError(
+        'Completa nombre, correo y las dos contraseÃ±as.',
+      )
       return
     }
 
     if (!email.includes('@')) {
-      setError('Escribe un correo válido.')
+      setError('Escribe un correo vÃ¡lido.')
       return
     }
 
-    if (password.length < 4) {
-      setError('La contraseña debe tener al menos 4 caracteres.')
+    if (password.length < 8) {
+      setError(
+        'La contraseÃ±a debe tener al menos 8 caracteres.',
+      )
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.')
+      setError(
+        'Las contraseÃ±as no coinciden.',
+      )
       return
     }
 
-    const createError = createAccount({ name, email, password, role })
-
-    if (createError) {
-      setError(createError)
+    if (!roleId) {
+      setError(
+        'Selecciona un tipo de cuenta.',
+      )
       return
     }
 
-    onCreated()
+    setSubmitting(true)
+
+    try {
+      await createUser({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        roleId,
+      })
+
+      onCreated()
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No fue posible crear la cuenta.',
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <section className="accounts-panel">
       <div className="accounts-title">
         <h1>Crear una nueva cuenta</h1>
-        <div className="accounts-title-line"></div>
+        <div className="accounts-title-line" />
       </div>
 
-      <form className="accounts-form" onSubmit={handleSubmit}>
+      <form
+        className="accounts-form"
+        onSubmit={handleSubmit}
+      >
         <label className="accounts-field accounts-field-wide">
           Nombre
-          <input value={name} onChange={(event) => setName(event.target.value)} />
+
+          <input
+            value={name}
+            disabled={submitting}
+            onChange={(event) =>
+              setName(event.target.value)
+            }
+          />
         </label>
 
         <label className="accounts-field">
-          Correo electrónico
+          Correo electrÃ³nico
+
           <input
             type="email"
             autoComplete="off"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            disabled={submitting}
+            onChange={(event) =>
+              setEmail(event.target.value)
+            }
           />
         </label>
 
         <div className="accounts-password-row">
           <label className="accounts-field">
-            Contraseña
+            ContraseÃ±a
+
             <input
               type="password"
               autoComplete="new-password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              disabled={submitting}
+              onChange={(event) =>
+                setPassword(
+                  event.target.value,
+                )
+              }
             />
           </label>
 
           <label className="accounts-field">
-            Confirmar contraseña
+            Confirmar contraseÃ±a
+
             <input
               type="password"
               autoComplete="new-password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              disabled={submitting}
+              onChange={(event) =>
+                setConfirmPassword(
+                  event.target.value,
+                )
+              }
             />
           </label>
         </div>
 
         <label className="accounts-field">
           Tipo de cuenta
+
           <select
-            value={role}
-            onChange={(event) => setRole(event.target.value as UserRole)}
+            value={roleId ?? ''}
+            disabled={
+              loadingRoles || submitting
+            }
+            onChange={(event) =>
+              setRoleId(
+                Number(event.target.value),
+              )
+            }
           >
-            {userRoles.map((option) => (
-              <option key={option} value={option}>
-                {roleLabels[option]}
+            {roles.map((role) => (
+              <option
+                key={role.id}
+                value={role.id}
+              >
+                {role.nombre}
               </option>
             ))}
           </select>
         </label>
 
-        <p className="accounts-hint">
-          El empleado puede iniciar sesión y recibir reportes en seguimiento.
-        </p>
+        {error && (
+          <p className="accounts-error">
+            {error}
+          </p>
+        )}
 
-        {error && <p className="accounts-error">{error}</p>}
-
-        <button type="submit" className="accounts-submit">
-          Crear cuenta
+        <button
+          type="submit"
+          className="accounts-submit"
+          disabled={
+            submitting || loadingRoles
+          }
+        >
+          {submitting
+            ? 'Creando...'
+            : 'Crear cuenta'}
         </button>
       </form>
     </section>
   )
 }
 
-type AccountSort = 'nombre-az' | 'nombre-za' | 'reportes'
-
-function countActiveReports(reports: Report[], name: string) {
+function countActiveReports(
+  reports: Report[],
+  name: string,
+) {
   return reports.filter((report) => {
-    const semaforo = semaforoByStatus[report.status]
+    const semaforo =
+      semaforoByStatus[report.status]
+
     return (
       report.caseHolder === name &&
-      (semaforo === 'SIN_ATENDER' || semaforo === 'ATENDIENDO')
+      (semaforo === 'SIN_ATENDER' ||
+        semaforo === 'ATENDIENDO')
     )
   }).length
 }
 
-function ManageAccounts({ currentEmail }: { currentEmail: string }) {
-  const accounts = useAccounts()
+function ManageAccounts({
+  currentUserId,
+}: {
+  currentUserId: number
+}) {
   const reports = useReports()
-  const [sort, setSort] = useState<AccountSort>('nombre-az')
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const selected = accounts.find((account) => account.email === selectedEmail) ?? null
+  const [accounts, setAccounts] =
+    useState<ApiUser[]>([])
 
-  const rows = accounts
-    .map((account) => ({
-      account,
-      activeReports: countActiveReports(reports, account.name),
-    }))
-    .sort((a, b) => {
-      if (sort === 'reportes') {
-        return b.activeReports - a.activeReports || a.account.name.localeCompare(b.account.name, 'es')
-      }
+  const [roles, setRoles] =
+    useState<RoleCatalog[]>([])
 
-      const byName = a.account.name.localeCompare(b.account.name, 'es')
-      return sort === 'nombre-za' ? -byName : byName
-    })
+  const [loading, setLoading] =
+    useState(true)
 
-  function changeRole(email: string, role: UserRole) {
-    const account = updateAccountRole(email, role)
-    if (account) syncSessionFromAccount(account)
+  const [error, setError] =
+    useState('')
+
+  const [sort, setSort] =
+    useState<AccountSort>('nombre-az')
+
+  const [
+    selectedUserId,
+    setSelectedUserId,
+  ] = useState<number | null>(null)
+
+  const [
+    confirmDelete,
+    setConfirmDelete,
+  ] = useState(false)
+
+  const [saving, setSaving] =
+    useState(false)
+
+  async function loadData() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const [usersResult, rolesResult] =
+        await Promise.all([
+          getUsers(),
+          getRoles(),
+        ])
+
+      setAccounts(usersResult)
+      setRoles(rolesResult)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No fue posible cargar las cuentas.',
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function removeAccount(email: string) {
-    deleteAccount(email)
-    setSelectedEmail(null)
-    setConfirmDelete(false)
+  useEffect(() => {
+    void loadData()
+  }, [])
+
+  const selected =
+    accounts.find(
+      (account) =>
+        account.id === selectedUserId,
+    ) ?? null
+
+  const rows = useMemo(() => {
+    return accounts
+      .map((account) => ({
+        account,
+        activeReports:
+          countActiveReports(
+            reports,
+            account.name,
+          ),
+      }))
+      .sort((a, b) => {
+        if (sort === 'reportes') {
+          return (
+            b.activeReports -
+              a.activeReports ||
+            a.account.name.localeCompare(
+              b.account.name,
+              'es',
+            )
+          )
+        }
+
+        const byName =
+          a.account.name.localeCompare(
+            b.account.name,
+            'es',
+          )
+
+        return sort === 'nombre-za'
+          ? -byName
+          : byName
+      })
+  }, [accounts, reports, sort])
+
+  async function changeRole(
+    account: ApiUser,
+    roleId: number,
+  ) {
+    setSaving(true)
+    setError('')
+
+    try {
+      await updateUser(account.id, {
+        roleId,
+      })
+
+      await loadData()
+
+      setSelectedUserId(null)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No fue posible actualizar la cuenta.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function removeAccount(
+    account: ApiUser,
+  ) {
+    setSaving(true)
+    setError('')
+
+    try {
+      await deactivateUser(account.id)
+
+      await loadData()
+
+      setSelectedUserId(null)
+      setConfirmDelete(false)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No fue posible desactivar la cuenta.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="accounts-panel">
+        <p>Cargando cuentas...</p>
+      </section>
+    )
   }
 
   return (
@@ -231,51 +559,102 @@ function ManageAccounts({ currentEmail }: { currentEmail: string }) {
       <div className="accounts-toolbar">
         <label>
           Ordenar por:
+
           <select
             value={sort}
-            onChange={(event) => setSort(event.target.value as AccountSort)}
+            onChange={(event) =>
+              setSort(
+                event.target
+                  .value as AccountSort,
+              )
+            }
           >
-            <option value="nombre-az">Nombre (a-z)</option>
-            <option value="nombre-za">Nombre (z-a)</option>
-            <option value="reportes">Cantidad de reportes</option>
+            <option value="nombre-az">
+              Nombre (a-z)
+            </option>
+
+            <option value="nombre-za">
+              Nombre (z-a)
+            </option>
+
+            <option value="reportes">
+              Cantidad de reportes
+            </option>
           </select>
         </label>
       </div>
+
+      {error && (
+        <p className="accounts-error">
+          {error}
+        </p>
+      )}
 
       <div className="accounts-table-wrap">
         <table className="accounts-table">
           <thead>
             <tr>
               <th>Nombre</th>
-              <th>Correo electrónico</th>
+              <th>Correo electrÃ³nico</th>
               <th>Tipo de cuenta</th>
-              <th>Cantidad de reportes activos</th>
+              <th>Estado</th>
+              <th>
+                Cantidad de reportes activos
+              </th>
             </tr>
           </thead>
+
           <tbody>
-            {rows.map(({ account, activeReports }) => (
-              <tr
-                key={account.email}
-                className="accounts-row"
-                tabIndex={0}
-                onClick={() => {
-                  setSelectedEmail(account.email)
-                  setConfirmDelete(false)
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    setSelectedEmail(account.email)
+            {rows.map(
+              ({
+                account,
+                activeReports,
+              }) => (
+                <tr
+                  key={account.id}
+                  className="accounts-row"
+                  tabIndex={0}
+                  onClick={() => {
+                    setSelectedUserId(
+                      account.id,
+                    )
                     setConfirmDelete(false)
-                  }
-                }}
-              >
-                <td>{account.name}</td>
-                <td>{account.email}</td>
-                <td>{roleLabels[account.role]}</td>
-                <td>{activeReports}</td>
-              </tr>
-            ))}
+                  }}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === 'Enter' ||
+                      event.key === ' '
+                    ) {
+                      event.preventDefault()
+
+                      setSelectedUserId(
+                        account.id,
+                      )
+
+                      setConfirmDelete(false)
+                    }
+                  }}
+                >
+                  <td>{account.name}</td>
+
+                  <td>{account.email}</td>
+
+                  <td>
+                    {account.roleName}
+                  </td>
+
+                  <td>
+                    {account.active
+                      ? 'Activa'
+                      : 'Inactiva'}
+                  </td>
+
+                  <td>
+                    {activeReports}
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>
@@ -284,59 +663,118 @@ function ManageAccounts({ currentEmail }: { currentEmail: string }) {
         <div
           className="accounts-overlay"
           onClick={(event) => {
-            if (event.target === event.currentTarget) setSelectedEmail(null)
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setSelectedUserId(null)
+            }
           }}
         >
-          <div className="accounts-dialog" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title">
+          <div
+            className="accounts-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="account-dialog-title"
+          >
             <button
               type="button"
               className="accounts-dialog-close"
-              onClick={() => setSelectedEmail(null)}
+              onClick={() =>
+                setSelectedUserId(null)
+              }
               aria-label="Cerrar"
             >
-              ×
+              Ã—
             </button>
 
-            <h2 id="account-dialog-title">{selected.name}</h2>
-            <div className="accounts-dialog-line"></div>
+            <h2 id="account-dialog-title">
+              {selected.name}
+            </h2>
+
+            <div className="accounts-dialog-line" />
 
             <p>
-              <strong>Correo electrónico:</strong> {selected.email}
+              <strong>
+                Correo electrÃ³nico:
+              </strong>{' '}
+              {selected.email}
             </p>
+
             <p>
-              <strong>Contraseña:</strong> {selected.password}
+              <strong>Tipo de cuenta:</strong>{' '}
+              {selected.roleName}
             </p>
+
             <p>
-              <strong>Cantidad de reportes activos:</strong>{' '}
-              {countActiveReports(reports, selected.name)}
+              <strong>Estado:</strong>{' '}
+              {selected.active
+                ? 'Activa'
+                : 'Inactiva'}
             </p>
+
             <p>
-              <strong>Tipo de cuenta:</strong> {roleLabels[selected.role]}
+              <strong>
+                Cantidad de reportes activos:
+              </strong>{' '}
+              {countActiveReports(
+                reports,
+                selected.name,
+              )}
             </p>
+
+            <label className="accounts-field">
+              Cambiar tipo de cuenta
+
+              <select
+                value={
+                  roles.find(
+                    (role) =>
+                      role.codigo ===
+                      selected.roleCode,
+                  )?.id ?? ''
+                }
+                disabled={saving}
+                onChange={(event) =>
+                  void changeRole(
+                    selected,
+                    Number(
+                      event.target.value,
+                    ),
+                  )
+                }
+              >
+                {roles.map((role) => (
+                  <option
+                    key={role.id}
+                    value={role.id}
+                  >
+                    {role.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <div className="accounts-dialog-actions">
               <button
                 type="button"
-                className="accounts-dialog-primary"
+                className="accounts-dialog-secondary"
+                disabled={
+                  saving ||
+                  selected.id ===
+                    currentUserId ||
+                  !selected.active
+                }
                 onClick={() =>
-                  changeRole(
-                    selected.email,
-                    selected.role === 'ADMINISTRADOR' ? 'EMPLEADO' : 'ADMINISTRADOR',
-                  )
+                  setConfirmDelete(true)
                 }
               >
-                {selected.role === 'ADMINISTRADOR'
-                  ? 'Convertir en empleado'
-                  : 'Convertir en administrador'}
-              </button>
-
-              <button
-                type="button"
-                className="accounts-dialog-secondary"
-                disabled={selected.email === currentEmail}
-                onClick={() => setConfirmDelete(true)}
-              >
-                {selected.email === currentEmail ? 'Sesión actual' : 'Eliminar cuenta'}
+                {selected.id ===
+                currentUserId
+                  ? 'SesiÃ³n actual'
+                  : selected.active
+                    ? 'Desactivar cuenta'
+                    : 'Cuenta inactiva'}
               </button>
             </div>
           </div>
@@ -345,30 +783,60 @@ function ManageAccounts({ currentEmail }: { currentEmail: string }) {
 
       {selected && confirmDelete && (
         <div className="accounts-overlay">
-          <div className="accounts-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+          <div
+            className="accounts-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+          >
             <button
               type="button"
               className="accounts-dialog-close"
-              onClick={() => setConfirmDelete(false)}
+              onClick={() =>
+                setConfirmDelete(false)
+              }
               aria-label="Cerrar"
             >
-              ×
+              Ã—
             </button>
 
-            <h2 id="delete-dialog-title" className="accounts-delete-title">
-              La cuenta de <span>{selected.name}</span> se eliminará completamente del sistema
+            <h2
+              id="delete-dialog-title"
+              className="accounts-delete-title"
+            >
+              La cuenta de{' '}
+              <span>{selected.name}</span>{' '}
+              serÃ¡ desactivada
             </h2>
 
+            <p>
+              El historial y las acciones realizadas
+              por esta cuenta se conservarÃ¡n.
+            </p>
+
             <div className="accounts-confirm-actions">
-              <button type="button" className="accounts-dialog-primary" onClick={() => setConfirmDelete(false)}>
+              <button
+                type="button"
+                className="accounts-dialog-primary"
+                disabled={saving}
+                onClick={() =>
+                  setConfirmDelete(false)
+                }
+              >
                 Cancelar
               </button>
+
               <button
                 type="button"
                 className="accounts-dialog-secondary"
-                onClick={() => removeAccount(selected.email)}
+                disabled={saving}
+                onClick={() =>
+                  void removeAccount(selected)
+                }
               >
-                Confirmar
+                {saving
+                  ? 'Desactivando...'
+                  : 'Confirmar'}
               </button>
             </div>
           </div>

@@ -1105,3 +1105,1717 @@ a {
     gap: 10px;
   }
 }
+
+/* =========================================================
+   MAPA DE CALOR RIETI - IMPLEMENTACION REAL
+   ========================================================= */
+
+.heatmap-toolbar {
+  width: 100%;
+  max-width: 1450px;
+
+  margin-top: 28px;
+
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 14px;
+
+  padding: 18px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #bff8f2;
+  border-radius: 16px;
+}
+
+.heatmap-filter {
+  min-width: 180px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.heatmap-filter label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.heatmap-filter select {
+  min-height: 40px;
+
+  padding: 8px 11px;
+
+  border: 1px solid #95e3ea;
+  border-radius: 9px;
+
+  background-color: #ffffff;
+  color: #000000;
+
+  font-size: 14px;
+
+  outline: none;
+}
+
+.heatmap-filter select:focus {
+  border-color: #1fc5b4;
+}
+
+.heatmap-clear-button {
+  min-height: 40px;
+
+  padding: 8px 18px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #000000;
+  color: #ffffff;
+
+  cursor: pointer;
+}
+
+.heatmap-clear-button:hover {
+  background-color: #1fc5b4;
+  color: #000000;
+}
+
+.heatmap-summary {
+  width: 100%;
+  max-width: 1450px;
+
+  margin-top: 14px;
+
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 22px;
+
+  padding: 12px 18px;
+
+  border-radius: 12px;
+
+  background-color: rgba(255, 255, 255, 0.8);
+
+  font-size: 13px;
+}
+
+.heatmap-map-wrapper {
+  position: relative;
+
+  width: 100%;
+  max-width: 1450px;
+  height: 480px;
+
+  margin-top: 18px;
+
+  overflow: hidden;
+
+  border: 2px solid #95e3ea;
+  border-radius: 18px;
+
+  background-color: #ffffff;
+
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.08);
+}
+
+.heatmap-map {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.heatmap-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 500;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 30px;
+
+  background-color: rgba(255, 255, 255, 0.88);
+
+  font-size: 16px;
+  text-align: center;
+}
+
+.heatmap-error {
+  color: #a00000;
+}
+
+.rieti-map-popup {
+  min-width: 175px;
+
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.rieti-map-popup > strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 14px;
+}
+
+@media (max-width: 1600px) {
+  .heatmap-map-wrapper {
+    height: 430px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .heatmap-map-wrapper {
+    height: 390px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .heatmap-map-wrapper {
+    height: 350px;
+  }
+
+  .heatmap-toolbar {
+    padding: 14px;
+  }
+
+  .heatmap-filter {
+    min-width: 155px;
+  }
+}
+
+
+/* =========================================================
+   MAPA DE CALOR RIETI - IMPLEMENTACION REAL
+   ========================================================= */
+
+.heatmap-toolbar {
+  width: 100%;
+  max-width: 1450px;
+
+  margin-top: 28px;
+
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 14px;
+
+  padding: 18px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #bff8f2;
+  border-radius: 16px;
+}
+
+.heatmap-filter {
+  min-width: 180px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.heatmap-filter label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.heatmap-filter select {
+  min-height: 40px;
+
+  padding: 8px 11px;
+
+  border: 1px solid #95e3ea;
+  border-radius: 9px;
+
+  background-color: #ffffff;
+  color: #000000;
+
+  font-size: 14px;
+
+  outline: none;
+}
+
+.heatmap-filter select:focus {
+  border-color: #1fc5b4;
+}
+
+.heatmap-clear-button {
+  min-height: 40px;
+
+  padding: 8px 18px;
+
+  border: none;
+  border-radius: 10px;
+
+  background-color: #000000;
+  color: #ffffff;
+
+  cursor: pointer;
+}
+
+.heatmap-clear-button:hover {
+  background-color: #1fc5b4;
+  color: #000000;
+}
+
+.heatmap-summary {
+  width: 100%;
+  max-width: 1450px;
+
+  margin-top: 14px;
+
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 22px;
+
+  padding: 12px 18px;
+
+  border-radius: 12px;
+
+  background-color: rgba(255, 255, 255, 0.8);
+
+  font-size: 13px;
+}
+
+.heatmap-map-wrapper {
+  position: relative;
+
+  width: 100%;
+  max-width: 1450px;
+  height: 480px;
+
+  margin-top: 18px;
+
+  overflow: hidden;
+
+  border: 2px solid #95e3ea;
+  border-radius: 18px;
+
+  background-color: #ffffff;
+
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.08);
+}
+
+.heatmap-map {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.heatmap-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 500;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 30px;
+
+  background-color: rgba(255, 255, 255, 0.88);
+
+  font-size: 16px;
+  text-align: center;
+}
+
+.heatmap-error {
+  color: #a00000;
+}
+
+.rieti-map-popup {
+  min-width: 175px;
+
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.rieti-map-popup > strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 14px;
+}
+
+@media (max-width: 1600px) {
+  .heatmap-map-wrapper {
+    height: 430px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .heatmap-map-wrapper {
+    height: 390px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .heatmap-map-wrapper {
+    height: 350px;
+  }
+
+  .heatmap-toolbar {
+    padding: 14px;
+  }
+
+  .heatmap-filter {
+    min-width: 155px;
+  }
+}
+
+
+/* =========================================================
+   DETALLE DE REPORTE - MAPA REAL
+   ========================================================= */
+
+.report-map-container {
+  width: 100%;
+  height: 170px;
+
+  margin-bottom: 18px;
+
+  overflow: hidden;
+
+  border: 1px solid #95e3ea;
+  border-radius: 10px;
+
+  background-color: #f8fcfa;
+}
+
+.report-location-map {
+  width: 100%;
+  height: 100%;
+}
+
+.report-map-empty {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  color: #555555;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   EVIDENCIAS REALES
+   ========================================================= */
+
+.evidence-empty {
+  min-height: 100px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 15px;
+
+  border-radius: 8px;
+
+  background-color: #ffdce6;
+
+  color: #666666;
+
+  font-size: 13px;
+  text-align: center;
+}
+
+.evidence-error {
+  color: #a00000;
+}
+
+.evidence-image-button {
+  padding: 0;
+
+  overflow: hidden;
+
+  border: none;
+  border-radius: 8px;
+
+  background: none;
+
+  cursor: pointer;
+}
+
+.evidence-image {
+  width: 100%;
+  height: 120px;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition: transform 0.2s ease;
+}
+
+.evidence-image-button:hover .evidence-image {
+  transform: scale(1.04);
+}
+
+
+/* =========================================================
+   MODAL DE EVIDENCIA
+   ========================================================= */
+
+.evidence-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 3000;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 30px;
+
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+.evidence-modal-content {
+  position: relative;
+
+  max-width: 90vw;
+  max-height: 90vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.evidence-modal-image {
+  max-width: 90vw;
+  max-height: 88vh;
+
+  object-fit: contain;
+
+  border-radius: 10px;
+}
+
+.evidence-modal-close {
+  position: absolute;
+
+  top: -18px;
+  right: -18px;
+
+  z-index: 1;
+
+  width: 38px;
+  height: 38px;
+
+  border: none;
+  border-radius: 50%;
+
+  background-color: #ffffff;
+  color: #000000;
+
+  font-size: 26px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   ANALITICA RIETI
+   ========================================================= */
+
+.statistics-section {
+  width: 100%;
+  padding: 30px 4% 110px;
+  background-color: #ff8aca;
+}
+
+.statistics-content {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statistics-title {
+  margin-top: 25px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(32px, 2.3vw, 48px);
+  font-weight: 400;
+
+  text-align: center;
+}
+
+.statistics-intro {
+  margin-top: 8px;
+  margin-bottom: 25px;
+
+  font-size: 15px;
+  text-align: center;
+}
+
+.analytics-filters {
+  width: 100%;
+
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 14px;
+
+  margin-bottom: 25px;
+  padding: 17px;
+
+  border-radius: 16px;
+
+  background-color: #ffffff;
+}
+
+.analytics-filters > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.analytics-filters label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analytics-filters input {
+  min-height: 40px;
+
+  padding: 7px 10px;
+
+  border: 1px solid #95e3ea;
+  border-radius: 9px;
+
+  background: #ffffff;
+}
+
+.analytics-filters button {
+  min-height: 40px;
+
+  padding: 8px 17px;
+
+  border: none;
+  border-radius: 9px;
+
+  background-color: #000000;
+  color: #ffffff;
+
+  cursor: pointer;
+}
+
+.analytics-filters button:hover {
+  background-color: #1fc5b4;
+  color: #000000;
+}
+
+.analytics-filter-secondary {
+  background-color: #d10073 !important;
+}
+
+.analytics-state {
+  width: 100%;
+  padding: 35px;
+
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  text-align: center;
+}
+
+.analytics-state-error {
+  color: #a00000;
+}
+
+.analytics-metrics-grid {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.analytics-metric-card {
+  min-height: 125px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  padding: 18px;
+
+  border-radius: 16px;
+
+  background-color: #ffffff;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+
+  text-align: center;
+}
+
+.analytics-metric-title {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analytics-metric-value {
+  margin-top: 6px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 31px;
+}
+
+.analytics-metric-detail {
+  margin-top: 5px;
+
+  color: #555555;
+
+  font-size: 11px;
+}
+
+.analytics-charts-grid {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.analytics-chart-card {
+  min-width: 0;
+  height: 390px;
+
+  padding: 20px;
+
+  border-radius: 18px;
+
+  background-color: #ffffff;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+}
+
+.analytics-chart-wide {
+  grid-column: span 2;
+  height: 410px;
+}
+
+.analytics-chart-heading {
+  margin-bottom: 10px;
+}
+
+.analytics-chart-heading h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.analytics-chart-heading p {
+  margin-top: 3px;
+
+  color: #666666;
+
+  font-size: 12px;
+}
+
+.analytics-chart-body {
+  width: 100%;
+  height: calc(100% - 55px);
+}
+
+.analytics-small-metrics {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
+
+  margin-top: 18px;
+}
+
+.analytics-small-metrics > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  padding: 18px;
+
+  border-radius: 16px;
+
+  background-color: #ffffff;
+}
+
+.analytics-small-metrics strong {
+  margin-bottom: 4px;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+}
+
+.analytics-small-metrics span {
+  font-size: 13px;
+}
+
+@media (max-width: 1350px) {
+  .analytics-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .analytics-metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-chart-wide {
+    grid-column: span 1;
+  }
+
+  .analytics-small-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   RIETI - PULIDO DASHBOARD ANALITICO
+   ========================================================= */
+
+/*
+ * Sobrescribe el bloque anterior sin necesidad de borrar
+ * estilos viejos todavía.
+ */
+
+.analytics-filters {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  gap: 18px;
+
+  margin-bottom: 28px;
+  padding: 22px 26px;
+
+  border: 1px solid rgba(31, 197, 180, 0.28);
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.analytics-filter-header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.analytics-filter-header > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.analytics-filter-header strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.analytics-filter-header span {
+  color: #646464;
+
+  font-size: 12px;
+}
+
+.analytics-filter-controls {
+  width: 100%;
+
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+
+  gap: 14px;
+}
+
+.analytics-date-field {
+  flex: 0 1 210px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.analytics-date-field label {
+  margin-left: 2px;
+
+  color: #242424;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analytics-date-field input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+
+  padding: 9px 13px;
+
+  border: 1px solid #b9e7ea;
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #fbfefe;
+
+  font: inherit;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.analytics-date-field input:focus {
+  border-color: #1fc5b4;
+
+  box-shadow:
+    0 0 0 3px rgba(31, 197, 180, 0.13);
+}
+
+.analytics-filter-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-left: auto;
+}
+
+.analytics-filter-actions button {
+  min-height: 46px;
+
+  padding: 10px 20px;
+
+  border: none;
+  border-radius: 11px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.analytics-filter-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.analytics-filter-apply {
+  background: #000000 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.13);
+}
+
+.analytics-filter-apply:hover {
+  background: #1fc5b4 !important;
+  color: #000000 !important;
+}
+
+.analytics-filter-secondary {
+  background: #d10073 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 5px 14px rgba(209, 0, 115, 0.13);
+}
+
+.analytics-filter-secondary:hover {
+  background: #ef65ae !important;
+}
+
+
+/* ---------------------------------------------------------
+   GRID DE GRAFICAS
+   --------------------------------------------------------- */
+
+.analytics-charts-grid {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  grid-auto-flow: row;
+
+  gap: 20px;
+}
+
+.analytics-chart-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  height: 390px;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 7px 20px rgba(0, 0, 0, 0.065);
+}
+
+.analytics-chart-wide {
+  grid-column: 1 / -1;
+
+  width: 100%;
+}
+
+
+/* ---------------------------------------------------------
+   TARJETAS INFERIORES
+   Ahora quedan solo ubicación + evidencia.
+   --------------------------------------------------------- */
+
+.analytics-small-metrics {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+
+  margin-top: 20px;
+}
+
+.analytics-small-metrics > div {
+  min-height: 105px;
+
+  box-sizing: border-box;
+
+  padding: 20px 22px;
+
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.055);
+}
+
+
+/* ---------------------------------------------------------
+   MEJORAR ESPACIADO GENERAL
+   --------------------------------------------------------- */
+
+.analytics-metrics-grid {
+  gap: 16px;
+
+  margin-bottom: 22px;
+}
+
+.analytics-metric-card {
+  box-sizing: border-box;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.035);
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+
+  .analytics-filter-controls {
+    align-items: stretch;
+  }
+
+  .analytics-date-field {
+    flex: 1 1 200px;
+  }
+
+  .analytics-filter-actions {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-chart-wide {
+    grid-column: auto;
+  }
+
+  .analytics-small-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+
+  .analytics-filters {
+    padding: 18px;
+  }
+
+  .analytics-date-field {
+    flex: 1 1 100%;
+  }
+
+  .analytics-filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analytics-filter-actions button {
+    width: 100%;
+  }
+
+  .analytics-chart-card {
+    height: 350px;
+
+    padding: 15px;
+  }
+}
+
+
+/* =========================================================
+   RIETI - PULIDO DASHBOARD ANALITICO
+   ========================================================= */
+
+/*
+ * Sobrescribe el bloque anterior sin necesidad de borrar
+ * estilos viejos todavía.
+ */
+
+.analytics-filters {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  gap: 18px;
+
+  margin-bottom: 28px;
+  padding: 22px 26px;
+
+  border: 1px solid rgba(31, 197, 180, 0.28);
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.06);
+}
+
+.analytics-filter-header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.analytics-filter-header > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.analytics-filter-header strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.analytics-filter-header span {
+  color: #646464;
+
+  font-size: 12px;
+}
+
+.analytics-filter-controls {
+  width: 100%;
+
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+
+  gap: 14px;
+}
+
+.analytics-date-field {
+  flex: 0 1 210px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.analytics-date-field label {
+  margin-left: 2px;
+
+  color: #242424;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analytics-date-field input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+
+  padding: 9px 13px;
+
+  border: 1px solid #b9e7ea;
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #fbfefe;
+
+  font: inherit;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.analytics-date-field input:focus {
+  border-color: #1fc5b4;
+
+  box-shadow:
+    0 0 0 3px rgba(31, 197, 180, 0.13);
+}
+
+.analytics-filter-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-left: auto;
+}
+
+.analytics-filter-actions button {
+  min-height: 46px;
+
+  padding: 10px 20px;
+
+  border: none;
+  border-radius: 11px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.analytics-filter-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.analytics-filter-apply {
+  background: #000000 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.13);
+}
+
+.analytics-filter-apply:hover {
+  background: #1fc5b4 !important;
+  color: #000000 !important;
+}
+
+.analytics-filter-secondary {
+  background: #d10073 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 5px 14px rgba(209, 0, 115, 0.13);
+}
+
+.analytics-filter-secondary:hover {
+  background: #ef65ae !important;
+}
+
+
+/* ---------------------------------------------------------
+   GRID DE GRAFICAS
+   --------------------------------------------------------- */
+
+.analytics-charts-grid {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  grid-auto-flow: row;
+
+  gap: 20px;
+}
+
+.analytics-chart-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  height: 390px;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 7px 20px rgba(0, 0, 0, 0.065);
+}
+
+.analytics-chart-wide {
+  grid-column: 1 / -1;
+
+  width: 100%;
+}
+
+
+/* ---------------------------------------------------------
+   TARJETAS INFERIORES
+   Ahora quedan solo ubicación + evidencia.
+   --------------------------------------------------------- */
+
+.analytics-small-metrics {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+
+  margin-top: 20px;
+}
+
+.analytics-small-metrics > div {
+  min-height: 105px;
+
+  box-sizing: border-box;
+
+  padding: 20px 22px;
+
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.055);
+}
+
+
+/* ---------------------------------------------------------
+   MEJORAR ESPACIADO GENERAL
+   --------------------------------------------------------- */
+
+.analytics-metrics-grid {
+  gap: 16px;
+
+  margin-bottom: 22px;
+}
+
+.analytics-metric-card {
+  box-sizing: border-box;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.035);
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+
+  .analytics-filter-controls {
+    align-items: stretch;
+  }
+
+  .analytics-date-field {
+    flex: 1 1 200px;
+  }
+
+  .analytics-filter-actions {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-chart-wide {
+    grid-column: auto;
+  }
+
+  .analytics-small-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+
+  .analytics-filters {
+    padding: 18px;
+  }
+
+  .analytics-date-field {
+    flex: 1 1 100%;
+  }
+
+  .analytics-filter-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analytics-filter-actions button {
+    width: 100%;
+  }
+
+  .analytics-chart-card {
+    height: 350px;
+
+    padding: 15px;
+  }
+}
+
+
+/* =========================================================
+   FIX FINAL - FILTRO COMPACTO DE ESTADISTICAS
+   ========================================================= */
+
+.analytics-filters {
+  width: min(1180px, 100%);
+  box-sizing: border-box;
+
+  display: grid !important;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  align-items: center;
+
+  gap: 28px;
+
+  margin: 0 auto 28px;
+  padding: 18px 22px;
+
+  border: 1px solid rgba(31, 197, 180, 0.28);
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.055);
+}
+
+
+/* Evita que la regla vieja rompa los div internos */
+.analytics-filters > div {
+  min-width: 0;
+}
+
+
+/* ---------------------------------------------------------
+   TITULO DEL FILTRO
+   --------------------------------------------------------- */
+
+.analytics-filter-header {
+  display: block !important;
+}
+
+.analytics-filter-header > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.analytics-filter-header strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.analytics-filter-header span {
+  color: #666666;
+
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+
+/* ---------------------------------------------------------
+   CONTROLES
+   --------------------------------------------------------- */
+
+.analytics-filter-controls {
+  display: flex !important;
+  flex-direction: row !important;
+
+  align-items: flex-end !important;
+  justify-content: flex-end;
+
+  flex-wrap: nowrap !important;
+
+  gap: 12px;
+
+  width: auto;
+}
+
+
+/* ---------------------------------------------------------
+   FECHAS
+   --------------------------------------------------------- */
+
+.analytics-date-field {
+  width: 175px;
+  min-width: 175px;
+
+  flex: none !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 6px;
+}
+
+.analytics-date-field label {
+  margin: 0 0 0 2px;
+
+  color: #222222;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.analytics-date-field input {
+  width: 100%;
+  height: 43px;
+  min-height: 43px;
+
+  box-sizing: border-box;
+
+  padding: 7px 11px;
+
+  border: 1px solid #9edfe5;
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #fbfefe;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.analytics-date-field input:focus {
+  border-color: #1fc5b4;
+
+  box-shadow:
+    0 0 0 3px rgba(31, 197, 180, 0.12);
+}
+
+
+/* ---------------------------------------------------------
+   BOTONES
+   --------------------------------------------------------- */
+
+.analytics-filter-actions {
+  display: flex !important;
+  flex-direction: row !important;
+
+  align-items: flex-end;
+
+  gap: 9px;
+
+  margin: 0 0 0 4px !important;
+
+  width: auto !important;
+}
+
+.analytics-filter-actions button {
+  width: auto !important;
+  min-width: 125px;
+
+  height: 43px;
+  min-height: 43px;
+
+  padding: 8px 15px;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.analytics-filter-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.analytics-filter-apply {
+  background: #000000 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.analytics-filter-apply:hover {
+  background: #1fc5b4 !important;
+  color: #000000 !important;
+}
+
+.analytics-filter-secondary {
+  background: #d10073 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 4px 10px rgba(209, 0, 115, 0.13);
+}
+
+.analytics-filter-secondary:hover {
+  background: #eb58a9 !important;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 1050px) {
+
+  .analytics-filters {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .analytics-filter-controls {
+    justify-content: flex-start;
+    flex-wrap: wrap !important;
+  }
+}
+
+@media (max-width: 700px) {
+
+  .analytics-filters {
+    padding: 17px;
+  }
+
+  .analytics-filter-controls {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .analytics-date-field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .analytics-filter-actions {
+    width: 100% !important;
+
+    margin-left: 0 !important;
+
+    flex-direction: column !important;
+  }
+
+  .analytics-filter-actions button {
+    width: 100% !important;
+  }
+}
+
