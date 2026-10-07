@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { useSessionUser } from "../data/shared/session";
-import spinnaLogo from "./spinna logo.png";
+import spinnaLogo from "../../assets/spinna-logo.png";
+import { useSessionUser } from "../../data/shared/session";
+import UserMenu from "../shared/UserMenu";
 
 function ReportHeader() {
     const user = useSessionUser();
@@ -40,11 +41,15 @@ function ReportHeader() {
                     Seguimiento
                 </Link>
 
+                {user?.role === "ADMINISTRADOR" && (
+                    <Link to="/cuentas" className="nav-option">
+                        Cuentas
+                    </Link>
+                )}
+
             </nav>
 
-            <Link to="/login" className="user-button">
-                {user ? user.name : "Iniciar sesión"}
-            </Link>
+            <UserMenu />
         </header>
     );
 }

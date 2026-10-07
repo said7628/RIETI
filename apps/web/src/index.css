@@ -22,7 +22,7 @@ a {
   text-decoration: none;
 }
 
-.app-lalo {
+.app {
   min-height: 100vh;
   background-color: #f8fcfa;
 }
@@ -161,6 +161,12 @@ a {
   margin-left: 0;
 }
 
+.user-menu {
+  position: relative;
+
+  margin-left: auto;
+}
+
 .user-button {
   margin-left: auto;
 
@@ -175,10 +181,13 @@ a {
   border: 2px solid #95e3ea;
   border-radius: 18px;
 
+  background-color: transparent;
   color: #ffffff;
 
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(15px, 0.9vw, 18px);
+
+  cursor: pointer;
 
   transition:
     background-color 0.2s ease,
@@ -186,11 +195,54 @@ a {
     transform 0.2s ease;
 }
 
+.user-menu .user-button {
+  margin-left: 0;
+}
+
 .user-button:hover {
   background-color: #1fc5b4;
   color: #000000;
 
   transform: translateY(-2px);
+}
+
+.user-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+
+  min-width: 100%;
+  padding: 8px;
+
+  border: 2px solid #95e3ea;
+  border-radius: 16px;
+
+  background-color: #000000;
+}
+
+.user-menu-item {
+  width: 100%;
+
+  padding: 10px 14px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: none;
+  color: #ffffff;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+}
+
+.user-menu-item:hover {
+  background-color: #1fc5b4;
+  color: #000000;
 }
 
 

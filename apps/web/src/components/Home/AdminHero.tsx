@@ -12,7 +12,7 @@ function AdminHero() {
           administración de RIETI
         </h1>
         <hr className="linea"></hr>
-        {user && <p>“{user.name}”</p>}
+        {user && <p>{user.name}</p>}
       </div>
     </section>
   )

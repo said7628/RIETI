@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { municipalStaff } from '../../data/tracking/staffData'
+import { useAccounts } from '../../data/shared/accounts'
 import Modal from '../shared/Modal'
 
 interface AssignSelectProps {
@@ -8,6 +8,7 @@ interface AssignSelectProps {
 }
 
 function AssignSelect({ folio, onConfirm }: AssignSelectProps) {
+  const staff = useAccounts().filter((account) => account.active)
   const [pendingCaseHolder, setPendingCaseHolder] = useState<string | null>(null)
 
   function confirmAssignment() {
@@ -26,9 +27,9 @@ function AssignSelect({ folio, onConfirm }: AssignSelectProps) {
           <option value="" disabled>
             (Asignar)
           </option>
-          {municipalStaff.map((name) => (
-            <option key={name} value={name}>
-              {name}
+          {staff.map((account) => (
+            <option key={account.email} value={account.name}>
+              {account.name}
             </option>
           ))}
         </select>

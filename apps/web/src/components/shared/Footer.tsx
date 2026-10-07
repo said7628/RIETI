@@ -1,5 +1,5 @@
 import rietiLogo from '../../assets/rieti-logo.png'
-import worldVisionLogo from '../../assets/word-vision.png'
+import worldVisionLogo from '../../assets/world-vision.png'
 
 function Footer() {
   return (

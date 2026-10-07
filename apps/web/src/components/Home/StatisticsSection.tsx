@@ -1,4 +1,4 @@
-import graphIcon from '../../assets/Graph-icon.png'
+import graphIcon from '../../assets/graph-icon.png'
 
 function StatisticsSection() {
   return (

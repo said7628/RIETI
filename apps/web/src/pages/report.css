@@ -138,6 +138,14 @@
    USUARIO
 ========================================== */
 
+.report-page .user-menu {
+    margin-left: auto;
+}
+
+.report-page .user-menu .user-button {
+    margin-left: 0;
+}
+
 .report-page .user-button {
     margin-left: auto;
 
@@ -560,6 +568,17 @@
         background-color 0.2s ease,
         transform 0.2s ease,
         box-shadow 0.2s ease;
+}
+
+
+.report-form-message {
+    margin: 8px 0 0;
+
+    color: #ffb4dc;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    font-size: 15px;
 }
 
 

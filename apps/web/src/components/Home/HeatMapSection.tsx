@@ -5,7 +5,7 @@ function HeatMapSection() {
     <section className="heatmap-section">
       <div className="section-label">
         <img src={heatmapIcon} alt="" />
-        <span>Mapa de Calor</span>
+        <span>Mapa de calor</span>
       </div>
 
       {/*

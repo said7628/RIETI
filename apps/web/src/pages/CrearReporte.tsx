@@ -1,29 +1,47 @@
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import type { ReportDraft } from "../data/shared/createReport";
-import "./ReporteEnviado.css";
-import ReportForm from "./ReportForm";
-import ReportHeader from "./ReportHeader";
-import spinnaLogo from "./spinna logo.png";
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+    draftToReport,
+    emptyReportDraft,
+    createFolio,
+    type ReportDraft,
+} from "../data/shared/createReport";
+import { addReport } from "../data/shared/session";
+import ReportForm from "../components/report/ReportForm";
+import ReportHeader from "../components/report/ReportHeader";
+import spinnaLogo from "../assets/spinna-logo.png";
+import "./report.css";
 
-interface SuccessState {
-    folio: string;
-    draft: ReportDraft;
-}
-
-function ReporteEnviado() {
+function CrearReporte() {
     const navigate = useNavigate();
-    const location = useLocation();
-    const state = location.state as SuccessState | null;
+    const [draft, setDraft] = useState<ReportDraft>(emptyReportDraft);
+    const [error, setError] = useState("");
 
-    useEffect(() => {
-        if (!state?.folio || !state.draft) {
-            navigate("/crear-reporte", { replace: true });
+    function updateDraft(field: keyof ReportDraft, value: string) {
+        setDraft((current) => ({ ...current, [field]: value }));
+        setError("");
+    }
+
+    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        const missing: string[] = [];
+
+        if (!draft.children.trim()) missing.push("número de niños");
+        if (!draft.workType.trim()) missing.push("tipo de trabajo");
+        if (!draft.details.trim()) missing.push("detalles");
+        if (!draft.address.trim()) missing.push("dirección");
+        if (!draft.neighborhood.trim()) missing.push("colonia");
+
+        if (missing.length > 0) {
+            setError(`Completa: ${missing.join(", ")}.`);
+            return;
         }
-    }, [navigate, state]);
 
-    if (!state?.folio || !state.draft) {
-        return null;
+        const folio = createFolio();
+        addReport(draftToReport(draft, folio));
+        navigate("/reporte-enviado", { state: { folio, draft } });
     }
 
     return (
@@ -80,7 +98,12 @@ function ReporteEnviado() {
                     <div className="report-title-line"></div>
                 </div>
 
-                <ReportForm draft={state.draft} readOnly />
+                <ReportForm
+                    draft={draft}
+                    error={error}
+                    onChange={updateDraft}
+                    onSubmit={handleSubmit}
+                />
             </main>
 
             <footer className="report-footer">
@@ -102,27 +125,8 @@ function ReporteEnviado() {
                     <div className="report-world-vision-icon">✦</div>
                 </div>
             </footer>
-
-            <div className="report-success-backdrop"></div>
-
-            <div className="report-success-modal">
-                <button
-                    type="button"
-                    className="success-close-button"
-                    onClick={() => navigate("/crear-reporte")}
-                    aria-label="Cerrar"
-                >
-                    ×
-                </button>
-
-                <h2 className="success-title">Reporte enviado</h2>
-
-                <h2 className="success-title success-title-second">con Exito</h2>
-
-                <div className="folio-box">Folio: {state.folio}</div>
-            </div>
         </div>
     );
 }
 
-export default ReporteEnviado;
+export default CrearReporte;

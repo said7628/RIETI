@@ -16,7 +16,14 @@ export type AgeRange = '0-5' | '6-11' | '12-14' | '15-17'
 
 export type Priority = 'MEDIA' | 'ALTA' | 'URGENTE'
 
-export type UserRole = 'ADMINISTRADOR' | 'GESTOR_MUNICIPAL' | 'PROCURADOR'
+export type UserRole = 'ADMINISTRADOR' | 'EMPLEADO'
+
+export const userRoles: UserRole[] = ['ADMINISTRADOR', 'EMPLEADO']
+
+export const roleLabels: Record<UserRole, string> = {
+  ADMINISTRADOR: 'Administrador',
+  EMPLEADO: 'Empleado',
+}
 
 export const reportStatuses: ReportStatus[] = [
   'Registrado',

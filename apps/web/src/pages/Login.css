@@ -227,6 +227,7 @@
 .forgot-button {
     display: block;
 
+    width: fit-content;
 
     margin:
         0
@@ -249,6 +250,9 @@
     font-family: Arial, Helvetica, sans-serif;
 
     font-size: 15px;
+
+    text-align: center;
+    text-decoration: none;
 
     cursor: pointer;
 
@@ -314,6 +318,37 @@
     box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
 }
 
+.login-button {
+    text-align: center;
+    text-decoration: none;
+}
+
+.login-back-button {
+    display: block;
+
+    width: fit-content;
+
+    margin: 22px auto 0;
+
+    padding: 10px 22px;
+
+    border: 1px solid #ffffff;
+    border-radius: 22px;
+
+    background: none;
+    color: #ffffff;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.login-back-button:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
 
 .login-message {
     width: min(100%, 350px);
@@ -329,6 +364,10 @@
     line-height: 1.4;
 
     text-align: center;
+}
+
+.login-message-success {
+    color: #bff8f2;
 }
 
 

@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from "react";
-import type { ReportDraft } from "../data/shared/createReport";
+import type { ReportDraft } from "../../data/shared/createReport";
 
 interface ReportFormProps {
     draft: ReportDraft;
@@ -55,7 +55,7 @@ function ReportForm({
                 </div>
 
                 <div className="report-field">
-                    <label htmlFor="workType">Tipo de Trabajo</label>
+                    <label htmlFor="workType">Tipo de trabajo</label>
 
                     <input
                         id="workType"
@@ -67,7 +67,7 @@ function ReportForm({
                 </div>
 
                 <div className="report-field">
-                    <label htmlFor="schedule">Horario de Trabajo</label>
+                    <label htmlFor="schedule">Horario de trabajo</label>
 
                     <input
                         id="schedule"
@@ -87,7 +87,7 @@ function ReportForm({
 
                         <textarea
                             id="details"
-                            placeholder="Describa detalladamente lo que observó ..."
+                            placeholder="Describa detalladamente lo que observó..."
                             value={draft.details}
                             readOnly={readOnly}
                             onChange={update("details")}
@@ -140,7 +140,7 @@ function ReportForm({
 
                     <div className="postal-row">
                         <div className="report-field postal-field">
-                            <label htmlFor="postalCode">Código Postal</label>
+                            <label htmlFor="postalCode">Código postal</label>
 
                             <input
                                 id="postalCode"
@@ -164,7 +164,7 @@ function ReportForm({
                 className="send-report-button"
                 disabled={readOnly}
             >
-                Enviar Reporte
+                Enviar reporte
             </button>
         </form>
     );

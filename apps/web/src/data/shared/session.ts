@@ -1,30 +1,14 @@
 import { useSyncExternalStore } from 'react'
+import { findActiveAccount, type Account } from './accounts'
 import type { UserRole } from './catalogs'
 import { currentUser } from './currentUser'
 import { reportsData, type Report } from './reportsData'
 
 export interface SessionUser {
   name: string
+  email: string
   role: UserRole
 }
-
-const demoAccounts: { email: string; password: string; user: SessionUser }[] = [
-  {
-    email: 'manolo@rieti.mx',
-    password: 'rieti',
-    user: { name: 'Manolo Sánchez', role: 'ADMINISTRADOR' },
-  },
-  {
-    email: 'joaquin@rieti.mx',
-    password: 'rieti',
-    user: { name: 'Joaquín Mondragón', role: 'GESTOR_MUNICIPAL' },
-  },
-  {
-    email: 'maria@rieti.mx',
-    password: 'rieti',
-    user: { name: 'María Posada', role: 'PROCURADOR' },
-  },
-]
 
 let user: SessionUser | null = currentUser
 let reports: Report[] = [...reportsData]
@@ -55,19 +39,38 @@ export function useReports() {
   return useSyncExternalStore(subscribeSession, getReports)
 }
 
+export function logout() {
+  user = null
+  emit()
+}
+
 export function login(email: string, password: string) {
-  const account = demoAccounts.find(
-    (item) =>
-      item.email === email.trim().toLowerCase() && item.password === password,
-  )
+  const account = findActiveAccount(email, password)
 
   if (!account) {
     return false
   }
 
-  user = account.user
+  user = toSessionUser(account)
   emit()
   return true
+}
+
+export function syncSessionFromAccount(account: Account) {
+  if (user?.email !== account.email) {
+    return
+  }
+
+  user = account.active ? toSessionUser(account) : null
+  emit()
+}
+
+function toSessionUser(account: Account): SessionUser {
+  return {
+    name: account.name,
+    email: account.email,
+    role: account.role,
+  }
 }
 
 export function addReport(report: Report) {
