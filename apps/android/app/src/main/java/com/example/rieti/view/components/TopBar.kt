@@ -25,6 +25,10 @@ import com.example.rieti.R
 import com.example.rieti.ui.theme.AppTheme
 
 
+// =====================================================================
+// TOP BAR
+// =====================================================================
+
 @Composable
 fun TopBar(
     modifier: Modifier = Modifier
@@ -32,7 +36,8 @@ fun TopBar(
 
     val colors = AppTheme.colors
 
-    val logoResource = R.drawable.logo_ninos
+    val logoResource =
+        R.drawable.logo_ninos
 
 
     Column(
@@ -52,41 +57,68 @@ fun TopBar(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 14.dp),
 
-                verticalAlignment = Alignment.CenterVertically
+                    // =================================================
+                    // POSICIÓN HORIZONTAL DEL CONTENIDO
+                    //
+                    // start controla qué tan lejos está el logo
+                    // del borde izquierdo.
+                    // =================================================
+
+                    .padding(
+                        start = 5.dp,
+                        end = 20.dp
+                    ),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
 
-                // =================================================
+                // =====================================================
                 // LOGO
-                // =================================================
+                // =====================================================
 
                 Image(
                     painter = painterResource(
                         id = logoResource
                     ),
-                    contentDescription = "Logo RIETI",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.height(45.dp)
+
+                    contentDescription =
+                        "Logo RIETI",
+
+                    contentScale =
+                        ContentScale.Fit,
+
+                    modifier = Modifier
+                        .height(45.dp)
                 )
 
 
-                // =================================================
+                // =====================================================
                 // NOMBRE RIETI
-                // =================================================
+                // =====================================================
 
                 Text(
                     text = "RIETI",
-                    color = colors.text,
-                    fontSize = 24.sp,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Medium
+
+                    color =
+                        colors.text,
+
+                    fontSize =
+                        24.sp,
+
+                    fontFamily =
+                        FontFamily.Serif,
+
+                    fontWeight =
+                        FontWeight.Medium
                 )
 
 
                 Spacer(
-                    modifier = Modifier.weight(1f)
+                    modifier =
+                        Modifier.weight(1f)
                 )
             }
         }

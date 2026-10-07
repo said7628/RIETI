@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
@@ -369,34 +368,6 @@ fun OrientationScreen(
                         OrientationOption.SUPPORT_MATERIAL
                 }
             )
-
-
-            Spacer(
-                modifier = Modifier.height(9.dp)
-            )
-
-
-            // =========================================================
-            // PREGUNTAS FRECUENTES
-            // =========================================================
-
-            OrientationCard(
-                title = "Preguntas frecuentes",
-                description =
-                    "Resuelve tus dudas sobre el reporte y el proceso de atención.",
-                icon = Icons.Default.HelpOutline,
-                navy = navy,
-                secondaryText = secondaryText,
-                cardBackground = cardBackground,
-                cardBorder = cardBorder,
-                iconBackground = iconBackground,
-                pink = colors.pinkPrincipal,
-
-                onClick = {
-                    selectedOption =
-                        OrientationOption.FREQUENT_QUESTIONS
-                }
-            )
         }
     }
 
@@ -473,9 +444,7 @@ private enum class OrientationOption {
 
     SUPPORT_INSTITUTIONS,
 
-    SUPPORT_MATERIAL,
-
-    FREQUENT_QUESTIONS
+    SUPPORT_MATERIAL
 }
 
 
@@ -643,9 +612,6 @@ private fun OrientationInformationSheet(
 
             OrientationOption.SUPPORT_MATERIAL ->
                 "Material de apoyo"
-
-            OrientationOption.FREQUENT_QUESTIONS ->
-                "Preguntas frecuentes"
         }
 
 

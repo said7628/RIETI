@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.PersonOutline
@@ -29,6 +31,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -46,6 +49,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -84,6 +88,23 @@ fun LoginScreen(
 
     var contrasena by remember {
         mutableStateOf("")
+    }
+
+
+    // =========================================================
+    // VISIBILIDAD DE CONTRASEÑA
+    // =========================================================
+    //
+    // Este estado pertenece únicamente a la interfaz.
+    //
+    // false -> contraseña oculta
+    // true  -> contraseña visible
+    //
+    // No requiere conexión con el backend.
+    // =========================================================
+
+    var contrasenaVisible by remember {
+        mutableStateOf(false)
     }
 
 
@@ -534,8 +555,56 @@ fun LoginScreen(
 
                     singleLine = true,
 
+
+                    // =================================================
+                    // MOSTRAR / OCULTAR CONTRASEÑA
+                    // =================================================
+
                     visualTransformation =
-                        PasswordVisualTransformation(),
+                        if (contrasenaVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+
+
+                    // =================================================
+                    // OJITO
+                    // =================================================
+
+                    trailingIcon = {
+
+                        IconButton(
+                            onClick = {
+                                contrasenaVisible =
+                                    !contrasenaVisible
+                            }
+                        ) {
+
+                            Icon(
+                                imageVector =
+                                    if (contrasenaVisible) {
+                                        Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
+                                    },
+
+                                contentDescription =
+                                    if (contrasenaVisible) {
+                                        "Contraseña visible"
+                                    } else {
+                                        "Contraseña oculta"
+                                    },
+
+                                tint =
+                                    if (errorContrasena != null) {
+                                        errorColor
+                                    } else {
+                                        colors.text
+                                    }
+                            )
+                        }
+                    },
 
                     keyboardOptions =
                         KeyboardOptions(

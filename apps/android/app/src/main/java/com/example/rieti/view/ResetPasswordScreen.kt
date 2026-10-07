@@ -15,7 +15,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -615,6 +620,25 @@ private fun ResetPasswordField(
         AppTheme.colors
 
 
+    // =========================================================
+    // VISIBILIDAD DE LA CONTRASEÑA
+    // =========================================================
+    //
+    // Cada llamada a ResetPasswordField mantiene su propio
+    // estado.
+    //
+    // Por eso "Nueva contraseña" y "Confirmar contraseña"
+    // pueden mostrarse u ocultarse de manera independiente.
+    //
+    // Este estado es únicamente de interfaz y NO requiere
+    // conexión con el backend.
+    // =========================================================
+
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
+
+
     val unfocusedFieldColor =
         if (darkTheme) {
             Color.White
@@ -679,8 +703,16 @@ private fun ResetPasswordField(
             isError =
                 error != null,
 
+
+            // =====================================================
+            // MOSTRAR / OCULTAR CONTRASEÑA
+            // =====================================================
+
             visualTransformation =
-                if (isPassword) {
+                if (
+                    isPassword &&
+                    !passwordVisible
+                ) {
 
                     PasswordVisualTransformation()
 
@@ -689,10 +721,64 @@ private fun ResetPasswordField(
                     VisualTransformation.None
                 },
 
+
+            // =====================================================
+            // OJITO
+            //
+            // Solamente aparece cuando el campo es una contraseña.
+            // El código de recuperación NO mostrará este icono.
+            // =====================================================
+
+            trailingIcon =
+                if (isPassword) {
+
+                    {
+                        IconButton(
+                            onClick = {
+                                passwordVisible =
+                                    !passwordVisible
+                            }
+                        ) {
+
+                            Icon(
+                                imageVector =
+                                    if (passwordVisible) {
+                                        Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
+                                    },
+
+                                contentDescription =
+                                    if (passwordVisible) {
+                                        "Contraseña visible"
+                                    } else {
+                                        "Contraseña oculta"
+                                    },
+
+                                tint =
+                                    if (error != null) {
+                                        errorColor
+                                    } else {
+                                        colors.text
+                                    }
+                            )
+                        }
+                    }
+
+                } else {
+
+                    null
+                },
+
+
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType =
-                        keyboardType
+                        if (isPassword) {
+                            KeyboardType.Password
+                        } else {
+                            keyboardType
+                        }
                 ),
 
             shape =

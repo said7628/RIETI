@@ -20,12 +20,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Login
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -44,6 +47,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -74,6 +78,25 @@ fun RegisterScreen(
 
     var confirmarContrasena by remember {
         mutableStateOf("")
+    }
+
+
+    // =========================================================
+    // VISIBILIDAD DE CONTRASEÑAS
+    // =========================================================
+    //
+    // Cada campo tiene su propio estado.
+    //
+    // De esta forma mostrar la contraseña principal NO muestra
+    // automáticamente la contraseña de confirmación.
+    // =========================================================
+
+    var contrasenaVisible by remember {
+        mutableStateOf(false)
+    }
+
+    var confirmarContrasenaVisible by remember {
+        mutableStateOf(false)
     }
 
 
@@ -347,8 +370,56 @@ fun RegisterScreen(
 
                     singleLine = true,
 
+
+                    // =================================================
+                    // MOSTRAR / OCULTAR CONTRASEÑA
+                    // =================================================
+
                     visualTransformation =
-                        PasswordVisualTransformation(),
+                        if (contrasenaVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+
+
+                    // =================================================
+                    // OJITO DE CONTRASEÑA
+                    // =================================================
+
+                    trailingIcon = {
+
+                        IconButton(
+                            onClick = {
+                                contrasenaVisible =
+                                    !contrasenaVisible
+                            }
+                        ) {
+
+                            Icon(
+                                imageVector =
+                                    if (contrasenaVisible) {
+                                        Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
+                                    },
+
+                                contentDescription =
+                                    if (contrasenaVisible) {
+                                        "Contraseña visible"
+                                    } else {
+                                        "Contraseña oculta"
+                                    },
+
+                                tint =
+                                    if (errorContrasena != null) {
+                                        Color(0xFFFF0060)
+                                    } else {
+                                        colors.text
+                                    }
+                            )
+                        }
+                    },
 
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
@@ -439,8 +510,56 @@ fun RegisterScreen(
 
                     singleLine = true,
 
+
+                    // =================================================
+                    // MOSTRAR / OCULTAR CONFIRMACIÓN
+                    // =================================================
+
                     visualTransformation =
-                        PasswordVisualTransformation(),
+                        if (confirmarContrasenaVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+
+
+                    // =================================================
+                    // OJITO DE CONFIRMACIÓN
+                    // =================================================
+
+                    trailingIcon = {
+
+                        IconButton(
+                            onClick = {
+                                confirmarContrasenaVisible =
+                                    !confirmarContrasenaVisible
+                            }
+                        ) {
+
+                            Icon(
+                                imageVector =
+                                    if (confirmarContrasenaVisible) {
+                                        Icons.Default.Visibility
+                                    } else {
+                                        Icons.Default.VisibilityOff
+                                    },
+
+                                contentDescription =
+                                    if (confirmarContrasenaVisible) {
+                                        "Confirmación visible"
+                                    } else {
+                                        "Confirmación oculta"
+                                    },
+
+                                tint =
+                                    if (errorConfirmarContrasena != null) {
+                                        Color(0xFFFF0060)
+                                    } else {
+                                        colors.text
+                                    }
+                            )
+                        }
+                    },
 
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
