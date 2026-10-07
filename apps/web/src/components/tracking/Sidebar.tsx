@@ -1,5 +1,6 @@
-import { Link, useSearchParams } from 'react-router-dom'
+﻿import { Link, useSearchParams } from 'react-router-dom'
 import rietiLogo from '../../assets/rieti-logo.png'
+import { useSessionUser } from '../../data/shared/session'
 import {
   parseTrackingView,
   trackingViews,
@@ -13,7 +14,13 @@ interface SidebarProps {
 
 function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const user = useSessionUser()
+
   const activeView = parseTrackingView(searchParams.get('vista'))
+
+  const isAdmin =
+    user?.roleCode === 'ADMINISTRADOR_FUNDACION' ||
+    user?.role === 'ADMINISTRADOR_FUNDACION'
 
   function selectView(view: TrackingView) {
     setSearchParams({ vista: view })
@@ -40,18 +47,41 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
         </button>
       </div>
 
-      {/* inert evita que el teclado llegue a las opciones cuando el menú está cerrado. */}
       <nav className="sidebar-nav" inert={!isOpen}>
         {trackingViews.map((view) => (
           <button
             key={view.id}
             type="button"
-            className={`sidebar-item ${view.id === activeView ? 'sidebar-item-active' : ''}`}
+            className={`sidebar-item ${
+              view.id === activeView
+                ? 'sidebar-item-active'
+                : ''
+            }`}
             onClick={() => selectView(view.id)}
           >
             {view.label}
           </button>
         ))}
+
+        {isAdmin && (
+          <>
+            <div className="sidebar-divider" />
+
+            <Link
+              to="/cuentas"
+              className="sidebar-item sidebar-link"
+            >
+              Crear cuenta
+            </Link>
+
+            <Link
+              to="/cuentas?vista=administrar"
+              className="sidebar-item sidebar-link"
+            >
+              Administrar cuentas
+            </Link>
+          </>
+        )}
       </nav>
     </aside>
   )
