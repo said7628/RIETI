@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL
+﻿const API_URL = import.meta.env.VITE_API_URL
 
 if (!API_URL) {
   throw new Error('VITE_API_URL no está configurada')
@@ -34,22 +34,58 @@ export async function apiRequest<T>(
     headers.set('authorization', `Bearer ${accessToken}`)
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  })
+  let response: Response
 
-  const data = await response.json().catch(() => null)
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+    })
+  } catch {
+    throw new Error(
+      'No fue posible conectar con el servidor. Verifica tu conexión e intenta nuevamente.',
+    )
+  }
+
+  const raw = await response.text()
+
+  let data: any = null
+
+  if (raw) {
+    try {
+      data = JSON.parse(raw)
+    } catch {
+      data = null
+    }
+  }
 
   if (!response.ok) {
     if (response.status === 401) {
       setAccessToken(null)
     }
 
+    if (data?.error?.message) {
+      throw new Error(data.error.message)
+    }
+
+    if (data?.message) {
+      throw new Error(data.message)
+    }
+
+    if (response.status >= 500) {
+      throw new Error(
+        `El servidor presentó un problema temporal (HTTP ${response.status}). Intenta nuevamente.`,
+      )
+    }
+
     throw new Error(
-      data?.error?.message ??
-        data?.message ??
-        `Error HTTP ${response.status}`,
+      `La solicitud no pudo completarse (HTTP ${response.status}).`,
+    )
+  }
+
+  if (data === null) {
+    throw new Error(
+      `El servidor devolvió una respuesta inválida (HTTP ${response.status}).`,
     )
   }
 
