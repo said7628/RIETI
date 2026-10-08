@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -33,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,17 +45,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.rieti.data.local.ReportDatabaseProvider
+import com.example.rieti.data.local.ReportDraftEntity
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
-
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 // =================================================================
 // TIPO DE REPORTE SELECCIONADO
@@ -62,7 +70,6 @@ private enum class HomeReportType {
     ANONYMOUS,
     TRACKING
 }
-
 
 // =================================================================
 // HOME
@@ -76,11 +83,42 @@ fun HomeScreen(
     onAboutUsClick: () -> Unit,
     onTrackingClick: () -> Unit,
     onOrientationClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+
+    // TODO(NAVIGATION):
+    // Conectar con la ruta que recupera un borrador.
+    onContinueDraftClick: (String, String) -> Unit = { _, _ -> }
 ) {
 
     val colors = AppTheme.colors
     val isDarkTheme = AppTheme.isDarkTheme
+
+    // =============================================================
+    // BORRADORES GUARDADOS EN ROOM
+    // =============================================================
+
+    val context = LocalContext.current
+    val isPreview = LocalInspectionMode.current
+
+    val draftFlow: Flow<ReportDraftEntity?> =
+        remember(context, isPreview) {
+            if (isPreview) {
+                flowOf(null)
+            } else {
+                ReportDatabaseProvider
+                    .getDatabase(context.applicationContext)
+                    .reportDraftDao()
+                    .observeLatestDraft()
+            }
+        }
+
+    val latestDraft by draftFlow.collectAsState(
+        initial = null
+    )
+
+    // =============================================================
+    // ESTADO DEL MODAL
+    // =============================================================
 
     var showReportTypeSheet by remember {
         mutableStateOf(false)
@@ -90,7 +128,6 @@ fun HomeScreen(
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true
         )
-
 
     // =============================================================
     // COLORES
@@ -138,13 +175,11 @@ fun HomeScreen(
             Color(0xFFFFFBFC)
         }
 
-
     // =============================================================
     // PANTALLA
     // =============================================================
 
     Scaffold(
-
         containerColor = colors.surface,
 
         topBar = {
@@ -152,22 +187,12 @@ fun HomeScreen(
         },
 
         bottomBar = {
-
             BottomBar(
-
-                // Ya estamos en Inicio
                 onHomeClick = {},
-
-                onAboutUsClick = {
-                    onAboutUsClick()
-                },
-
-                onSettingsClick = {
-                    onSettingsClick()
-                }
+                onAboutUsClick = onAboutUsClick,
+                onSettingsClick = onSettingsClick
             )
         }
-
     ) { innerPadding ->
 
         Column(
@@ -175,11 +200,8 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(colors.surface)
-                .verticalScroll(
-                    rememberScrollState()
-                )
+                .verticalScroll(rememberScrollState())
         ) {
-
 
             // =====================================================
             // PRESENTACIÓN
@@ -191,18 +213,58 @@ fun HomeScreen(
                 secondaryText = secondaryText
             )
 
-
             Spacer(
-                modifier = Modifier.height(18.dp)
+                modifier = Modifier.height(15.dp)
             )
 
+            // =====================================================
+            // CONTINUAR REPORTE SIN TERMINAR
+            // =====================================================
+
+            latestDraft?.let { draft ->
+
+                val draftModeText =
+                    when (draft.mode) {
+                        "ANONYMOUS" -> "Reporte anónimo"
+                        "TRACKING" -> "Reporte con seguimiento"
+                        else -> "Reporte"
+                    }
+
+                HomeActionCard(
+                    icon = Icons.Default.EditNote,
+
+                    title = "Continuar reporte",
+
+                    subtitle =
+                        "$draftModeText · Paso ${draft.currentStep} de 4. " +
+                                "Tienes un reporte sin terminar.",
+
+                    backgroundColor = secondaryCard,
+                    borderColor = mainPink,
+
+                    iconColor = mainPink,
+                    titleColor = primaryText,
+                    subtitleColor = secondaryText,
+                    arrowColor = mainPink,
+
+                    onClick = {
+                        onContinueDraftClick(
+                            draft.id,
+                            draft.mode
+                        )
+                    }
+                )
+
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
+            }
 
             // =====================================================
             // REALIZAR REPORTE
             // =====================================================
 
             HomeActionCard(
-
                 icon = Icons.Default.Description,
 
                 title = "Realizar reporte",
@@ -211,17 +273,13 @@ fun HomeScreen(
                     "Proporciona información sobre una posible situación de trabajo infantil.",
 
                 backgroundColor = mainPink,
-
                 borderColor = mainPink,
 
                 iconColor = Color.White,
-
                 titleColor = Color.White,
-
                 subtitleColor = Color.White.copy(
                     alpha = 0.92f
                 ),
-
                 arrowColor = Color.White,
 
                 onClick = {
@@ -229,18 +287,15 @@ fun HomeScreen(
                 }
             )
 
-
             Spacer(
                 modifier = Modifier.height(14.dp)
             )
-
 
             // =====================================================
             // SEGUIMIENTO
             // =====================================================
 
             HomeActionCard(
-
                 icon = Icons.Default.AccessTime,
 
                 title = "Seguimiento",
@@ -249,34 +304,25 @@ fun HomeScreen(
                     "Consulta el estado general de tu reporte.",
 
                 backgroundColor = secondaryCard,
-
                 borderColor = secondaryBorder,
 
                 iconColor = primaryText,
-
                 titleColor = primaryText,
-
                 subtitleColor = secondaryText,
-
                 arrowColor = primaryText,
 
-                onClick = {
-                    onTrackingClick()
-                }
+                onClick = onTrackingClick
             )
-
 
             Spacer(
                 modifier = Modifier.height(14.dp)
             )
-
 
             // =====================================================
             // ORIENTACIÓN
             // =====================================================
 
             HomeActionCard(
-
                 icon = Icons.AutoMirrored.Filled.MenuBook,
 
                 title = "Orientación",
@@ -285,29 +331,21 @@ fun HomeScreen(
                     "Conoce información útil sobre reportes y trabajo infantil.",
 
                 backgroundColor = secondaryCard,
-
                 borderColor = secondaryBorder,
 
                 iconColor = primaryText,
-
                 titleColor = primaryText,
-
                 subtitleColor = secondaryText,
-
                 arrowColor = primaryText,
 
-                onClick = {
-                    onOrientationClick()
-                }
+                onClick = onOrientationClick
             )
-
 
             Spacer(
                 modifier = Modifier.height(28.dp)
             )
         }
     }
-
 
     // =============================================================
     // MODAL PARA ELEGIR TIPO DE REPORTE
@@ -316,17 +354,14 @@ fun HomeScreen(
     if (showReportTypeSheet) {
 
         ModalBottomSheet(
-
             onDismissRequest = {
                 showReportTypeSheet = false
             },
 
             sheetState = reportTypeSheetState,
-
             containerColor = sheetBackground,
 
             dragHandle = {
-
                 Box(
                     modifier = Modifier
                         .padding(
@@ -335,9 +370,7 @@ fun HomeScreen(
                         )
                         .width(34.dp)
                         .height(4.dp)
-                        .clip(
-                            RoundedCornerShape(50)
-                        )
+                        .clip(RoundedCornerShape(50))
                         .background(
                             if (isDarkTheme) {
                                 Color(0xFF8A8185)
@@ -347,11 +380,9 @@ fun HomeScreen(
                         )
                 )
             }
-
         ) {
 
             ReportTypeContent(
-
                 isDarkTheme = isDarkTheme,
 
                 onClose = {
@@ -360,33 +391,15 @@ fun HomeScreen(
 
                 onContinue = { selectedType ->
 
-                    // Cerramos el modal antes de navegar
                     showReportTypeSheet = false
 
                     when (selectedType) {
 
                         HomeReportType.ANONYMOUS -> {
-
-                            /*
-                             * TODO(BACKEND):
-                             *
-                             * Al enviar el reporte deberá
-                             * conservarse la modalidad ANÓNIMA.
-                             */
-
                             onAnonymousReportClick()
                         }
 
                         HomeReportType.TRACKING -> {
-
-                            /*
-                             * TODO(BACKEND):
-                             *
-                             * Al enviar el reporte deberá
-                             * conservarse la modalidad
-                             * CON SEGUIMIENTO.
-                             */
-
                             onReportClick()
                         }
                     }
@@ -396,6 +409,9 @@ fun HomeScreen(
     }
 }
 
+// =================================================================
+// PRESENTACIÓN SUPERIOR
+// =================================================================
 
 // =================================================================
 // PRESENTACIÓN SUPERIOR
@@ -417,13 +433,11 @@ private fun HomeHeroSection(
 
     val teal = Color(0xFF16BFAF)
 
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(235.dp)
+            .height(205.dp)
     ) {
-
 
         // =========================================================
         // CUADRADOS DECORATIVOS TRANSPARENTES
@@ -440,16 +454,14 @@ private fun HomeHeroSection(
                 )
                 .background(
                     color = pink.copy(
-                        alpha =
-                            if (isDarkTheme) {
-                                0.10f
-                            } else {
-                                0.07f
-                            }
+                        alpha = if (isDarkTheme) {
+                            0.10f
+                        } else {
+                            0.07f
+                        }
                     )
                 )
         )
-
 
         // Rosa secundario
         Box(
@@ -462,16 +474,14 @@ private fun HomeHeroSection(
                 )
                 .background(
                     color = pink.copy(
-                        alpha =
-                            if (isDarkTheme) {
-                                0.07f
-                            } else {
-                                0.045f
-                            }
+                        alpha = if (isDarkTheme) {
+                            0.07f
+                        } else {
+                            0.045f
+                        }
                     )
                 )
         )
-
 
         // Turquesa inferior
         Box(
@@ -484,16 +494,14 @@ private fun HomeHeroSection(
                 )
                 .background(
                     color = teal.copy(
-                        alpha =
-                            if (isDarkTheme) {
-                                0.10f
-                            } else {
-                                0.07f
-                            }
+                        alpha = if (isDarkTheme) {
+                            0.10f
+                        } else {
+                            0.07f
+                        }
                     )
                 )
         )
-
 
         // Turquesa pequeño superpuesto
         Box(
@@ -506,16 +514,14 @@ private fun HomeHeroSection(
                 )
                 .background(
                     color = teal.copy(
-                        alpha =
-                            if (isDarkTheme) {
-                                0.06f
-                            } else {
-                                0.04f
-                            }
+                        alpha = if (isDarkTheme) {
+                            0.06f
+                        } else {
+                            0.04f
+                        }
                     )
                 )
         )
-
 
         // =========================================================
         // CONTENIDO
@@ -540,7 +546,6 @@ private fun HomeHeroSection(
                 lineHeight = 37.sp
             )
 
-
             Text(
                 text = "seguros",
                 color = pink,
@@ -550,11 +555,9 @@ private fun HomeHeroSection(
                 lineHeight = 40.sp
             )
 
-
             Spacer(
                 modifier = Modifier.height(9.dp)
             )
-
 
             Box(
                 modifier = Modifier
@@ -563,30 +566,22 @@ private fun HomeHeroSection(
                     .background(pink)
             )
 
-
             Spacer(
                 modifier = Modifier.height(15.dp)
             )
 
-
             Text(
                 text =
                     "Informa sobre una posible situación de trabajo infantil de forma rápida y segura.",
-
                 color = secondaryText,
-
                 fontFamily = FontFamily.Serif,
-
                 fontSize = 17.sp,
-
                 lineHeight = 21.sp,
-
                 modifier = Modifier.width(300.dp)
             )
         }
     }
 }
-
 
 // =================================================================
 // TARJETAS DEL HOME
@@ -609,13 +604,9 @@ private fun HomeActionCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                horizontal = 12.dp
-            )
+            .padding(horizontal = 12.dp)
             .height(102.dp)
-            .clickable {
-                onClick()
-            },
+            .clickable(onClick = onClick),
 
         shape = RoundedCornerShape(14.dp),
 
@@ -625,7 +616,6 @@ private fun HomeActionCard(
             width = 1.dp,
             color = borderColor
         )
-
     ) {
 
         Row(
@@ -636,10 +626,8 @@ private fun HomeActionCard(
                     end = 18.dp
                 ),
 
-            verticalAlignment =
-                Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
 
             // =====================================================
             // ICONO
@@ -652,11 +640,9 @@ private fun HomeActionCard(
                 modifier = Modifier.size(40.dp)
             )
 
-
             Spacer(
                 modifier = Modifier.width(18.dp)
             )
-
 
             // =====================================================
             // TEXTO
@@ -675,11 +661,9 @@ private fun HomeActionCard(
                     fontSize = 21.sp
                 )
 
-
                 Spacer(
                     modifier = Modifier.height(6.dp)
                 )
-
 
                 Text(
                     text = subtitle,
@@ -690,11 +674,9 @@ private fun HomeActionCard(
                 )
             }
 
-
             Spacer(
                 modifier = Modifier.width(10.dp)
             )
-
 
             Text(
                 text = "›",
@@ -705,7 +687,6 @@ private fun HomeActionCard(
         }
     }
 }
-
 
 // =================================================================
 // CONTENIDO DEL MODAL
@@ -722,14 +703,12 @@ private fun ReportTypeContent(
         mutableStateOf<HomeReportType?>(null)
     }
 
-
     val primaryText =
         if (isDarkTheme) {
             Color(0xFFF8F5F6)
         } else {
             Color(0xFF123E5B)
         }
-
 
     val secondaryText =
         if (isDarkTheme) {
@@ -738,14 +717,12 @@ private fun ReportTypeContent(
             Color(0xFF587081)
         }
 
-
     val cardBackground =
         if (isDarkTheme) {
             Color(0xFF211D20)
         } else {
             Color(0xFFFFFDFD)
         }
-
 
     val cardBorder =
         if (isDarkTheme) {
@@ -754,9 +731,7 @@ private fun ReportTypeContent(
             Color(0xFFE3E3E3)
         }
 
-
     val pink = Color(0xFFFF0060)
-
 
     Column(
         modifier = Modifier
@@ -767,15 +742,8 @@ private fun ReportTypeContent(
                 bottom = 22.dp
             ),
 
-        horizontalAlignment =
-            Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-
-        // =========================================================
-        // YA NO HAY "X" AQUÍ
-        // =========================================================
-
 
         // =========================================================
         // INDICADOR SUPERIOR
@@ -786,13 +754,10 @@ private fun ReportTypeContent(
                 .size(48.dp)
                 .clip(CircleShape)
                 .background(
-                    pink.copy(
-                        alpha = 0.09f
-                    )
+                    pink.copy(alpha = 0.09f)
                 ),
 
-            contentAlignment =
-                Alignment.Center
+            contentAlignment = Alignment.Center
         ) {
 
             Text(
@@ -802,164 +767,117 @@ private fun ReportTypeContent(
             )
         }
 
-
         Spacer(
             modifier = Modifier.height(10.dp)
         )
-
 
         // =========================================================
         // TÍTULO
         // =========================================================
 
         Text(
-            text =
-                "¿Qué tipo de reporte\ndeseas realizar?",
-
+            text = "¿Qué tipo de reporte\ndeseas realizar?",
             color = primaryText,
-
             fontFamily = FontFamily.Serif,
-
             fontWeight = FontWeight.Bold,
-
             fontSize = 21.sp,
-
             lineHeight = 23.sp,
-
             textAlign = TextAlign.Center
         )
-
 
         Spacer(
             modifier = Modifier.height(8.dp)
         )
 
-
         Text(
             text =
                 "Selecciona la opción que mejor se adapte a tu situación. Puedes consultar los detalles de cada modalidad.",
-
             color = secondaryText,
-
             fontFamily = FontFamily.Serif,
-
             fontSize = 12.sp,
-
             lineHeight = 16.sp,
-
             textAlign = TextAlign.Center,
-
-            modifier = Modifier.padding(
-                horizontal = 22.dp
-            )
+            modifier = Modifier.padding(horizontal = 22.dp)
         )
-
 
         Spacer(
             modifier = Modifier.height(16.dp)
         )
-
 
         // =========================================================
         // REPORTE ANÓNIMO
         // =========================================================
 
         ReportTypeOption(
-
             title = "Reporte anónimo",
 
             subtitle =
                 "Tu identidad se mantendrá confidencial.",
 
             selected =
-                selectedType ==
-                        HomeReportType.ANONYMOUS,
+                selectedType == HomeReportType.ANONYMOUS,
 
             backgroundColor = cardBackground,
-
             borderColor = cardBorder,
-
             selectedColor = pink,
-
             titleColor = primaryText,
-
             subtitleColor = secondaryText,
 
             onClick = {
-
-                selectedType =
-                    HomeReportType.ANONYMOUS
+                selectedType = HomeReportType.ANONYMOUS
             }
         )
-
 
         Spacer(
             modifier = Modifier.height(10.dp)
         )
-
 
         // =========================================================
         // REPORTE CON SEGUIMIENTO
         // =========================================================
 
         ReportTypeOption(
-
             title = "Reporte con seguimiento",
 
             subtitle =
                 "Podrás dar seguimiento al estado de tu reporte con un folio.",
 
             selected =
-                selectedType ==
-                        HomeReportType.TRACKING,
+                selectedType == HomeReportType.TRACKING,
 
             backgroundColor = cardBackground,
-
             borderColor = cardBorder,
-
             selectedColor = pink,
-
             titleColor = primaryText,
-
             subtitleColor = secondaryText,
 
             onClick = {
-
-                selectedType =
-                    HomeReportType.TRACKING
+                selectedType = HomeReportType.TRACKING
             }
         )
-
 
         Spacer(
             modifier = Modifier.height(16.dp)
         )
-
 
         // =========================================================
         // CONTINUAR
         // =========================================================
 
         ContinueReportButton(
-
             enabled = selectedType != null,
-
             pink = pink,
 
             onClick = {
-
                 selectedType?.let { type ->
-
                     onContinue(type)
                 }
             }
         )
 
-
         Spacer(
             modifier = Modifier.height(10.dp)
         )
-
 
         // =========================================================
         // CANCELAR
@@ -969,19 +887,15 @@ private fun ReportTypeContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(46.dp)
-                .clickable {
-                    onClose()
-                },
+                .clickable(onClick = onClose),
 
             color = Color.Transparent,
-
             shape = RoundedCornerShape(8.dp),
 
             border = BorderStroke(
                 width = 1.dp,
                 color = pink
             )
-
         ) {
 
             Box(
@@ -1026,43 +940,34 @@ private fun ReportTypeOption(
             borderColor
         }
 
-
     val finalBackgroundColor =
         if (selected) {
-
             selectedColor.copy(
                 alpha = 0.07f
             )
-
         } else {
-
             backgroundColor
         }
-
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(82.dp)
-            .clickable {
-                onClick()
-            },
+            .clickable(onClick = onClick),
 
         color = finalBackgroundColor,
 
         shape = RoundedCornerShape(12.dp),
 
         border = BorderStroke(
-            width =
-                if (selected) {
-                    1.5.dp
-                } else {
-                    1.dp
-                },
+            width = if (selected) {
+                1.5.dp
+            } else {
+                1.dp
+            },
 
             color = finalBorderColor
         )
-
     ) {
 
         Row(
@@ -1075,10 +980,12 @@ private fun ReportTypeOption(
                     bottom = 12.dp
                 ),
 
-            verticalAlignment =
-                Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
+            // =====================================================
+            // TEXTO DE LA OPCIÓN
+            // =====================================================
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -1093,11 +1000,9 @@ private fun ReportTypeOption(
                     fontSize = 15.sp
                 )
 
-
                 Spacer(
                     modifier = Modifier.height(6.dp)
                 )
-
 
                 Text(
                     text = subtitle,
@@ -1108,11 +1013,9 @@ private fun ReportTypeOption(
                 )
             }
 
-
             Spacer(
                 modifier = Modifier.width(16.dp)
             )
-
 
             // =====================================================
             // CÍRCULO DE SELECCIÓN
@@ -1122,25 +1025,22 @@ private fun ReportTypeOption(
                 modifier = Modifier
                     .size(21.dp)
                     .border(
-                        width =
-                            if (selected) {
-                                2.dp
-                            } else {
-                                1.5.dp
-                            },
+                        width = if (selected) {
+                            2.dp
+                        } else {
+                            1.5.dp
+                        },
 
-                        color =
-                            if (selected) {
-                                selectedColor
-                            } else {
-                                Color(0xFFB5C7D1)
-                            },
+                        color = if (selected) {
+                            selectedColor
+                        } else {
+                            Color(0xFFB5C7D1)
+                        },
 
                         shape = CircleShape
                     ),
 
-                contentAlignment =
-                    Alignment.Center
+                contentAlignment = Alignment.Center
             ) {
 
                 if (selected) {
@@ -1149,9 +1049,7 @@ private fun ReportTypeOption(
                         modifier = Modifier
                             .size(11.dp)
                             .clip(CircleShape)
-                            .background(
-                                selectedColor
-                            )
+                            .background(selectedColor)
                     )
                 }
             }
@@ -1159,9 +1057,8 @@ private fun ReportTypeOption(
     }
 }
 
-
 // =================================================================
-// BOTÓN CONTINUAR
+// BOTÓN CONTINUAR DEL MODAL
 // =================================================================
 
 @Composable
@@ -1180,7 +1077,6 @@ private fun ContinueReportButton(
             )
         }
 
-
     val textColor =
         if (enabled) {
             Color.White
@@ -1190,21 +1086,17 @@ private fun ContinueReportButton(
             )
         }
 
-
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
             .clickable(
-                enabled = enabled
-            ) {
-                onClick()
-            },
+                enabled = enabled,
+                onClick = onClick
+            ),
 
         color = backgroundColor,
-
         shape = RoundedCornerShape(8.dp)
-
     ) {
 
         Box(
@@ -1222,7 +1114,6 @@ private fun ContinueReportButton(
         }
     }
 }
-
 
 // =================================================================
 // PREVIEW DARK
@@ -1247,11 +1138,11 @@ private fun HomeScreenDarkPreview() {
             onAboutUsClick = {},
             onTrackingClick = {},
             onOrientationClick = {},
-            onSettingsClick = {}
+            onSettingsClick = {},
+            onContinueDraftClick = { _, _ -> }
         )
     }
 }
-
 
 // =================================================================
 // PREVIEW LIGHT
@@ -1275,7 +1166,8 @@ private fun HomeScreenLightPreview() {
             onAboutUsClick = {},
             onTrackingClick = {},
             onOrientationClick = {},
-            onSettingsClick = {}
+            onSettingsClick = {},
+            onContinueDraftClick = { _, _ -> }
         )
     }
 }

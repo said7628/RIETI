@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -58,6 +60,13 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation(libs.play.services.maps)
 
+    // =============================================================
+// ROOM - ALMACENAMIENTO LOCAL DE BORRADORES
+// =============================================================
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))

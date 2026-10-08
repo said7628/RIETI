@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -37,16 +38,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -55,12 +56,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.ReportLocationMap
+import com.example.rieti.viewmodel.ReportViewModel
 import com.google.android.gms.maps.model.LatLng
-
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 // =================================================================
 // MODALIDAD DEL REPORTE
@@ -70,7 +74,6 @@ enum class ReportMode {
     TRACKING,
     ANONYMOUS
 }
-
 
 // =================================================================
 // REPORTE CON SEGUIMIENTO
@@ -85,7 +88,6 @@ fun ReportScreen(
     onSelectFilesClick: () -> Unit,
     onSendReportClick: () -> Unit
 ) {
-
     ReportFormScreen(
         mode = ReportMode.TRACKING,
         onHomeClick = onHomeClick,
@@ -96,7 +98,6 @@ fun ReportScreen(
         onSendReportClick = onSendReportClick
     )
 }
-
 
 // =================================================================
 // FORMULARIO COMPARTIDO
@@ -110,101 +111,108 @@ fun ReportFormScreen(
     onSettingsClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
     onSelectFilesClick: () -> Unit,
-    onSendReportClick: () -> Unit
+    onSendReportClick: () -> Unit,
+    draftId: String? = null
 ) {
 
-    // =============================================================
-    // PASO ACTUAL
-    // =============================================================
+    val isPreview = LocalInspectionMode.current
 
-    var currentStep by rememberSaveable {
-        mutableIntStateOf(1)
-    }
+    val reportViewModel: ReportViewModel = viewModel()
 
+    val reportState by
+    reportViewModel.uiState.collectAsState()
 
-    // =============================================================
-    // DATOS ESPECÍFICOS DEL REPORTE ANÓNIMO
-    //
-    // TODO(BACKEND):
-    // Estos datos posteriormente podrán administrarse desde
-    // ReportViewModel.
-    // =============================================================
+    val isDraftLoaded by
+    reportViewModel.isDraftLoaded.collectAsState()
 
-    var email by rememberSaveable {
-        mutableStateOf("")
-    }
+    val draftError by
+    reportViewModel.draftError.collectAsState()
 
-    var confirmEmail by rememberSaveable {
-        mutableStateOf("")
-    }
-
-
-    // =============================================================
-    // DATOS COMUNES DEL REPORTE
-    //
-    // TODO(BACKEND):
-    // Posteriormente estos datos pueden administrarse desde
-    // ReportViewModel y enviarse al backend.
-    // =============================================================
-
-    var numberOfChildren by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var childrenAges by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var workType by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var workSchedule by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var details by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var fullAddress by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var neighborhood by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var postalCode by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var municipality by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    /*
- * Ubicación seleccionada temporalmente en el mapa.
- *
- * TODO(VIEWMODEL):
- * En el siguiente paso este estado será administrado
- * por ReportViewModel mediante ReportUiState.selectedLocation.
- */
-    var selectedLocation by rememberSaveable {
-        mutableStateOf(
-            LatLng(
-                19.4326,
-                -99.1332
-            )
-        )
-    }
-
+    val coroutineScope = rememberCoroutineScope()
 
     val colors = AppTheme.colors
 
+    // =============================================================
+    // APERTURA DEL BORRADOR
+    // =============================================================
+
+    LaunchedEffect(mode, draftId) {
+
+        if (!isPreview) {
+
+            reportViewModel.openDraft(
+                mode = mode.name,
+                draftId = draftId
+            )
+        }
+    }
 
     // =============================================================
-    // PANTALLA
+    // ESTADO DEL FORMULARIO
+    // =============================================================
+
+    val currentStep = reportState.currentStep
+
+    val email = reportState.email
+    val confirmEmail = reportState.confirmEmail
+
+    val numberOfChildren = reportState.numberOfChildren
+    val childrenAges = reportState.childrenAges
+
+    val workType = reportState.workType
+    val workSchedule = reportState.workSchedule
+    val details = reportState.details
+
+    val fullAddress = reportState.fullAddress
+    val neighborhood = reportState.neighborhood
+    val postalCode = reportState.postalCode
+    val municipality = reportState.municipality
+
+    val selectedLocation = reportState.selectedLocation
+
+    // =============================================================
+    // GUARDADO SEGURO ANTES DE NAVEGAR
+    // =============================================================
+
+    /**
+     * Guarda el borrador antes de abandonar el formulario.
+     *
+     * Si ocurre un error:
+     * - No ejecuta la navegación.
+     * - Mantiene el formulario abierto.
+     * - Permite mostrar el error del ViewModel.
+     */
+    val saveAndNavigate: (() -> Unit) -> Unit = { navigate ->
+
+        if (isPreview) {
+
+            navigate()
+
+        } else if (isDraftLoaded) {
+
+            coroutineScope.launch {
+
+                try {
+
+                    reportViewModel.saveDraftNow()
+
+                    navigate()
+
+                } catch (e: CancellationException) {
+
+                    throw e
+
+                } catch (e: Exception) {
+
+                    // El ViewModel actualiza draftError.
+                    // No salimos para evitar perder cambios.
+                }
+            }
+        }
+    }
+
+    // =============================================================
+    // PANTALLA PRINCIPAL
     // =============================================================
 
     Scaffold(
@@ -213,16 +221,17 @@ fun ReportFormScreen(
         bottomBar = {
 
             BottomBar(
+
                 onHomeClick = {
-                    onHomeClick()
+                    saveAndNavigate(onHomeClick)
                 },
 
                 onAboutUsClick = {
-                    onAboutUsClick()
+                    saveAndNavigate(onAboutUsClick)
                 },
 
                 onSettingsClick = {
-                    onSettingsClick()
+                    saveAndNavigate(onSettingsClick)
                 }
             )
         }
@@ -236,7 +245,6 @@ fun ReportFormScreen(
                 .background(colors.surface)
         ) {
 
-
             // =====================================================
             // ENCABEZADO
             // =====================================================
@@ -244,23 +252,37 @@ fun ReportFormScreen(
             ReportHeader(
                 onBackClick = {
 
-                    if (currentStep > 1) {
-                        currentStep--
+                    if (!isDraftLoaded && !isPreview) {
+
+                        // Si la recuperación falló, regresar
+                        // no debe intentar guardar nada.
+                        if (draftError != null) {
+                            onHomeClick()
+                        }
+
+                    } else if (currentStep > 1) {
+
+                        reportViewModel.onStepChange(
+                            currentStep - 1
+                        )
+
                     } else {
-                        onHomeClick()
+
+                        saveAndNavigate(onHomeClick)
                     }
                 }
             )
-
 
             // =====================================================
             // INDICADOR DE PROGRESO
             // =====================================================
 
-            ReportProgressIndicator(
-                currentStep = currentStep
-            )
+            if (isDraftLoaded || isPreview) {
 
+                ReportProgressIndicator(
+                    currentStep = currentStep
+                )
+            }
 
             // =====================================================
             // CONTENIDO
@@ -272,186 +294,314 @@ fun ReportFormScreen(
                     .weight(1f)
             ) {
 
-                when (currentStep) {
+                // =================================================
+                // BORRADOR NO DISPONIBLE
+                // =================================================
 
+                if (!isDraftLoaded && !isPreview) {
 
-                    // =================================================
-                    // PASO 1 - DETALLES
-                    // =================================================
+                    if (draftError != null) {
 
-                    1 -> {
+                        // =========================================
+                        // ERROR DE RECUPERACIÓN
+                        // =========================================
 
-                        ReportDetailsStep(
-                            mode = mode,
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .fillMaxWidth()
+                                .padding(24.dp),
 
-                            email = email,
-                            onEmailChange = {
-                                email = it
-                            },
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally,
 
-                            confirmEmail = confirmEmail,
-                            onConfirmEmailChange = {
-                                confirmEmail = it
-                            },
+                            verticalArrangement =
+                                Arrangement.spacedBy(16.dp)
+                        ) {
 
-                            numberOfChildren = numberOfChildren,
-                            onNumberOfChildrenChange = {
-                                numberOfChildren = it
-                            },
+                            Text(
+                                text =
+                                    "No fue posible recuperar el reporte",
 
-                            childrenAges = childrenAges,
-                            onChildrenAgesChange = {
-                                childrenAges = it
-                            },
+                                color = colors.titles,
 
-                            workType = workType,
-                            onWorkTypeChange = {
-                                workType = it
-                            },
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 21.sp,
 
-                            workSchedule = workSchedule,
-                            onWorkScheduleChange = {
-                                workSchedule = it
-                            },
+                                textAlign = TextAlign.Center
+                            )
 
-                            details = details,
-                            onDetailsChange = {
-                                details = it
-                            },
+                            Text(
+                                text = draftError
+                                    ?: "Ocurrió un error al recuperar la información.",
 
-                            onNextClick = {
+                                color = colors.text,
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp,
 
-                                /*
-                                 * TODO(BACKEND / VALIDATION):
-                                 *
-                                 * En la modalidad ANONYMOUS se deberá
-                                 * validar el correo de acuerdo con las
-                                 * reglas ya definidas para el sistema.
-                                 */
+                                textAlign = TextAlign.Center
+                            )
 
-                                currentStep = 2
+                            Text(
+                                text =
+                                    "El borrador original no ha sido eliminado.",
+
+                                color = colors.text.copy(
+                                    alpha = 0.70f
+                                ),
+
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Button(
+                                onClick = onHomeClick,
+
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+
+                                shape = RoundedCornerShape(10.dp),
+
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor =
+                                        colors.pinkPrincipal,
+
+                                    contentColor = Color.White
+                                )
+                            ) {
+
+                                Text(
+                                    text = "Volver al inicio",
+
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
                             }
-                        )
-                    }
-
-
-                    // =================================================
-                    // PASO 2 - UBICACIÓN
-                    // =================================================
-
-                    2 -> {
-
-                        ReportLocationStep(
-                            selectedLocation = selectedLocation,
-
-                            onLocationSelected = { newLocation ->
-                                selectedLocation = newLocation
-                            },
-
-                            fullAddress = fullAddress,
-
-                            onFullAddressChange = {
-                                fullAddress = it
-                            },
-
-                            neighborhood = neighborhood,
-
-                            onNeighborhoodChange = {
-                                neighborhood = it
-                            },
-
-                            postalCode = postalCode,
-
-                            onPostalCodeChange = {
-                                postalCode = it
-                            },
-
-                            municipality = municipality,
-
-                            onMunicipalityChange = {
-                                municipality = it
-                            },
-
-                            onCurrentLocationClick = {
-                                onCurrentLocationClick()
-                            },
-
-                            onNextClick = {
-                                currentStep = 3
-                            }
-                        )
                         }
 
+                    } else {
 
-                    // =================================================
-                    // PASO 3 - EVIDENCIA
-                    // =================================================
+                        // =========================================
+                        // RECUPERACIÓN EN PROCESO
+                        // =========================================
 
-                    3 -> {
+                        Text(
+                            text = "Recuperando reporte...",
 
-                        ReportEvidenceStep(
-                            onSelectFilesClick = {
-                                onSelectFilesClick()
-                            },
+                            color = colors.text,
 
-                            onNextClick = {
-                                currentStep = 4
-                            }
+                            modifier = Modifier.align(
+                                Alignment.Center
+                            )
                         )
                     }
 
+                } else {
 
                     // =================================================
-                    // PASO 4 - REVISIÓN
+                    // FORMULARIO DISPONIBLE
                     // =================================================
 
-                    4 -> {
+                    Column {
 
-                        ReportReviewStep(
-                            mode = mode,
-                            email = email,
+                        // =========================================
+                        // MENSAJES DE GUARDADO Y UBICACIÓN
+                        // =========================================
 
-                            numberOfChildren = numberOfChildren,
-                            childrenAges = childrenAges,
-                            workType = workType,
-                            workSchedule = workSchedule,
-                            details = details,
+                        if (draftError != null) {
 
-                            fullAddress = fullAddress,
-                            neighborhood = neighborhood,
-                            postalCode = postalCode,
-                            municipality = municipality,
+                            Text(
+                                text = draftError ?: "",
 
-                            onEditDetailsClick = {
-                                currentStep = 1
-                            },
+                                color = colors.pinkPrincipal,
 
-                            onEditLocationClick = {
-                                currentStep = 2
-                            },
+                                fontSize = 12.sp,
 
-                            onEditEvidenceClick = {
-                                currentStep = 3
-                            },
+                                modifier = Modifier.padding(
+                                    horizontal = 22.dp,
+                                    vertical = 8.dp
+                                )
+                            )
+                        }
 
-                            onSendReportClick = {
+                        Box(
+                            modifier = Modifier.weight(1f)
+                        ) {
 
-                                /*
-                                 * TODO(BACKEND):
-                                 *
-                                 * Mantener la modalidad seleccionada
-                                 * al construir el request del reporte:
-                                 *
-                                 * ReportMode.TRACKING
-                                 * ReportMode.ANONYMOUS
-                                 *
-                                 * Después de la confirmación del backend,
-                                 * navegar a ReportSuccessScreen.
-                                 */
+                            when (currentStep) {
 
-                                onSendReportClick()
+                                // =====================================
+                                // PASO 1: DETALLES
+                                // =====================================
+
+                                1 -> {
+
+                                    ReportDetailsStep(
+                                        mode = mode,
+
+                                        email = email,
+
+                                        onEmailChange =
+                                            reportViewModel::onEmailChange,
+
+                                        confirmEmail = confirmEmail,
+
+                                        onConfirmEmailChange =
+                                            reportViewModel::onConfirmEmailChange,
+
+                                        numberOfChildren =
+                                            numberOfChildren,
+
+                                        onNumberOfChildrenChange =
+                                            reportViewModel::onNumberOfChildrenChange,
+
+                                        childrenAges = childrenAges,
+
+                                        onChildrenAgesChange =
+                                            reportViewModel::onChildrenAgesChange,
+
+                                        workType = workType,
+
+                                        onWorkTypeChange =
+                                            reportViewModel::onWorkTypeChange,
+
+                                        workSchedule = workSchedule,
+
+                                        onWorkScheduleChange =
+                                            reportViewModel::onWorkScheduleChange,
+
+                                        details = details,
+
+                                        onDetailsChange =
+                                            reportViewModel::onDetailsChange,
+
+                                        onNextClick = {
+
+                                            reportViewModel.onStepChange(2)
+                                        }
+                                    )
+                                }
+
+                                // =====================================
+                                // PASO 2: UBICACIÓN
+                                // =====================================
+
+                                2 -> {
+
+                                    ReportLocationStep(
+                                        selectedLocation =
+                                            selectedLocation,
+
+                                        onLocationSelected = {
+
+                                            reportViewModel
+                                                .onMapLocationChanged(it)
+                                        },
+
+                                        fullAddress = fullAddress,
+
+                                        onFullAddressChange =
+                                            reportViewModel::onFullAddressChange,
+
+                                        neighborhood = neighborhood,
+
+                                        onNeighborhoodChange =
+                                            reportViewModel::onNeighborhoodChange,
+
+                                        postalCode = postalCode,
+
+                                        onPostalCodeChange =
+                                            reportViewModel::onPostalCodeChange,
+
+                                        municipality = municipality,
+
+                                        onMunicipalityChange =
+                                            reportViewModel::onMunicipalityChange,
+
+                                        onCurrentLocationClick =
+                                            onCurrentLocationClick,
+
+                                        onNextClick = {
+
+                                            reportViewModel.onStepChange(3)
+                                        }
+                                    )
+                                }
+
+                                // =====================================
+                                // PASO 3: EVIDENCIAS
+                                // =====================================
+
+                                3 -> {
+
+                                    ReportEvidenceStep(
+                                        onSelectFilesClick =
+                                            onSelectFilesClick,
+
+                                        onNextClick = {
+
+                                            reportViewModel.onStepChange(4)
+                                        }
+                                    )
+                                }
+
+                                // =====================================
+                                // PASO 4: REVISIÓN
+                                // =====================================
+
+                                4 -> {
+
+                                    ReportReviewStep(
+                                        mode = mode,
+                                        email = email,
+
+                                        numberOfChildren =
+                                            numberOfChildren,
+
+                                        childrenAges = childrenAges,
+                                        workType = workType,
+                                        workSchedule = workSchedule,
+                                        details = details,
+
+                                        fullAddress = fullAddress,
+                                        neighborhood = neighborhood,
+                                        postalCode = postalCode,
+                                        municipality = municipality,
+
+                                        onEditDetailsClick = {
+
+                                            reportViewModel.onStepChange(1)
+                                        },
+
+                                        onEditLocationClick = {
+
+                                            reportViewModel.onStepChange(2)
+                                        },
+
+                                        onEditEvidenceClick = {
+
+                                            reportViewModel.onStepChange(3)
+                                        },
+
+                                        onSendReportClick = {
+
+                                            /*
+                                             * TODO(BACKEND):
+                                             *
+                                             * No mostrar éxito hasta que
+                                             * el servidor confirme el
+                                             * registro del reporte.
+                                             *
+                                             * onSendReportClick()
+                                             */
+                                        }
+                                    )
+                                }
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -468,26 +618,18 @@ fun ReportFormScreen(
 private fun ReportHeader(
     onBackClick: () -> Unit
 ) {
-
     val colors = AppTheme.colors
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .padding(
-                horizontal = 14.dp
-            ),
-
+            .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         IconButton(
-            onClick = {
-                onBackClick()
-            }
+            onClick = onBackClick
         ) {
-
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Regresar",
@@ -496,11 +638,7 @@ private fun ReportHeader(
             )
         }
 
-
-        Spacer(
-            modifier = Modifier.width(8.dp)
-        )
-
+        Spacer(modifier = Modifier.width(8.dp))
 
         Text(
             text = "Realizar reporte",
@@ -512,7 +650,6 @@ private fun ReportHeader(
     }
 }
 
-
 // =================================================================
 // INDICADOR DE PROGRESO
 // =================================================================
@@ -521,15 +658,9 @@ private fun ReportHeader(
 private fun ReportProgressIndicator(
     currentStep: Int
 ) {
-
     val colors = AppTheme.colors
-
     val pink = colors.pinkPrincipal
-
-    val inactiveColor =
-        colors.text.copy(
-            alpha = 0.30f
-        )
+    val inactiveColor = colors.text.copy(alpha = 0.30f)
 
     val labels = listOf(
         "Detalles",
@@ -538,7 +669,6 @@ private fun ReportProgressIndicator(
         "Revisión"
     )
 
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -546,56 +676,35 @@ private fun ReportProgressIndicator(
                 horizontal = 16.dp,
                 vertical = 10.dp
             ),
-
         verticalAlignment = Alignment.Top
     ) {
-
         labels.forEachIndexed { index, label ->
 
             val step = index + 1
-
             val isCompleted = step < currentStep
             val isCurrent = step == currentStep
-
 
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-
-                // =================================================
-                // CÍRCULO + LÍNEAS
-                // =================================================
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-
                     if (step != 1) {
-
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(1.dp)
                                 .background(
-                                    if (step <= currentStep) {
-                                        pink
-                                    } else {
-                                        inactiveColor
-                                    }
+                                    if (step <= currentStep) pink
+                                    else inactiveColor
                                 )
                         )
-
                     } else {
-
-                        Spacer(
-                            modifier = Modifier.weight(1f)
-                        )
+                        Spacer(modifier = Modifier.weight(1f))
                     }
-
 
                     Box(
                         modifier = Modifier
@@ -610,93 +719,61 @@ private fun ReportProgressIndicator(
                             )
                             .border(
                                 width = 1.5.dp,
-
-                                color =
-                                    if (isCompleted || isCurrent) {
-                                        pink
-                                    } else {
-                                        inactiveColor
-                                    },
-
+                                color = if (isCompleted || isCurrent) {
+                                    pink
+                                } else {
+                                    inactiveColor
+                                },
                                 shape = CircleShape
                             ),
-
                         contentAlignment = Alignment.Center
                     ) {
-
                         if (isCompleted) {
-
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
-
                         } else {
-
                             Text(
                                 text = step.toString(),
-
-                                color =
-                                    if (isCurrent) {
-                                        Color.White
-                                    } else {
-                                        colors.text.copy(
-                                            alpha = 0.65f
-                                        )
-                                    },
-
+                                color = if (isCurrent) {
+                                    Color.White
+                                } else {
+                                    colors.text.copy(alpha = 0.65f)
+                                },
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
-
                     if (step != 4) {
-
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(1.dp)
                                 .background(
-                                    if (step < currentStep) {
-                                        pink
-                                    } else {
-                                        inactiveColor
-                                    }
+                                    if (step < currentStep) pink
+                                    else inactiveColor
                                 )
                         )
-
                     } else {
-
-                        Spacer(
-                            modifier = Modifier.weight(1f)
-                        )
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
 
-
-                Spacer(
-                    modifier = Modifier.height(6.dp)
-                )
-
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = label,
-
-                    color =
-                        if (isCurrent) {
-                            pink
-                        } else {
-                            colors.text.copy(
-                                alpha = 0.70f
-                            )
-                        },
-
+                    color = if (isCurrent) {
+                        pink
+                    } else {
+                        colors.text.copy(alpha = 0.70f)
+                    },
                     fontSize = 11.sp,
-
                     textAlign = TextAlign.Center
                 )
             }
@@ -704,9 +781,8 @@ private fun ReportProgressIndicator(
     }
 }
 
-
 // =================================================================
-// PASO 1 - DETALLES
+// PASO 1: DETALLES
 // =================================================================
 
 @Composable
@@ -736,13 +812,10 @@ private fun ReportDetailsStep(
 
     onNextClick: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(
-                rememberScrollState()
-            )
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = 22.dp,
                 end = 22.dp,
@@ -751,27 +824,20 @@ private fun ReportDetailsStep(
             )
     ) {
 
-
         // =========================================================
-        // BLOQUE EXCLUSIVO DEL REPORTE ANÓNIMO
+        // REPORTE ANÓNIMO
         // =========================================================
 
         if (mode == ReportMode.ANONYMOUS) {
-
             AnonymousModeCard(
                 email = email,
                 onEmailChange = onEmailChange,
-
                 confirmEmail = confirmEmail,
                 onConfirmEmailChange = onConfirmEmailChange
             )
 
-
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
         }
-
 
         // =========================================================
         // DATOS COMUNES
@@ -779,16 +845,11 @@ private fun ReportDetailsStep(
 
         StepTitle(
             title = "Detalles del reporte",
-
             description =
                 "Proporciona la información disponible sobre la situación observada. No es necesario contar con todos los datos para continuar."
         )
 
-
-        Spacer(
-            modifier = Modifier.height(24.dp)
-        )
-
+        Spacer(modifier = Modifier.height(24.dp))
 
         ReportFieldWithLabel(
             label = "Número de niñas, niños",
@@ -797,11 +858,7 @@ private fun ReportDetailsStep(
             onValueChange = onNumberOfChildrenChange
         )
 
-
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
+        Spacer(modifier = Modifier.height(18.dp))
 
         ReportFieldWithLabel(
             label = "Rango de edad aproximado",
@@ -810,11 +867,7 @@ private fun ReportDetailsStep(
             onValueChange = onChildrenAgesChange
         )
 
-
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
+        Spacer(modifier = Modifier.height(18.dp))
 
         ReportFieldWithLabel(
             label = "Tipo de actividad observada",
@@ -823,11 +876,7 @@ private fun ReportDetailsStep(
             onValueChange = onWorkTypeChange
         )
 
-
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
+        Spacer(modifier = Modifier.height(18.dp))
 
         ReportFieldWithLabel(
             label = "Horario aproximado",
@@ -836,54 +885,31 @@ private fun ReportDetailsStep(
             onValueChange = onWorkScheduleChange
         )
 
-
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
+        Spacer(modifier = Modifier.height(18.dp))
 
         ReportFieldWithLabel(
             label = "Descripción de la situación",
             value = details,
             placeholder = "Describe brevemente los hechos observados...",
-
             onValueChange = {
-
                 if (it.length <= 500) {
                     onDetailsChange(it)
                 }
             },
-
             minHeight = 120.dp,
             singleLine = false
         )
 
-
-        Spacer(
-            modifier = Modifier.height(5.dp)
-        )
-
+        Spacer(modifier = Modifier.height(5.dp))
 
         Text(
             text = "${details.length}/500",
-
-            color =
-                AppTheme.colors.text.copy(
-                    alpha = 0.65f
-                ),
-
+            color = AppTheme.colors.text.copy(alpha = 0.65f),
             fontSize = 12.sp,
-
-            modifier = Modifier.align(
-                Alignment.End
-            )
+            modifier = Modifier.align(Alignment.End)
         )
 
-
-        Spacer(
-            modifier = Modifier.height(26.dp)
-        )
-
+        Spacer(modifier = Modifier.height(26.dp))
 
         NextButton(
             text = "Siguiente",
@@ -892,9 +918,8 @@ private fun ReportDetailsStep(
     }
 }
 
-
 // =================================================================
-// BLOQUE EXCLUSIVO - REPORTE ANÓNIMO
+// BLOQUE EXCLUSIVO: REPORTE ANÓNIMO
 // =================================================================
 
 @Composable
@@ -904,81 +929,44 @@ private fun AnonymousModeCard(
     confirmEmail: String,
     onConfirmEmailChange: (String) -> Unit
 ) {
-
     val colors = AppTheme.colors
-
-    /*
-     * Se utiliza el rosa de la identidad visual con transparencia
-     * para que el bloque también se adapte al modo oscuro.
-     */
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-
-        color =
-            colors.pinkPrincipal.copy(
-                alpha = 0.08f
-            ),
-
+        color = colors.pinkPrincipal.copy(alpha = 0.08f),
         shape = RoundedCornerShape(12.dp),
-
         border = BorderStroke(
             width = 1.dp,
-
-            color =
-                colors.pinkPrincipal.copy(
-                    alpha = 0.22f
-                )
+            color = colors.pinkPrincipal.copy(alpha = 0.22f)
         )
     ) {
-
         Column(
             modifier = Modifier.padding(
                 horizontal = 16.dp,
                 vertical = 16.dp
             )
         ) {
-
-
             Text(
                 text = "Reporte anónimo",
-
                 color = colors.pinkPrincipal,
-
                 fontFamily = FontFamily.Serif,
-
                 fontWeight = FontWeight.Bold,
-
                 fontSize = 21.sp
             )
 
-
-            Spacer(
-                modifier = Modifier.height(6.dp)
-            )
-
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text =
                     "El reporte se registrará de forma anónima. " +
                             "El correo electrónico se utilizará únicamente " +
                             "para los fines definidos para esta modalidad.",
-
-                color =
-                    colors.text.copy(
-                        alpha = 0.78f
-                    ),
-
+                color = colors.text.copy(alpha = 0.78f),
                 fontSize = 12.sp,
-
                 lineHeight = 17.sp
             )
 
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
+            Spacer(modifier = Modifier.height(16.dp))
 
             ReportFieldWithLabel(
                 label = "Correo electrónico (*)",
@@ -987,11 +975,7 @@ private fun AnonymousModeCard(
                 onValueChange = onEmailChange
             )
 
-
-            Spacer(
-                modifier = Modifier.height(14.dp)
-            )
-
+            Spacer(modifier = Modifier.height(14.dp))
 
             ReportFieldWithLabel(
                 label = "Confirmar correo electrónico",
@@ -1000,30 +984,15 @@ private fun AnonymousModeCard(
                 onValueChange = onConfirmEmailChange
             )
 
-
-            // =====================================================
-            // VALIDACIÓN VISUAL TEMPORAL
-            // =====================================================
-
             if (
                 confirmEmail.isNotEmpty() &&
-                !email.equals(
-                    confirmEmail,
-                    ignoreCase = true
-                )
+                !email.equals(confirmEmail, ignoreCase = true)
             ) {
-
-                Spacer(
-                    modifier = Modifier.height(7.dp)
-                )
-
+                Spacer(modifier = Modifier.height(7.dp))
 
                 Text(
-                    text =
-                        "Los correos electrónicos no coinciden.",
-
+                    text = "Los correos electrónicos no coinciden.",
                     color = colors.pinkPrincipal,
-
                     fontSize = 12.sp
                 )
             }
@@ -1031,9 +1000,8 @@ private fun AnonymousModeCard(
     }
 }
 
-
 // =================================================================
-// PASO 2 - UBICACIÓN
+// PASO 2: UBICACIÓN
 // =================================================================
 
 @Composable
@@ -1056,13 +1024,10 @@ private fun ReportLocationStep(
     onCurrentLocationClick: () -> Unit,
     onNextClick: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(
-                rememberScrollState()
-            )
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = 22.dp,
                 end = 22.dp,
@@ -1070,16 +1035,13 @@ private fun ReportLocationStep(
                 bottom = 24.dp
             )
     ) {
-
         StepTitle(
             title = "Ubicación del reporte",
             description =
                 "Indica el lugar donde ocurrió la situación. Puedes seleccionar un punto en el mapa o proporcionar la dirección de forma manual."
         )
 
-        Spacer(
-            modifier = Modifier.height(22.dp)
-        )
+        Spacer(modifier = Modifier.height(22.dp))
 
         // =========================================================
         // MAPA INTERACTIVO
@@ -1090,9 +1052,7 @@ private fun ReportLocationStep(
             onLocationSelected = onLocationSelected
         )
 
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         ReportFieldWithLabel(
             label = "Dirección completa",
@@ -1103,16 +1063,12 @@ private fun ReportLocationStep(
             singleLine = false
         )
 
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
+        Spacer(modifier = Modifier.height(18.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement =
-                Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
             ReportFieldWithLabel(
                 label = "Colonia",
                 value = neighborhood,
@@ -1130,9 +1086,7 @@ private fun ReportLocationStep(
             )
         }
 
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
+        Spacer(modifier = Modifier.height(18.dp))
 
         ReportFieldWithLabel(
             label = "Municipio",
@@ -1141,9 +1095,7 @@ private fun ReportLocationStep(
             onValueChange = onMunicipalityChange
         )
 
-        Spacer(
-            modifier = Modifier.height(28.dp)
-        )
+        Spacer(modifier = Modifier.height(28.dp))
 
         NextButton(
             text = "Siguiente",
@@ -1153,7 +1105,7 @@ private fun ReportLocationStep(
 }
 
 // =================================================================
-// PASO 3 - EVIDENCIA
+// PASO 3: EVIDENCIA
 // =================================================================
 
 @Composable
@@ -1161,13 +1113,10 @@ private fun ReportEvidenceStep(
     onSelectFilesClick: () -> Unit,
     onNextClick: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(
-                rememberScrollState()
-            )
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = 22.dp,
                 end = 22.dp,
@@ -1175,44 +1124,29 @@ private fun ReportEvidenceStep(
                 bottom = 24.dp
             )
     ) {
-
-
         StepTitle(
             title = "Evidencia fotográfica",
-
             description =
                 "Puedes agregar fotografías que ayuden a documentar la situación. Este campo es opcional."
         )
 
-
-        Spacer(
-            modifier = Modifier.height(28.dp)
-        )
-
+        Spacer(modifier = Modifier.height(28.dp))
 
         EvidenceSelector(
             onClick = onSelectFilesClick
         )
 
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(
-            modifier = Modifier.height(24.dp)
-        )
-
-
-        /*
-         * TODO:
-         * Después mostrar aquí las fotografías seleccionadas.
-         */
+        // TODO(EVIDENCE):
+        // Mostrar aquí las fotografías seleccionadas
+        // cuando se integre el selector real.
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement =
-                Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-
             repeat(4) { index ->
-
                 EvidencePlaceholder(
                     showAdd = index == 0,
                     modifier = Modifier.weight(1f)
@@ -1220,11 +1154,7 @@ private fun ReportEvidenceStep(
             }
         }
 
-
-        Spacer(
-            modifier = Modifier.height(14.dp)
-        )
-
+        Spacer(modifier = Modifier.height(14.dp))
 
         EvidencePlaceholder(
             showAdd = false,
@@ -1233,11 +1163,7 @@ private fun ReportEvidenceStep(
                 .height(76.dp)
         )
 
-
-        Spacer(
-            modifier = Modifier.height(40.dp)
-        )
-
+        Spacer(modifier = Modifier.height(40.dp))
 
         NextButton(
             text = "Siguiente",
@@ -1246,9 +1172,8 @@ private fun ReportEvidenceStep(
     }
 }
 
-
 // =================================================================
-// PASO 4 - REVISIÓN
+// PASO 4: REVISIÓN
 // =================================================================
 
 @Composable
@@ -1273,13 +1198,10 @@ private fun ReportReviewStep(
 
     onSendReportClick: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(
-                rememberScrollState()
-            )
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = 18.dp,
                 end = 18.dp,
@@ -1287,20 +1209,13 @@ private fun ReportReviewStep(
                 bottom = 28.dp
             )
     ) {
-
-
         StepTitle(
             title = "Revisión del reporte",
-
             description =
                 "Verifica que la información sea correcta antes de enviarlo. Puedes editar los datos si es necesario."
         )
 
-
-        Spacer(
-            modifier = Modifier.height(22.dp)
-        )
-
+        Spacer(modifier = Modifier.height(22.dp))
 
         // =========================================================
         // MODALIDAD
@@ -1310,21 +1225,16 @@ private fun ReportReviewStep(
             title = "Modalidad del reporte",
             onEditClick = onEditDetailsClick
         ) {
-
             ReviewRow(
                 label = "Modalidad",
-
-                value =
-                    if (mode == ReportMode.ANONYMOUS) {
-                        "Reporte anónimo"
-                    } else {
-                        "Reporte con seguimiento"
-                    }
+                value = if (mode == ReportMode.ANONYMOUS) {
+                    "Reporte anónimo"
+                } else {
+                    "Reporte con seguimiento"
+                }
             )
 
-
             if (mode == ReportMode.ANONYMOUS) {
-
                 ReviewRow(
                     label = "Correo electrónico",
                     value = valueOrEmpty(email)
@@ -1332,11 +1242,7 @@ private fun ReportReviewStep(
             }
         }
 
-
-        Spacer(
-            modifier = Modifier.height(14.dp)
-        )
-
+        Spacer(modifier = Modifier.height(14.dp))
 
         // =========================================================
         // DETALLES
@@ -1346,48 +1252,33 @@ private fun ReportReviewStep(
             title = "Detalles del reporte",
             onEditClick = onEditDetailsClick
         ) {
-
             ReviewRow(
                 label = "Número de niñas, niños",
-                value = valueOrEmpty(
-                    numberOfChildren
-                )
+                value = valueOrEmpty(numberOfChildren)
             )
 
             ReviewRow(
                 label = "Rango de edad aproximado",
-                value = valueOrEmpty(
-                    childrenAges
-                )
+                value = valueOrEmpty(childrenAges)
             )
 
             ReviewRow(
                 label = "Tipo de actividad",
-                value = valueOrEmpty(
-                    workType
-                )
+                value = valueOrEmpty(workType)
             )
 
             ReviewRow(
                 label = "Horario aproximado",
-                value = valueOrEmpty(
-                    workSchedule
-                )
+                value = valueOrEmpty(workSchedule)
             )
 
             ReviewRow(
                 label = "Descripción",
-                value = valueOrEmpty(
-                    details
-                )
+                value = valueOrEmpty(details)
             )
         }
 
-
-        Spacer(
-            modifier = Modifier.height(14.dp)
-        )
-
+        Spacer(modifier = Modifier.height(14.dp))
 
         // =========================================================
         // UBICACIÓN
@@ -1397,41 +1288,28 @@ private fun ReportReviewStep(
             title = "Ubicación del reporte",
             onEditClick = onEditLocationClick
         ) {
-
             ReviewRow(
                 label = "Dirección",
-                value = valueOrEmpty(
-                    fullAddress
-                )
+                value = valueOrEmpty(fullAddress)
             )
 
             ReviewRow(
                 label = "Colonia",
-                value = valueOrEmpty(
-                    neighborhood
-                )
+                value = valueOrEmpty(neighborhood)
             )
 
             ReviewRow(
                 label = "Código postal",
-                value = valueOrEmpty(
-                    postalCode
-                )
+                value = valueOrEmpty(postalCode)
             )
 
             ReviewRow(
                 label = "Municipio",
-                value = valueOrEmpty(
-                    municipality
-                )
+                value = valueOrEmpty(municipality)
             )
         }
 
-
-        Spacer(
-            modifier = Modifier.height(14.dp)
-        )
-
+        Spacer(modifier = Modifier.height(14.dp))
 
         // =========================================================
         // EVIDENCIAS
@@ -1441,51 +1319,36 @@ private fun ReportReviewStep(
             title = "Evidencias",
             onEditClick = onEditEvidenceClick
         ) {
-
             Text(
                 text =
                     "Las evidencias seleccionadas aparecerán aquí cuando se conecte el selector de archivos.",
-
-                color =
-                    AppTheme.colors.text.copy(
-                        alpha = 0.70f
-                    ),
-
+                color = AppTheme.colors.text.copy(alpha = 0.70f),
                 fontSize = 13.sp,
-
                 lineHeight = 18.sp
             )
         }
 
-
-        Spacer(
-            modifier = Modifier.height(28.dp)
-        )
-
+        Spacer(modifier = Modifier.height(28.dp))
 
         // =========================================================
-        // ENVIAR
+        // ENVÍO
         // =========================================================
 
         Button(
-            onClick = {
-                onSendReportClick()
-            },
-
+            onClick = onSendReportClick,
+            enabled = false,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(58.dp),
-
             shape = RoundedCornerShape(10.dp),
-
             colors = ButtonDefaults.buttonColors(
-                containerColor =
-                    AppTheme.colors.pinkPrincipal,
-
-                contentColor = Color.White
+                containerColor = AppTheme.colors.pinkPrincipal,
+                contentColor = Color.White,
+                disabledContainerColor =
+                    AppTheme.colors.pinkPrincipal.copy(alpha = 0.45f),
+                disabledContentColor = Color.White
             )
         ) {
-
             Text(
                 text = "Enviar reporte",
                 fontFamily = FontFamily.Serif,
@@ -1494,23 +1357,22 @@ private fun ReportReviewStep(
             )
         }
 
+        Spacer(modifier = Modifier.height(10.dp))
 
-        Spacer(
-            modifier = Modifier.height(16.dp)
+        Text(
+            text = "El envío estará disponible cuando se conecte el servicio de registro.",
+            color = AppTheme.colors.text.copy(alpha = 0.65f),
+            fontSize = 12.sp,
+            lineHeight = 17.sp
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text =
                 "La información proporcionada será utilizada únicamente para atender el reporte.",
-
-            color =
-                AppTheme.colors.text.copy(
-                    alpha = 0.65f
-                ),
-
+            color = AppTheme.colors.text.copy(alpha = 0.65f),
             fontSize = 12.sp,
-
             lineHeight = 17.sp
         )
     }
@@ -1526,7 +1388,6 @@ private fun StepTitle(
     title: String,
     description: String
 ) {
-
     Text(
         text = title,
         color = AppTheme.colors.titles,
@@ -1535,25 +1396,15 @@ private fun StepTitle(
         fontSize = 25.sp
     )
 
-
-    Spacer(
-        modifier = Modifier.height(7.dp)
-    )
-
+    Spacer(modifier = Modifier.height(7.dp))
 
     Text(
         text = description,
-
-        color =
-            AppTheme.colors.text.copy(
-                alpha = 0.78f
-            ),
-
+        color = AppTheme.colors.text.copy(alpha = 0.78f),
         fontSize = 14.sp,
         lineHeight = 20.sp
     )
 }
-
 
 // =================================================================
 // CAMPO CON LABEL
@@ -1569,10 +1420,7 @@ private fun ReportFieldWithLabel(
     minHeight: Dp = 52.dp,
     singleLine: Boolean = true
 ) {
-
-    Column(
-        modifier = modifier
-    ) {
+    Column(modifier = modifier) {
 
         Text(
             text = label,
@@ -1581,11 +1429,7 @@ private fun ReportFieldWithLabel(
             fontWeight = FontWeight.Bold
         )
 
-
-        Spacer(
-            modifier = Modifier.height(7.dp)
-        )
-
+        Spacer(modifier = Modifier.height(7.dp))
 
         RietiTextField(
             value = value,
@@ -1597,7 +1441,6 @@ private fun ReportFieldWithLabel(
         )
     }
 }
-
 
 // =================================================================
 // TEXT FIELD RIETI
@@ -1612,47 +1455,28 @@ private fun RietiTextField(
     minHeight: Dp = 52.dp,
     singleLine: Boolean = true
 ) {
-
     val colors = AppTheme.colors
-
 
     BasicTextField(
         value = value,
-
-        onValueChange = {
-            onValueChange(it)
-        },
-
+        onValueChange = onValueChange,
         singleLine = singleLine,
 
         textStyle = TextStyle(
-            color = colors.textTyping,
+            color = colors.text,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         ),
 
-        cursorBrush = SolidColor(
-            colors.pinkPrincipal
-        ),
+        cursorBrush = SolidColor(colors.pinkPrincipal),
 
         modifier = modifier
-            .heightIn(
-                min = minHeight
-            )
-            .clip(
-                RoundedCornerShape(9.dp)
-            )
-            .background(
-                colors.surface
-            )
+            .heightIn(min = minHeight)
+            .clip(RoundedCornerShape(9.dp))
+            .background(colors.surface)
             .border(
                 width = 1.dp,
-
-                color =
-                    colors.text.copy(
-                        alpha = 0.18f
-                    ),
-
+                color = colors.text.copy(alpha = 0.18f),
                 shape = RoundedCornerShape(9.dp)
             ),
 
@@ -1666,35 +1490,27 @@ private fun RietiTextField(
                         vertical = 14.dp
                     ),
 
-                contentAlignment =
-                    if (singleLine) {
-                        Alignment.CenterStart
-                    } else {
-                        Alignment.TopStart
-                    }
+                contentAlignment = if (singleLine) {
+                    Alignment.CenterStart
+                } else {
+                    Alignment.TopStart
+                }
             ) {
 
                 if (value.isEmpty()) {
 
                     Text(
                         text = placeholder,
-
-                        color =
-                            colors.text.copy(
-                                alpha = 0.45f
-                            ),
-
+                        color = colors.text.copy(alpha = 0.45f),
                         fontSize = 14.sp
                     )
                 }
-
 
                 innerTextField()
             }
         }
     )
 }
-
 
 // =================================================================
 // MAPA TEMPORAL
@@ -1704,42 +1520,26 @@ private fun RietiTextField(
 private fun MapPlaceholder(
     onCurrentLocationClick: () -> Unit
 ) {
-
     val colors = AppTheme.colors
-
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(225.dp)
-            .clip(
-                RoundedCornerShape(10.dp)
-            )
+            .clip(RoundedCornerShape(10.dp))
             .background(
-                colors.blueDetails.copy(
-                    alpha = 0.10f
-                )
+                colors.blueDetails.copy(alpha = 0.10f)
             )
             .border(
                 width = 1.dp,
-
-                color =
-                    colors.blueDetails.copy(
-                        alpha = 0.35f
-                    ),
-
+                color = colors.blueDetails.copy(alpha = 0.35f),
                 shape = RoundedCornerShape(10.dp)
             )
     ) {
 
-
         Column(
-            modifier = Modifier.align(
-                Alignment.Center
-            ),
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             Icon(
@@ -1749,11 +1549,7 @@ private fun MapPlaceholder(
                 modifier = Modifier.size(44.dp)
             )
 
-
-            Spacer(
-                modifier = Modifier.height(6.dp)
-            )
-
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "Mapa",
@@ -1763,41 +1559,27 @@ private fun MapPlaceholder(
                 fontSize = 18.sp
             )
 
-
             Text(
                 text = "Se conectará posteriormente",
-
-                color =
-                    colors.text.copy(
-                        alpha = 0.55f
-                    ),
-
+                color = colors.text.copy(alpha = 0.55f),
                 fontSize = 11.sp
             )
         }
 
-
         Surface(
             modifier = Modifier
-                .align(
-                    Alignment.TopEnd
-                )
+                .align(Alignment.TopEnd)
                 .padding(10.dp)
                 .clickable {
                     onCurrentLocationClick()
                 },
 
             color = colors.surface,
-
             shape = RoundedCornerShape(8.dp),
 
             border = BorderStroke(
                 width = 1.dp,
-
-                color =
-                    colors.bluePrincipal.copy(
-                        alpha = 0.25f
-                    )
+                color = colors.bluePrincipal.copy(alpha = 0.25f)
             )
         ) {
 
@@ -1807,26 +1589,17 @@ private fun MapPlaceholder(
                     vertical = 8.dp
                 ),
 
-                verticalAlignment =
-                    Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
                 Icon(
-                    imageVector =
-                        Icons.Default.LocationOn,
-
+                    imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
-
                     tint = colors.bluePrincipal,
-
                     modifier = Modifier.size(17.dp)
                 )
 
-
-                Spacer(
-                    modifier = Modifier.width(5.dp)
-                )
-
+                Spacer(modifier = Modifier.width(5.dp))
 
                 Text(
                     text = "Usar ubicación actual",
@@ -1839,7 +1612,6 @@ private fun MapPlaceholder(
     }
 }
 
-
 // =================================================================
 // SELECTOR DE EVIDENCIAS
 // =================================================================
@@ -1848,62 +1620,40 @@ private fun MapPlaceholder(
 private fun EvidenceSelector(
     onClick: () -> Unit
 ) {
-
     val colors = AppTheme.colors
-
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(105.dp)
-            .clickable {
-                onClick()
-            },
+            .clickable(onClick = onClick),
 
         color = colors.surface,
-
         shape = RoundedCornerShape(10.dp),
 
         border = BorderStroke(
             width = 1.dp,
-
-            color =
-                colors.pinkPrincipal.copy(
-                    alpha = 0.55f
-                )
+            color = colors.pinkPrincipal.copy(alpha = 0.55f)
         )
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    horizontal = 22.dp
-                ),
+                .padding(horizontal = 22.dp),
 
-            verticalAlignment =
-                Alignment.CenterVertically,
-
-            horizontalArrangement =
-                Arrangement.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
 
             Icon(
-                imageVector =
-                    Icons.Default.AddPhotoAlternate,
-
+                imageVector = Icons.Default.AddPhotoAlternate,
                 contentDescription = null,
-
                 tint = colors.pinkPrincipal,
-
                 modifier = Modifier.size(38.dp)
             )
 
-
-            Spacer(
-                modifier = Modifier.width(18.dp)
-            )
-
+            Spacer(modifier = Modifier.width(18.dp))
 
             Column {
 
@@ -1914,27 +1664,17 @@ private fun EvidenceSelector(
                     fontSize = 15.sp
                 )
 
-
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
-
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = "Puedes subir hasta 5 imágenes.",
-
-                    color =
-                        colors.text.copy(
-                            alpha = 0.65f
-                        ),
-
+                    color = colors.text.copy(alpha = 0.65f),
                     fontSize = 12.sp
                 )
             }
         }
     }
 }
-
 
 // =================================================================
 // PLACEHOLDER DE EVIDENCIA
@@ -1945,21 +1685,13 @@ private fun EvidencePlaceholder(
     showAdd: Boolean,
     modifier: Modifier = Modifier
 ) {
-
     val colors = AppTheme.colors
-
 
     Box(
         modifier = modifier
             .height(76.dp)
-            .clip(
-                RoundedCornerShape(8.dp)
-            )
-            .background(
-                colors.text.copy(
-                    alpha = 0.06f
-                )
-            ),
+            .clip(RoundedCornerShape(8.dp))
+            .background(colors.text.copy(alpha = 0.06f)),
 
         contentAlignment = Alignment.Center
     ) {
@@ -1976,7 +1708,6 @@ private fun EvidencePlaceholder(
     }
 }
 
-
 // =================================================================
 // BOTÓN SIGUIENTE
 // =================================================================
@@ -1986,11 +1717,8 @@ private fun NextButton(
     text: String,
     onClick: () -> Unit
 ) {
-
     Button(
-        onClick = {
-            onClick()
-        },
+        onClick = onClick,
 
         modifier = Modifier
             .fillMaxWidth()
@@ -1999,9 +1727,7 @@ private fun NextButton(
         shape = RoundedCornerShape(10.dp),
 
         colors = ButtonDefaults.buttonColors(
-            containerColor =
-                AppTheme.colors.pinkPrincipal,
-
+            containerColor = AppTheme.colors.pinkPrincipal,
             contentColor = Color.White
         )
     ) {
@@ -2015,12 +1741,8 @@ private fun NextButton(
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-
-                modifier = Modifier.align(
-                    Alignment.Center
-                )
+                modifier = Modifier.align(Alignment.Center)
             )
-
 
             Icon(
                 imageVector =
@@ -2029,15 +1751,12 @@ private fun NextButton(
                 contentDescription = null,
 
                 modifier = Modifier
-                    .align(
-                        Alignment.CenterEnd
-                    )
+                    .align(Alignment.CenterEnd)
                     .size(22.dp)
             )
         }
     }
 }
-
 
 // =================================================================
 // TARJETA DE REVISIÓN
@@ -2049,56 +1768,36 @@ private fun ReviewCard(
     onEditClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
-
     val colors = AppTheme.colors
-
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-
         color = colors.surface,
-
         shape = RoundedCornerShape(10.dp),
 
         border = BorderStroke(
             width = 1.dp,
-
-            color =
-                colors.text.copy(
-                    alpha = 0.14f
-                )
+            color = colors.text.copy(alpha = 0.14f)
         )
     ) {
 
         Column(
-            modifier = Modifier.padding(
-                14.dp
-            )
+            modifier = Modifier.padding(14.dp)
         ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-
-                verticalAlignment =
-                    Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
                 Icon(
-                    imageVector =
-                        Icons.Default.Description,
-
+                    imageVector = Icons.Default.Description,
                     contentDescription = null,
-
                     tint = colors.titles,
-
                     modifier = Modifier.size(22.dp)
                 )
 
-
-                Spacer(
-                    modifier = Modifier.width(9.dp)
-                )
-
+                Spacer(modifier = Modifier.width(9.dp))
 
                 Text(
                     text = title,
@@ -2108,7 +1807,6 @@ private fun ReviewCard(
                     fontSize = 16.sp,
                     modifier = Modifier.weight(1f)
                 )
-
 
                 Text(
                     text = "Editar",
@@ -2125,17 +1823,12 @@ private fun ReviewCard(
                 )
             }
 
-
-            Spacer(
-                modifier = Modifier.height(14.dp)
-            )
-
+            Spacer(modifier = Modifier.height(14.dp))
 
             content()
         }
     }
 }
-
 
 // =================================================================
 // FILA DE REVISIÓN
@@ -2146,33 +1839,20 @@ private fun ReviewRow(
     label: String,
     value: String
 ) {
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                vertical = 4.dp
-            )
+            .padding(vertical = 4.dp)
     ) {
 
         Text(
             text = label,
-
-            color =
-                AppTheme.colors.text.copy(
-                    alpha = 0.75f
-                ),
-
+            color = AppTheme.colors.text.copy(alpha = 0.75f),
             fontSize = 12.sp,
-
             modifier = Modifier.weight(1.25f)
         )
 
-
-        Spacer(
-            modifier = Modifier.width(10.dp)
-        )
-
+        Spacer(modifier = Modifier.width(10.dp))
 
         Text(
             text = value,
@@ -2183,7 +1863,6 @@ private fun ReviewRow(
     }
 }
 
-
 // =================================================================
 // TEXTO VACÍO EN REVISIÓN
 // =================================================================
@@ -2191,15 +1870,13 @@ private fun ReviewRow(
 private fun valueOrEmpty(
     value: String
 ): String {
-
     return value.ifBlank {
         "No especificado"
     }
 }
 
-
 // =================================================================
-// PREVIEW LIGHT - REPORTE CON SEGUIMIENTO
+// PREVIEW LIGHT: REPORTE CON SEGUIMIENTO
 // =================================================================
 
 @Preview(
@@ -2210,9 +1887,7 @@ private fun valueOrEmpty(
 @Composable
 private fun ReportScreenLightPreview() {
 
-    RIETITheme(
-        darkTheme = false
-    ) {
+    RIETITheme(darkTheme = false) {
 
         ReportScreen(
             onHomeClick = {},
@@ -2225,9 +1900,8 @@ private fun ReportScreenLightPreview() {
     }
 }
 
-
 // =================================================================
-// PREVIEW DARK - REPORTE CON SEGUIMIENTO
+// PREVIEW DARK: REPORTE CON SEGUIMIENTO
 // =================================================================
 
 @Preview(
@@ -2239,9 +1913,7 @@ private fun ReportScreenLightPreview() {
 @Composable
 private fun ReportScreenDarkPreview() {
 
-    RIETITheme(
-        darkTheme = true
-    ) {
+    RIETITheme(darkTheme = true) {
 
         ReportScreen(
             onHomeClick = {},
@@ -2254,9 +1926,8 @@ private fun ReportScreenDarkPreview() {
     }
 }
 
-
 // =================================================================
-// PREVIEW LIGHT - REPORTE ANÓNIMO
+// PREVIEW LIGHT: REPORTE ANÓNIMO
 // =================================================================
 
 @Preview(
@@ -2267,9 +1938,7 @@ private fun ReportScreenDarkPreview() {
 @Composable
 private fun AnonymousReportFormLightPreview() {
 
-    RIETITheme(
-        darkTheme = false
-    ) {
+    RIETITheme(darkTheme = false) {
 
         ReportFormScreen(
             mode = ReportMode.ANONYMOUS,
@@ -2283,9 +1952,8 @@ private fun AnonymousReportFormLightPreview() {
     }
 }
 
-
 // =================================================================
-// PREVIEW DARK - REPORTE ANÓNIMO
+// PREVIEW DARK: REPORTE ANÓNIMO
 // =================================================================
 
 @Preview(
@@ -2297,9 +1965,7 @@ private fun AnonymousReportFormLightPreview() {
 @Composable
 private fun AnonymousReportFormDarkPreview() {
 
-    RIETITheme(
-        darkTheme = true
-    ) {
+    RIETITheme(darkTheme = true) {
 
         ReportFormScreen(
             mode = ReportMode.ANONYMOUS,
