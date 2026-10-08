@@ -1,0 +1,631 @@
+package com.example.rieti.view
+
+import android.content.res.Configuration
+import android.util.Patterns
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.rieti.ui.theme.AppTheme
+import com.example.rieti.ui.theme.RIETITheme
+
+
+@Composable
+fun ForgotPasswordScreen(
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onSendCodeClick: () -> Unit,
+    darkTheme: Boolean,
+    onThemeChange: () -> Unit
+) {
+
+    // ---------------------------------------------------------
+    // ESTADO LOCAL
+    // ---------------------------------------------------------
+
+    var correo by remember {
+        mutableStateOf("")
+    }
+
+    var errorCorreo by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    val colors = AppTheme.colors
+
+
+    // ---------------------------------------------------------
+    // COLORES SEGÚN EL TEMA
+    // ---------------------------------------------------------
+
+    val unfocusedFieldColor =
+        if (darkTheme) {
+            Color.White
+        } else {
+            Color(0xFF16BFAF)
+        }
+
+    val focusedFieldColor = Color(0xFFFF0060)
+
+    val errorColor = Color(0xFFD32F2F)
+
+    val primaryButtonColor =
+        if (darkTheme) {
+            Color(0xFF24A194)
+        } else {
+            Color(0xFF16BFAF)
+        }
+
+    val secondaryButtonBackground =
+        if (darkTheme) {
+            Color(0xFFFFEEF4)
+        } else {
+            Color(0xFFFFF3F7)
+        }
+
+    val secondaryButtonContent =
+        if (darkTheme) {
+            Color(0xFF160A10)
+        } else {
+            Color(0xFF131026)
+        }
+
+
+    // ---------------------------------------------------------
+    // VALIDACIÓN LOCAL
+    // ---------------------------------------------------------
+
+    fun validarCorreo(): Boolean {
+
+        errorCorreo = null
+
+        val correoLimpio = correo.trim()
+
+        return when {
+
+            correoLimpio.isBlank() -> {
+
+                errorCorreo =
+                    "El correo electrónico es obligatorio."
+
+                false
+            }
+
+            !Patterns.EMAIL_ADDRESS
+                .matcher(correoLimpio)
+                .matches() -> {
+
+                errorCorreo =
+                    "Ingresa un correo electrónico válido."
+
+                false
+            }
+
+            else -> true
+        }
+    }
+
+
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing
+    ) { innerPadding ->
+
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            color = colors.surface
+        ) {
+
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+
+
+                // =====================================================
+                // CABECERA
+                // =====================================================
+
+                ForgotPasswordHeader(
+                    darkTheme = darkTheme
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
+
+
+                // =====================================================
+                // TÍTULO
+                // =====================================================
+
+                Text(
+                    text = "Recuperar Contraseña",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = 30.sp,
+                    fontFamily = FontFamily.Serif,
+                    textAlign = TextAlign.Center,
+                    color = colors.titles
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+
+                HorizontalDivider(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 80.dp),
+                    thickness = 2.dp,
+                    color = Color(0xFFFF0060)
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(24.dp)
+                )
+
+
+                // =====================================================
+                // TEXTO DE APOYO
+                // =====================================================
+
+                Text(
+                    text = "Ingresa el correo electrónico asociado a tu cuenta para recibir un código de recuperación.",
+                    modifier = Modifier.padding(
+                        horizontal = 32.dp
+                    ),
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontFamily = FontFamily.Serif,
+                    textAlign = TextAlign.Center,
+                    color = colors.text
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(24.dp)
+                )
+
+
+                // =====================================================
+                // CORREO
+                // =====================================================
+
+                Text(
+                    text = "Correo",
+                    modifier = Modifier.padding(
+                        horizontal = 32.dp
+                    ),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif,
+                    color = colors.text
+                )
+
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+
+                OutlinedTextField(
+                    value = correo,
+
+                    onValueChange = {
+
+                        correo = it
+
+                        // Al volver a escribir quitamos el error anterior.
+                        errorCorreo = null
+                    },
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
+                        .height(58.dp),
+
+                    singleLine = true,
+
+                    isError = errorCorreo != null,
+
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
+
+                    shape = RoundedCornerShape(14.dp),
+
+                    colors = OutlinedTextFieldDefaults.colors(
+
+                        focusedTextColor = colors.text,
+                        unfocusedTextColor = colors.text,
+
+                        cursorColor = focusedFieldColor,
+
+                        focusedBorderColor = focusedFieldColor,
+                        unfocusedBorderColor = unfocusedFieldColor,
+
+                        errorBorderColor = focusedFieldColor,
+                        errorCursorColor = focusedFieldColor,
+
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent
+                    )
+                )
+
+
+                // =====================================================
+                // ESPACIO FIJO PARA EL ERROR
+                //
+                // Siempre ocupa 16.dp, haya o no haya error.
+                // De esta forma el botón NO se mueve.
+                // =====================================================
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+
+                    if (errorCorreo != null) {
+
+                        Text(
+                            text = errorCorreo!!,
+                            color = errorColor,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+
+                Spacer(
+                    modifier = Modifier.height(24.dp)
+                )
+
+
+                // =====================================================
+                // ENVIAR CÓDIGO
+                // =====================================================
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
+                        .height(70.dp)
+                        .clickable {
+
+                            if (validarCorreo()) {
+
+                                /*
+                                 * TODO(BACKEND):
+                                 *
+                                 * Actualmente solo se valida localmente
+                                 * el formato del correo.
+                                 *
+                                 * Cuando se conecte el backend:
+                                 *
+                                 * 1. Enviar el correo al ViewModel.
+                                 *
+                                 * 2. El ViewModel deberá solicitar al
+                                 *    endpoint correspondiente el envío
+                                 *    del código de recuperación.
+                                 *
+                                 * 3. Mostrar estado de carga mientras
+                                 *    se procesa la solicitud.
+                                 *
+                                 * 4. Si el backend indica que el correo
+                                 *    no existe o devuelve algún error,
+                                 *    mostrar el mensaje correspondiente.
+                                 *
+                                 * 5. SOLO cuando el backend confirme
+                                 *    que la solicitud fue exitosa,
+                                 *    continuar hacia ResetPasswordScreen.
+                                 *
+                                 * TEMPORAL:
+                                 * Mientras no exista la integración,
+                                 * navegamos directamente para poder
+                                 * probar el flujo visual.
+                                 */
+
+                                onSendCodeClick()
+                            }
+                        },
+                    shape = RoundedCornerShape(15.dp),
+                    color = primaryButtonColor
+                ) {
+
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        Text(
+                            text = "ENVIAR CÓDIGO",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif
+                        )
+                    }
+                }
+
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+
+                // =====================================================
+                // INICIAR SESIÓN
+                // =====================================================
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
+                        .height(65.dp)
+                        .clickable {
+                            onLoginClick()
+                        },
+                    shape = RoundedCornerShape(15.dp),
+                    color = secondaryButtonBackground
+                ) {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+
+                        Text(
+                            text = "INICIAR SESIÓN",
+                            color = secondaryButtonContent,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif
+                        )
+
+                        Text(
+                            text = "›",
+                            color = Color(0xFFFF0060),
+                            fontSize = 30.sp,
+                            fontFamily = FontFamily.Serif
+                        )
+                    }
+                }
+
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+
+
+                // =====================================================
+                // CREAR CUENTA
+                // =====================================================
+
+                Text(
+                    text = "¿Aún no tienes una cuenta? Crear cuenta",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onRegisterClick()
+                        }
+                        .padding(
+                            horizontal = 32.dp,
+                            vertical = 8.dp
+                        ),
+                    color = Color(0xFFFF0060),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Serif,
+                    textAlign = TextAlign.Center
+                )
+
+
+                // Empuja el selector de tema hasta la parte inferior.
+                Spacer(
+                    modifier = Modifier.weight(1f)
+                )
+
+
+                // =====================================================
+                // SELECTOR DE TEMA
+                // =====================================================
+
+                HorizontalDivider(
+                    thickness = 2.dp,
+                    color = Color(0xFFFF0060)
+                )
+
+
+                Text(
+                    text =
+                        if (darkTheme) {
+                            "Modo oscuro"
+                        } else {
+                            "Modo claro"
+                        },
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onThemeChange()
+                        }
+                        .padding(vertical = 18.dp),
+
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily.Serif,
+                    color = colors.text,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+
+// =============================================================
+// CABECERA RIETI
+// =============================================================
+
+@Composable
+private fun ForgotPasswordHeader(
+    darkTheme: Boolean
+) {
+
+    val gradientColors =
+        if (darkTheme) {
+
+            listOf(
+                Color(0xFFFF0060),
+                Color(0xFFD71964),
+                Color(0xFF85113F)
+            )
+
+        } else {
+
+            listOf(
+                Color(0xFFE4007C),
+                Color(0xFFFF62A0),
+                Color(0xFFECABBE)
+            )
+        }
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = gradientColors
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "RIETI",
+                color = Color.White,
+                fontFamily = FontFamily.Serif,
+                fontSize = 55.sp
+            )
+
+
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+
+            Surface(
+                modifier = Modifier
+                    .width(90.dp)
+                    .height(3.dp),
+                shape = RoundedCornerShape(50),
+                color = Color(0xFFE770A0)
+            ) {}
+        }
+    }
+}
+
+
+// =============================================================
+// PREVIEW LIGHT
+// =============================================================
+
+@Preview(
+    name = "Forgot Password - Light",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+private fun ForgotPasswordScreenLightPreview() {
+
+    RIETITheme(
+        darkTheme = false
+    ) {
+
+        ForgotPasswordScreen(
+            onLoginClick = {},
+            onRegisterClick = {},
+            onSendCodeClick = {},
+            darkTheme = false,
+            onThemeChange = {}
+        )
+    }
+}
+
+
+// =============================================================
+// PREVIEW DARK
+// =============================================================
+
+@Preview(
+    name = "Forgot Password - Dark",
+    showBackground = true,
+    showSystemUi = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+private fun ForgotPasswordScreenDarkPreview() {
+
+    RIETITheme(
+        darkTheme = true
+    ) {
+
+        ForgotPasswordScreen(
+            onLoginClick = {},
+            onRegisterClick = {},
+            onSendCodeClick = {},
+            darkTheme = true,
+            onThemeChange = {}
+        )
+    }
+}

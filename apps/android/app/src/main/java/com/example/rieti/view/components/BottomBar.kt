@@ -1,19 +1,17 @@
 package com.example.rieti.view.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -22,151 +20,144 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import com.example.rieti.R
 import com.example.rieti.ui.theme.AppTheme
-import androidx.compose.foundation.layout.requiredSize
+
 
 @Composable
 fun BottomBar(
     onHomeClick: () -> Unit,
-    onReportClick: () -> Unit,
+    onAboutUsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val colors = AppTheme.colors
-    val isDark = AppTheme.isDarkTheme
+    val isDarkTheme = AppTheme.isDarkTheme
 
-
-    val reportResource = if (isDark) {
-        R.drawable.central_button_dark
-    } else {
-        R.drawable.central_button_light
-    }
+    val navigationColor =
+        if (isDarkTheme) {
+            Color(0xFFF8F5F6)
+        } else {
+            Color(0xFFD9165D)
+        }
 
 
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .background(colors.surface)
     ) {
 
-        // =====================================================
-        // BARRA DE NUESTRA APP
-        // =====================================================
-
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp)
-                .background(colors.pinkPrincipal)
+                .height(72.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
 
-            // =================================================
-            // HOME
-            // =================================================
+            // =====================================================
+            // QUIÉNES SOMOS
+            // =====================================================
 
-            IconButton(
-                onClick = {
-                    onHomeClick()
-                },
-
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 22.dp)
-                    .size(52.dp)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
 
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "Inicio",
-                    tint = colors.onPrimary,
-                    modifier = Modifier.size(55.dp)
-                )
+                IconButton(
+                    onClick = {
+                        onAboutUsClick()
+                    },
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Groups,
+                        contentDescription = "Quiénes somos",
+                        tint = navigationColor,
+                        modifier = Modifier.size(45.dp)
+                    )
+                }
             }
 
 
-            // =================================================
-            // BOTÓN REPORTE
-            // =================================================
+            // =====================================================
+            // INICIO
+            // =====================================================
 
-            Image(
-                painter = painterResource(
-                    id = reportResource
-                ),
-
-                contentDescription = "Crear reporte",
-
-                contentScale = ContentScale.Fit,
-
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-
-                    // Sobresale de la barra sin crear
-                    // espacio extra en el Scaffold
-                    .offset(y = (-22).dp)
-
-                    .requiredSize(100.dp)
-
-                    .zIndex(1f)
-
-                    .clickable {
-                        onReportClick()
-                    }
-            )
-
-
-            // =================================================
-            // SETTINGS
-            // =================================================
-
-            IconButton(
-                onClick = {
-                    onSettingsClick()
-                },
-
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 22.dp)
-                    .size(65.dp)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
 
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Configuración",
-                    tint = colors.onPrimary,
-                    modifier = Modifier.size(55.dp)
-                )
+                IconButton(
+                    onClick = {
+                        onHomeClick()
+                    },
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = "Inicio",
+                        tint = navigationColor,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
+            }
+
+
+            // =====================================================
+            // CONFIGURACIÓN
+            // =====================================================
+
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+
+                IconButton(
+                    onClick = {
+                        onSettingsClick()
+                    },
+                    modifier = Modifier.size(64.dp)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configuración",
+                        tint = navigationColor,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
             }
         }
 
 
-        // =====================================================
-        // ESPACIO EXCLUSIVO PARA LOS BOTONES DE ANDROID
-        // =====================================================
-
-        SpacerForSystemNavigation()
+        SpacerForSystemNavigation(
+            backgroundColor = colors.surface
+        )
     }
 }
 
 
+// =================================================================
+// ESPACIO DE NAVEGACIÓN DEL SISTEMA
+// =================================================================
+
 @Composable
-private fun SpacerForSystemNavigation() {
+private fun SpacerForSystemNavigation(
+    backgroundColor: Color
+) {
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-
-            // Toma exactamente la altura que Android necesita
             .windowInsetsBottomHeight(
                 WindowInsets.navigationBars
             )
-
-            // Este será el fondo de ■ ● ◀
-            .background(Color.Black)
+            .background(backgroundColor)
     )
 }
