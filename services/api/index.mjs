@@ -1,4 +1,4 @@
-﻿import fs from "node:fs";
+import fs from "node:fs";
 import crypto from "node:crypto";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
@@ -155,16 +155,253 @@ async function health(){
     result:Object.fromEntries(Object.entries(rows[0]).map(([k,v])=>[k,Number(v)]))});
 }
 async function login(req){
-  const email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
-  if(!email||!password) throw httpError(400,"MISSING_CREDENTIALS","Correo y contraseÃ±a son obligatorios");
-  const [rows]=await pool.execute(`SELECT u.*,r.codigo rol_codigo,r.nombre rol_nombre,r.acceso_web,r.acceso_android,r.es_administrador
-    FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE LOWER(u.correo)=? LIMIT 1`,[email]);
-  const user=rows[0];
-  if(!user||!user.activo||!user.acceso_web) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseÃ±a incorrectos");
-  if(!(await bcrypt.compare(password,user.password_hash))) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseÃ±a incorrectos");
-  await pool.execute(`UPDATE usuarios SET ultimo_acceso_at=UTC_TIMESTAMP(6),updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[user.id]);
-  return response(200,{ok:true,user:publicUser(user),...(await createSession(user,req))});
+  const email=String(
+    req.body.email||""
+  )
+    .trim()
+    .toLowerCase()
+
+  const password=String(
+    req.body.password||""
+  )
+
+  const platform=String(
+    req.body.platform||"web"
+  )
+    .trim()
+    .toLowerCase()
+
+  if(!email || !password){
+    throw httpError(
+      400,
+      "MISSING_CREDENTIALS",
+      "Correo y contraseña son obligatorios"
+    )
+  }
+
+  if(!["web","android"].includes(platform)){
+    throw httpError(
+      400,
+      "INVALID_PLATFORM",
+      "Plataforma inválida"
+    )
+  }
+
+  const[rows]=await pool.execute(
+    `SELECT
+       u.*,
+       r.codigo rol_codigo,
+       r.nombre rol_nombre,
+       r.acceso_web,
+       r.acceso_android,
+       r.es_administrador
+     FROM usuarios u
+     JOIN roles r
+       ON r.id=u.rol_id
+     WHERE LOWER(u.correo)=?
+     LIMIT 1`,
+    [email]
+  )
+
+  const user=rows[0]
+
+  if(!user || !user.activo){
+    throw httpError(
+      401,
+      "INVALID_CREDENTIALS",
+      "Correo o contraseña incorrectos"
+    )
+  }
+
+  if(
+    platform==="web" &&
+    !user.acceso_web
+  ){
+    throw httpError(
+      403,
+      "WEB_ACCESS_DENIED",
+      "Este perfil no tiene acceso a la plataforma web"
+    )
+  }
+
+  if(
+    platform==="android" &&
+    !user.acceso_android
+  ){
+    throw httpError(
+      403,
+      "ANDROID_ACCESS_DENIED",
+      "Este perfil no tiene acceso a la aplicación móvil"
+    )
+  }
+
+  const validPassword=
+    await bcrypt.compare(
+      password,
+      user.password_hash
+    )
+
+  if(!validPassword){
+    throw httpError(
+      401,
+      "INVALID_CREDENTIALS",
+      "Correo o contraseña incorrectos"
+    )
+  }
+
+  await pool.execute(
+    `UPDATE usuarios
+     SET
+       ultimo_acceso_at=UTC_TIMESTAMP(6),
+       updated_at=UTC_TIMESTAMP(6)
+     WHERE id=?`,
+    [user.id]
+  )
+
+  return response(200,{
+    ok:true,
+    user:publicUser(user),
+    ...(await createSession(user,req))
+  })
 }
+
+async function registerCitizen(req){
+  const name=String(
+    req.body.name||""
+  ).trim()
+
+  const email=String(
+    req.body.email||""
+  )
+    .trim()
+    .toLowerCase()
+
+  const password=String(
+    req.body.password||""
+  )
+
+  if(
+    !name ||
+    !email ||
+    !password
+  ){
+    throw httpError(
+      400,
+      "INVALID_INPUT",
+      "Nombre, correo y contraseña son obligatorios"
+    )
+  }
+
+  if(
+    name.length<2 ||
+    name.length>120
+  ){
+    throw httpError(
+      400,
+      "INVALID_NAME",
+      "El nombre no es válido"
+    )
+  }
+
+  if(
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ){
+    throw httpError(
+      400,
+      "INVALID_EMAIL",
+      "El correo electrónico no es válido"
+    )
+  }
+
+  if(password.length<10){
+    throw httpError(
+      400,
+      "WEAK_PASSWORD",
+      "La contraseña debe tener al menos 10 caracteres"
+    )
+  }
+
+  const[roles]=await pool.execute(
+    `SELECT id
+     FROM roles
+     WHERE codigo='CIUDADANO'
+       AND acceso_web=0
+       AND acceso_android=1
+       AND activo=1
+     LIMIT 1`
+  )
+
+  if(!roles[0]){
+    throw httpError(
+      500,
+      "CITIZEN_ROLE_MISSING",
+      "El rol Ciudadano no está configurado correctamente"
+    )
+  }
+
+  const passwordHash=
+    await bcrypt.hash(
+      password,
+      12
+    )
+
+  try{
+    await pool.execute(
+      `INSERT INTO usuarios(
+         uuid,
+         rol_id,
+         municipio_id,
+         dependencia_id,
+         nombre,
+         correo,
+         telefono,
+         password_hash,
+         activo,
+         created_at,
+         updated_at
+       )
+       VALUES(
+         ?,
+         ?,
+         NULL,
+         NULL,
+         ?,
+         ?,
+         NULL,
+         ?,
+         1,
+         UTC_TIMESTAMP(6),
+         UTC_TIMESTAMP(6)
+       )`,
+      [
+        crypto.randomUUID(),
+        roles[0].id,
+        name,
+        email,
+        passwordHash
+      ]
+    )
+  }catch(e){
+    if(e.code==="ER_DUP_ENTRY"){
+      throw httpError(
+        409,
+        "EMAIL_EXISTS",
+        "Ese correo ya está registrado"
+      )
+    }
+
+    throw e
+  }
+
+  return response(
+    201,
+    {
+      ok:true,
+      message:"Cuenta creada correctamente"
+    }
+  )
+}
+
 async function refreshSession(req){
   const token=String(req.body.refreshToken||""); if(!token) throw httpError(400,"MISSING_REFRESH_TOKEN","Falta refreshToken");
   const conn=await pool.getConnection();
@@ -2433,6 +2670,7 @@ async function router(req){
 
     return bootstrapAdmin(req)
   }
+  if(req.method==="POST"&&req.path==="/auth/register")return registerCitizen(req);
   if(req.method==="POST"&&req.path==="/auth/login")return login(req);
   if(req.method==="POST"&&req.path==="/auth/refresh")return refreshSession(req);
   if(req.method==="POST"&&req.path==="/auth/logout")return logout(req);
