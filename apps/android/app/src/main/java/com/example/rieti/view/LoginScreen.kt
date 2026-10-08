@@ -61,7 +61,7 @@ import com.example.rieti.ui.theme.RIETITheme
 
 @Composable
 fun LoginScreen(
-    onLoginClick: () -> Unit,
+    onLoginClick: (String, String) -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     darkTheme: Boolean,
@@ -811,8 +811,13 @@ fun LoginScreen(
                             //
                             // =========================================
 
-                            onLoginClick()
+                            onLoginClick(
 
+                                correo.trim(),
+
+                                contrasena
+
+                            )
                             // TODO(BACKEND):
                             // Reemplazar navegación provisional.
                         }
@@ -1266,7 +1271,7 @@ private fun LoginScreenLightPreview() {
     ) {
 
         LoginScreen(
-            onLoginClick = {},
+            onLoginClick = { _, _ -> },
             onRegisterClick = {},
             onForgotPasswordClick = {},
             darkTheme = false,
@@ -1294,7 +1299,7 @@ private fun LoginScreenDarkPreview() {
     ) {
 
         LoginScreen(
-            onLoginClick = {},
+            onLoginClick = { _, _ -> },
             onRegisterClick = {},
             onForgotPasswordClick = {},
             darkTheme = true,

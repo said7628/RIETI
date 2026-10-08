@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -59,7 +61,7 @@ import com.example.rieti.ui.theme.RIETITheme
 @Composable
 fun RegisterScreen(
     onLoginClick: () -> Unit,
-    onCreateAccountClick: () -> Unit,
+    onCreateAccountClick: (String, String, String) -> Unit,
     darkTheme: Boolean,
     onThemeChange: () -> Unit
 ) {
@@ -67,6 +69,10 @@ fun RegisterScreen(
     // =========================================================
     // ESTADOS DE LOS CAMPOS
     // =========================================================
+
+    var nombre by remember {
+        mutableStateOf("")
+    }
 
     var correo by remember {
         mutableStateOf("")
@@ -103,6 +109,10 @@ fun RegisterScreen(
     // =========================================================
     // ESTADOS DE ERROR
     // =========================================================
+
+    var errorNombre by remember {
+        mutableStateOf<String?>(null)
+    }
 
     var errorCorreo by remember {
         mutableStateOf<String?>(null)
@@ -184,7 +194,9 @@ fun RegisterScreen(
         ) {
 
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
@@ -237,6 +249,72 @@ fun RegisterScreen(
                     modifier = Modifier.height(6.dp)
                 )
 
+
+                // =====================================================
+                // NOMBRE
+                // =====================================================
+
+                Text(
+                    text = "Nombre:",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = 5.dp,
+                            bottom = 5.dp,
+                            start = 32.dp,
+                            end = 32.dp
+                        ),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Left,
+                    color = colors.text
+                )
+
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = {
+                        nombre = it
+                        errorNombre = null
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
+                        .height(58.dp),
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    isError = errorNombre != null,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = colors.text,
+                        unfocusedTextColor = colors.text,
+                        cursorColor = Color(0xFFFF0060),
+                        focusedBorderColor = Color(0xFFFF0060),
+                        unfocusedBorderColor = unfocusedFieldColor,
+                        errorBorderColor = Color(0xFFFF0060),
+                        errorCursorColor = Color(0xFFFF0060),
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent
+                    )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (errorNombre != null) {
+                        Text(
+                            text = errorNombre!!,
+                            color = Color(0xFFFF0060),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 1
+                        )
+                    }
+                }
 
                 // =====================================================
                 // CORREO
@@ -633,11 +711,17 @@ fun RegisterScreen(
                         // LIMPIAR ERRORES ANTERIORES
                         // =============================================
 
+                        errorNombre = null
                         errorCorreo = null
                         errorContrasena = null
                         errorConfirmarContrasena = null
 
                         var formularioValido = true
+
+                        if (nombre.trim().length < 2) {
+                            errorNombre = "Ingresa tu nombre."
+                            formularioValido = false
+                        }
 
 
                         // =============================================
@@ -672,6 +756,13 @@ fun RegisterScreen(
 
                             errorContrasena =
                                 "Ingresa una contraseña."
+
+                            formularioValido = false
+
+                        } else if (contrasena.length < 10) {
+
+                            errorContrasena =
+                                "Usa al menos 10 caracteres."
 
                             formularioValido = false
                         }
@@ -715,7 +806,11 @@ fun RegisterScreen(
                         // =============================================
 
                         if (formularioValido) {
-                            onCreateAccountClick()
+                            onCreateAccountClick(
+                                nombre.trim(),
+                                correo.trim(),
+                                contrasena
+                            )
                         }
                     },
 
@@ -852,7 +947,7 @@ fun RegisterScreen(
                 // =====================================================
 
                 Spacer(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.height(24.dp)
                 )
 
 
@@ -1044,7 +1139,7 @@ private fun RegisterScreenLightPreview() {
 
         RegisterScreen(
             onLoginClick = {},
-            onCreateAccountClick = {},
+            onCreateAccountClick = { _, _, _ -> },
             darkTheme = false,
             onThemeChange = {}
         )
@@ -1071,7 +1166,7 @@ private fun RegisterScreenDarkPreview() {
 
         RegisterScreen(
             onLoginClick = {},
-            onCreateAccountClick = {},
+            onCreateAccountClick = { _, _, _ -> },
             darkTheme = true,
             onThemeChange = {}
         )

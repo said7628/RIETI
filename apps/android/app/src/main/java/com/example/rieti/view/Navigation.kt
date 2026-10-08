@@ -1,8 +1,21 @@
 
 package com.example.rieti.view
 
+import android.widget.Toast
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
+import com.example.rieti.data.repository.AuthRepository
+import com.example.rieti.data.repository.AuthResult
+import com.example.rieti.data.session.SessionManager
+import kotlinx.coroutines.launch
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -74,10 +87,49 @@ fun AppNavigation(
 ) {
 
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val authRepository = remember {
+        AuthRepository()
+    }
+
+    val sessionManager = remember {
+        SessionManager(context.applicationContext)
+    }
+
+    var startDestination by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    LaunchedEffect(Unit) {
+        val refreshToken = sessionManager.refreshToken()
+
+        if (refreshToken.isNullOrBlank()) {
+            startDestination = Routes.START
+        } else {
+            when (val result = authRepository.refresh(refreshToken)) {
+                is AuthResult.Success -> {
+                    sessionManager.saveRefresh(result.data)
+                    startDestination = Routes.HOME
+                }
+
+                is AuthResult.Error -> {
+                    sessionManager.clear()
+                    startDestination = Routes.START
+                }
+            }
+        }
+    }
+
+    if (startDestination == null) {
+        CircularProgressIndicator()
+        return
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Routes.START
+        startDestination = startDestination!!
     ) {
 
         // =========================================================
@@ -119,17 +171,44 @@ fun AppNavigation(
         ) {
 
             LoginScreen(
-                onLoginClick = {
-                    navController.navigate(
-                        Routes.HOME
-                    ) {
-                        popUpTo(
-                            Routes.START
-                        ) {
-                            inclusive = true
-                        }
+                onLoginClick = { email, password ->
 
-                        launchSingleTop = true
+                    scope.launch {
+
+                        when (
+                            val result = authRepository.login(
+                                email = email,
+                                password = password
+                            )
+                        ) {
+
+                            is AuthResult.Success -> {
+
+                                sessionManager.saveLogin(
+                                    result.data
+                                )
+
+                                navController.navigate(
+                                    Routes.HOME
+                                ) {
+                                    popUpTo(
+                                        Routes.START
+                                    ) {
+                                        inclusive = true
+                                    }
+
+                                    launchSingleTop = true
+                                }
+                            }
+
+                            is AuthResult.Error -> {
+                                Toast.makeText(
+                                    context,
+                                    result.message,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                     }
                 },
 
@@ -169,17 +248,47 @@ fun AppNavigation(
         ) {
 
             RegisterScreen(
-                onCreateAccountClick = {
-                    navController.navigate(
-                        Routes.LOGIN
-                    ) {
-                        popUpTo(
-                            Routes.START
-                        ) {
-                            inclusive = true
-                        }
+                onCreateAccountClick = { name, email, password ->
 
-                        launchSingleTop = true
+                    scope.launch {
+
+                        when (
+                            val result = authRepository.register(
+                                name = name,
+                                email = email,
+                                password = password
+                            )
+                        ) {
+
+                            is AuthResult.Success -> {
+
+                                Toast.makeText(
+                                    context,
+                                    "Cuenta creada correctamente. Inicia sesión.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                navController.navigate(
+                                    Routes.LOGIN
+                                ) {
+                                    popUpTo(
+                                        Routes.START
+                                    ) {
+                                        inclusive = false
+                                    }
+
+                                    launchSingleTop = true
+                                }
+                            }
+
+                            is AuthResult.Error -> {
+                                Toast.makeText(
+                                    context,
+                                    result.message,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                     }
                 },
 
@@ -890,7 +999,7 @@ fun AppNavigation(
                  * del usuario autenticado.
                  */
 
-                email = "correo@gmail.com",
+                email = sessionManager.userEmail().orEmpty(),
 
                 // -------------------------------------------------
                 // CAMBIAR CONTRASEÑA
@@ -909,14 +1018,28 @@ fun AppNavigation(
                 // -------------------------------------------------
 
                 onLogoutClick = {
-                    navController.navigate(
-                        Routes.START
-                    ) {
-                        popUpTo(Routes.HOME) {
-                            inclusive = true
+
+                    scope.launch {
+
+                        val refreshToken = sessionManager.refreshToken()
+
+                        if (!refreshToken.isNullOrBlank()) {
+                            authRepository.logout(refreshToken)
                         }
 
-                        launchSingleTop = true
+                        sessionManager.clear()
+
+                        navController.navigate(
+                            Routes.START
+                        ) {
+                            popUpTo(
+                                navController.graph.id
+                            ) {
+                                inclusive = true
+                            }
+
+                            launchSingleTop = true
+                        }
                     }
                 },
 
@@ -998,7 +1121,7 @@ fun AppNavigation(
                  * el correo del usuario autenticado.
                  */
 
-                email = "correo@gmail.com",
+                email = sessionManager.userEmail().orEmpty(),
 
                 // -------------------------------------------------
                 // ACTUALIZAR CONTRASEÑA
