@@ -861,65 +861,14 @@ fun LoginScreen(
 
 
                     // ================================================
-                    // TODO(BACKEND): INDICADOR DE CARGA
-                    // ================================================
-                    //
-                    // Esta interfaz ya queda preparada.
-                    //
-                    // Cuando el ViewModel indique isLoading = true,
-                    // aparecerá:
-                    //
-                    // [ ◯  INICIANDO SESIÓN... ]
-                    //
-                    // No es necesario rediseñar el botón.
-                    // ================================================
-
-                    if (cargando) {
-
-                        CircularProgressIndicator(
-                            modifier =
-                                Modifier.size(25.dp),
-                            color =
-                                loginContent,
-                            strokeWidth =
-                                2.dp
-                        )
-
-
-                        Spacer(
-                            modifier =
-                                Modifier.size(12.dp)
-                        )
-
-
-                        Text(
-                            text =
-                                "INICIANDO SESIÓN...",
-                            fontSize =
-                                17.sp,
-                            fontFamily =
-                                FontFamily.Serif,
-                            fontWeight =
-                                FontWeight.Bold,
-                            color =
-                                loginContent
-                        )
-
-                    } else {
-
-                        Text(
-                            text =
-                                "INICIAR SESIÓN",
-                            fontSize =
-                                20.sp,
-                            fontFamily =
-                                FontFamily.Serif,
-                            fontWeight =
-                                FontWeight.Bold,
-                            color =
-                                loginContent
-                        )
-                    }
+                    // El modal global indica el estado de carga. No duplicar el spinner aquí.
+                    Text(
+                        text = "INICIAR SESIÓN",
+                        fontSize = 20.sp,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        color = loginContent
+                    )
                 }
 
 

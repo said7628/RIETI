@@ -1,37 +1,33 @@
 package com.example.rieti.view.components
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.rieti.ui.theme.AppTheme
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 /**
- * Mapa utilizado para seleccionar la ubicación asociada a un reporte.
- *
- * El punto seleccionado representa la ubicación DEL REPORTE,
- * no necesariamente la ubicación actual del dispositivo.
- *
- * El usuario puede:
- * - Tocar cualquier punto del mapa para seleccionarlo.
- * - Arrastrar el marcador para ajustar la ubicación.
- *
- * TODO(BACKEND):
- * Las coordenadas seleccionadas se almacenarán en ReportUiState
- * y posteriormente se enviarán al backend junto con el reporte.
+ * Permite elegir un punto sin modificar la ubicacion hasta pulsar Confirmar.
+ * Said Valseca Figueroa
  */
 @Composable
 fun ReportLocationMap(
@@ -39,91 +35,77 @@ fun ReportLocationMap(
     onLocationSelected: (LatLng) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    /*
-     * Posición inicial de la cámara.
-     *
-     * selectedLocation provendrá posteriormente del ReportViewModel.
-     */
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(
-            selectedLocation,
-            15f
-        )
-    }
-
-    /*
-     * Estado del marcador.
-     */
-    val markerState = remember {
-        MarkerState(position = selectedLocation)
-    }
-
-    /*
-     * Si selectedLocation cambia desde fuera del mapa
-     * (por ejemplo, al usar la ubicación actual),
-     * actualizamos marcador y cámara.
-     */
-    LaunchedEffect(selectedLocation) {
-
-        markerState.position = selectedLocation
-
-        cameraPositionState.position =
-            CameraPosition.fromLatLngZoom(
-                selectedLocation,
-                15f
-            )
-    }
-
-    /*
-     * Configuración visual del mapa.
-     *
-     * Por ahora NO mostramos el punto azul de ubicación del dispositivo.
-     * Ese punto y la ubicación del reporte son conceptos diferentes.
-     */
-    val mapProperties = remember {
-        MapProperties(
-            isMyLocationEnabled = false
-        )
-    }
-
-    val mapUiSettings = remember {
-        MapUiSettings(
-            zoomControlsEnabled = false,
-            myLocationButtonEnabled = false,
-            compassEnabled = true
-        )
-    }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(225.dp)
-            .clip(RoundedCornerShape(20.dp))
-    ) {
-
+    var editing by remember { mutableStateOf(false) }
+    Box(modifier = modifier.fillMaxWidth().height(225.dp)
+        .clip(RoundedCornerShape(18.dp)).clickable { editing = true }) {
+        val previewCamera = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(selectedLocation, 15f)
+        }
+        LaunchedEffect(selectedLocation) {
+            previewCamera.position = CameraPosition.fromLatLngZoom(selectedLocation, 15f)
+        }
         GoogleMap(
             modifier = Modifier.matchParentSize(),
-            cameraPositionState = cameraPositionState,
-            properties = mapProperties,
-            uiSettings = mapUiSettings,
-
-            /*
-             * El usuario toca cualquier punto del mapa.
-             */
-            onMapClick = { latLng ->
-
-                markerState.position = latLng
-
-                onLocationSelected(latLng)
-            }
+            cameraPositionState = previewCamera,
+            uiSettings = MapUiSettings(scrollGesturesEnabled = false, zoomGesturesEnabled = false,
+                rotationGesturesEnabled = false, tiltGesturesEnabled = false, zoomControlsEnabled = false)
         ) {
-
-            Marker(
-                state = markerState,
-                title = "Ubicación del reporte",
-                snippet = "Puedes mover este marcador",
-            )
+            Marker(state = MarkerState(position = selectedLocation), title = "Punto del reporte")
+        }
+        Text("Modificar ubicación en mapa", color = Color.White,
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .background(Color(0xCCB90066)).clickable { editing = true }
+                .padding(12.dp))
+    }
+    if (editing) {
+        Dialog(
+            onDismissRequest = { editing = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            var candidate by remember(selectedLocation) { mutableStateOf(selectedLocation) }
+            val camera = rememberCameraPositionState {
+                position = CameraPosition.fromLatLngZoom(selectedLocation, 16f)
+            }
+            val marker = remember { MarkerState(position = selectedLocation) }
+            LaunchedEffect(candidate) { marker.position = candidate }
+            Surface(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                color = AppTheme.colors.surface
+            ) {
+                Column {
+                    Text("Selecciona el lugar exacto", modifier = Modifier.padding(20.dp),
+                        color = AppTheme.colors.pinkPrincipal)
+                    Text("Desliza el mapa, toca el lugar o mueve el marcador. Confirma para guardar.",
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                        color = AppTheme.colors.text)
+                    GoogleMap(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        cameraPositionState = camera,
+                        uiSettings = MapUiSettings(scrollGesturesEnabled = true,
+                            zoomGesturesEnabled = true, zoomControlsEnabled = true,
+                            compassEnabled = true),
+                        onMapClick = { candidate = it }
+                    ) {
+                        Marker(state = marker, draggable = true,
+                            onClick = { false },
+                            title = "Ubicación elegida")
+                    }
+                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = { editing = false }, modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
+                            Text("Cancelar")
+                        }
+                        Button(onClick = {
+                            onLocationSelected(marker.position)
+                            editing = false
+                        }, modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.pinkPrincipal)) {
+                            Text("Confirmar punto")
+                        }
+                    }
+                }
+            }
         }
     }
 }

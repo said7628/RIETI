@@ -1,6 +1,13 @@
 package com.example.rieti.view
 
 import android.content.res.Configuration
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.CircularProgressIndicator
+import com.example.rieti.view.RietiLoadingOverlay
+import com.example.rieti.data.repository.TrackingRepository
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -101,7 +108,8 @@ private data class TrackingReportUi(
     val municipality: String,
     val modality: String,
     val closingDate: String? = null,
-    val resolution: String? = null
+    val resolution: String? = null,
+    val timeline: Map<ReportStatus, String> = emptyMap()
 )
 
 
@@ -122,11 +130,12 @@ fun TrackingScreen(
         mutableStateOf("")
     }
 
-    var selectedReportStatus by rememberSaveable {
-        mutableStateOf<ReportStatus?>(null)
-    }
-
-
+    val context = LocalContext.current
+    val repository = remember(context) { TrackingRepository(context) }
+    val scope = rememberCoroutineScope()
+    var currentReport by remember { mutableStateOf<TrackingReportUi?>(null) }
+    var searching by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf<String?>(null) }
     Scaffold(
         containerColor = colors.surface,
 
@@ -151,196 +160,50 @@ fun TrackingScreen(
                 .background(colors.surface)
         ) {
 
-            if (selectedReportStatus == null) {
-
-                TrackingSearchContent(
-                    folio = reportFolio,
-
-                    onFolioChange = {
-                        reportFolio = it
-                    },
-
-                    onSearchClick = {
-
-                        /*
-                         * TODO(BACKEND):
-                         * DATOS SIMULADOS ÚNICAMENTE PARA PRUEBAS DE UI.
-                         *
-                         * Cuando se conecte el backend:
-                         *
-                         * 1. Eliminar la selección mediante folios
-                         *    especiales de prueba.
-                         *
-                         * 2. Consultar el reporte real mediante el
-                         *    folio ingresado.
-                         *
-                         * 3. Convertir la respuesta del API a un
-                         *    TrackingReportUi.
-                         *
-                         * 4. Mostrar un estado de carga mientras se
-                         *    realiza la consulta.
-                         *
-                         * 5. Mostrar un error si el folio no existe.
-                         *
-                         * 6. Manejar errores de conexión.
-                         *
-                         * 7. Utilizar el estatus recibido por backend
-                         *    para construir el timeline.
-                         *
-                         * 8. Mostrar información de cierre únicamente
-                         *    cuando corresponda.
-                         */
-
-                        selectedReportStatus =
-                            getSimulatedStatus(
-                                reportFolio
-                            )
-                    }
-                )
-
-            } else {
-
-                val report =
-                    createSimulatedReport(
+            if (currentReport == null) {
+                Column {
+                    TrackingSearchContent(
                         folio = reportFolio,
-                        status = selectedReportStatus!!
+                        onFolioChange = { reportFolio = it; searchError = null },
+                        onSearchClick = {
+                            if (!searching) {
+                                searching = true
+                                searchError = null
+                                scope.launch {
+                                    try {
+                                        val r = repository.lookup(reportFolio.trim())
+                                        val status = ReportStatus.valueOf(r.statusCode)
+                                        currentReport = TrackingReportUi(
+                                            folio = r.folio, status = status,
+                                            lastUpdate = formatTrackingDate(r.updatedAt),
+                                            registrationDate = formatTrackingDate(r.registeredAt),
+                                            municipality = r.municipality,
+                                            modality = "Con seguimiento",
+                                            closingDate = r.closedAt?.let(::formatTrackingDate),
+                                            resolution = r.resolution,
+                                            timeline = r.timeline.mapNotNull { (k,v) ->
+                                                runCatching { ReportStatus.valueOf(k) to formatTrackingDate(v) }.getOrNull()
+                                            }.toMap()
+                                        )
+                                    } catch (e: Exception) {
+                                        searchError = e.message ?: "No se pudo consultar el reporte"
+                                    } finally { searching = false }
+                                }
+                            }
+                        }
                     )
 
-                TrackingResultContent(
-                    report = report,
-
-                    onEditFolioClick = {
-                        selectedReportStatus = null
-                    }
-                )
+                    searchError?.let { Text(text=it, color=colors.pinkPrincipal,
+                        modifier=Modifier.padding(16.dp)) }
+                }
+            } else {
+                TrackingResultContent(report = currentReport!!,
+                    onEditFolioClick = { currentReport = null })
             }
+            if (searching) RietiLoadingOverlay("Consultando seguimiento...")
         }
     }
 }
-
-
-// =================================================================
-// DATOS TEMPORALES PARA PROBAR TODOS LOS ESTADOS
-// =================================================================
-
-private fun getSimulatedStatus(
-    folio: String
-): ReportStatus {
-
-    val normalizedFolio =
-        folio
-            .trim()
-            .uppercase()
-
-    return when (normalizedFolio) {
-
-        "RIETI-REGISTRADO" ->
-            ReportStatus.REGISTRADO
-
-        "RIETI-REVISION" ->
-            ReportStatus.EN_REVISION
-
-        "RIETI-SEGUIMIENTO" ->
-            ReportStatus.EN_SEGUIMIENTO
-
-        "RIETI-CANALIZADO" ->
-            ReportStatus.CANALIZADO
-
-        "RIETI-CONCLUIDO" ->
-            ReportStatus.CONCLUIDO
-
-        "RIETI-ARCHIVADO" ->
-            ReportStatus.ARCHIVADO
-
-        "RIETI-CANCELADO" ->
-            ReportStatus.CANCELADO
-
-        "RIETI-REINCIDENTE" ->
-            ReportStatus.REINCIDENTE
-
-        else ->
-            ReportStatus.EN_SEGUIMIENTO
-    }
-}
-
-
-// =================================================================
-// CREACIÓN TEMPORAL DEL REPORTE
-//
-// TODO(BACKEND):
-// Eliminar esta función cuando TrackingReportUi se construya con
-// los datos reales recibidos desde el API.
-// =================================================================
-
-private fun createSimulatedReport(
-    folio: String,
-    status: ReportStatus
-): TrackingReportUi {
-
-    val lastUpdate =
-        when (status) {
-
-            ReportStatus.REGISTRADO ->
-                "28 de septiembre de 2026, 10:12 h"
-
-            ReportStatus.EN_REVISION ->
-                "29 de septiembre de 2026, 16:40 h"
-
-            ReportStatus.EN_SEGUIMIENTO ->
-                "03 de octubre de 2026, 14:25 h"
-
-            ReportStatus.CANALIZADO ->
-                "08 de octubre de 2026, 09:30 h"
-
-            ReportStatus.CONCLUIDO ->
-                "12 de octubre de 2026, 12:15 h"
-
-            ReportStatus.ARCHIVADO ->
-                "12 de octubre de 2026, 12:15 h"
-
-            ReportStatus.CANCELADO ->
-                "06 de octubre de 2026, 11:20 h"
-
-            ReportStatus.REINCIDENTE ->
-                "10 de octubre de 2026, 15:45 h"
-        }
-
-
-    return TrackingReportUi(
-        folio = folio,
-
-        status = status,
-
-        lastUpdate = lastUpdate,
-
-        registrationDate =
-            "28 de septiembre de 2026",
-
-        municipality =
-            "Atizapán de Zaragoza",
-
-        modality =
-            "Con seguimiento",
-
-        closingDate =
-            if (
-                status == ReportStatus.CONCLUIDO ||
-                status == ReportStatus.ARCHIVADO
-            ) {
-                "12 de octubre de 2026"
-            } else {
-                null
-            },
-
-        resolution =
-            if (status == ReportStatus.CONCLUIDO) {
-                "La atención del reporte ha finalizado conforme al proceso correspondiente."
-            } else {
-                null
-            }
-    )
-}
-
 
 // =================================================================
 // VISTA 1 - CONSULTAR FOLIO
@@ -1541,119 +1404,12 @@ private fun TrackingTimeline(
 // CALCULAR ESTADO VISUAL DEL TIMELINE
 // =================================================================
 
-private fun getTimelineStatus(
-    step: ReportStatus,
-    current: ReportStatus
-): TrackingStatus {
-
-    val orderedStatuses =
-        listOf(
-            ReportStatus.REGISTRADO,
-            ReportStatus.EN_REVISION,
-            ReportStatus.EN_SEGUIMIENTO,
-            ReportStatus.CANALIZADO,
-            ReportStatus.CONCLUIDO
-        )
-
-
-    // =============================================================
-    // ESTADOS ESPECIALES
-    //
-    // Para la simulación visual mantenemos únicamente como
-    // completados los pasos que razonablemente ya ocurrieron.
-    //
-    // TODO(BACKEND):
-    // El historial real deberá venir del servidor. No se deberá
-    // inferir únicamente a partir del estado final.
-    // =============================================================
-
-    if (
-        current == ReportStatus.ARCHIVADO ||
-        current == ReportStatus.CANCELADO ||
-        current == ReportStatus.REINCIDENTE
-    ) {
-
-        return when (step) {
-
-            ReportStatus.REGISTRADO ->
-                TrackingStatus.COMPLETED
-
-            else ->
-                TrackingStatus.PENDING
-        }
-    }
-
-
-    val currentIndex =
-        orderedStatuses.indexOf(current)
-
-    val stepIndex =
-        orderedStatuses.indexOf(step)
-
-
-    return when {
-
-        stepIndex < currentIndex ->
-            TrackingStatus.COMPLETED
-
-        stepIndex == currentIndex -> {
-
-            if (current == ReportStatus.CONCLUIDO) {
-                TrackingStatus.COMPLETED
-            } else {
-                TrackingStatus.CURRENT
-            }
-        }
-
-        else ->
-            TrackingStatus.PENDING
-    }
+private fun getTimelineStatus(step: ReportStatus, current: ReportStatus): TrackingStatus {
+    return if (step == current) TrackingStatus.CURRENT else TrackingStatus.PENDING
 }
 
-
-// =================================================================
-// FECHAS TEMPORALES DEL TIMELINE
-// =================================================================
-
-private fun getTimelineDate(
-    step: ReportStatus,
-    report: TrackingReportUi
-): String {
-
-    val visualStatus =
-        getTimelineStatus(
-            step = step,
-            current = report.status
-        )
-
-
-    if (visualStatus == TrackingStatus.PENDING) {
-        return "Pendiente"
-    }
-
-
-    return when (step) {
-
-        ReportStatus.REGISTRADO ->
-            "28 de septiembre de 2026, 10:12 h"
-
-        ReportStatus.EN_REVISION ->
-            "29 de septiembre de 2026, 16:40 h"
-
-        ReportStatus.EN_SEGUIMIENTO ->
-            "03 de octubre de 2026, 14:25 h"
-
-        ReportStatus.CANALIZADO ->
-            "08 de octubre de 2026, 09:30 h"
-
-        ReportStatus.CONCLUIDO ->
-            "12 de octubre de 2026, 12:15 h"
-
-        else ->
-            report.lastUpdate
-    }
-}
-
+private fun getTimelineDate(step: ReportStatus, report: TrackingReportUi): String =
+    report.timeline[step] ?: if (step == ReportStatus.REGISTRADO) report.registrationDate else "Pendiente"
 
 // =================================================================
 // ELEMENTO DEL TIMELINE
@@ -1977,18 +1733,6 @@ private fun ReportGeneralInformation(
         ) {
 
             GeneralInformationRow(
-                icon = Icons.Default.Description,
-                label = "Modalidad",
-                value = report.modality
-            )
-
-
-            Spacer(
-                modifier = Modifier.height(13.dp)
-            )
-
-
-            GeneralInformationRow(
                 icon = Icons.Default.CalendarMonth,
                 label = "Fecha de registro",
                 value = report.registrationDate
@@ -2226,4 +1970,13 @@ private fun TrackingScreenDarkPreview() {
             onSettingsClick = {}
         )
     }
+}
+// Muestra fechas en horario de Ciudad de Mexico, no en formato tecnico UTC.
+private fun formatTrackingDate(raw: String): String {
+    return try {
+        val instant = java.time.Instant.parse(raw)
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy, h:mm a", java.util.Locale("es", "MX"))
+            .withZone(java.time.ZoneId.of("America/Mexico_City"))
+        formatter.format(instant)
+    } catch (_: Exception) { raw }
 }

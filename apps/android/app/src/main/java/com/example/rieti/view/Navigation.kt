@@ -15,6 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
+import com.example.rieti.data.repository.AccountActionsRepository
 import com.example.rieti.data.repository.AuthRepository
 import com.example.rieti.data.repository.AuthResult
 import com.example.rieti.data.session.SessionManager
@@ -104,6 +105,11 @@ fun AppNavigation(
     var lastReportFolio by remember { mutableStateOf("") }
     var registerBusy by remember { mutableStateOf(false) }
     var loginBusy by remember { mutableStateOf(false) }
+    var accountBusy by remember { mutableStateOf(false) }
+    var pendingDeactivate by remember { mutableStateOf(false) }
+    var lastReportAnonymous by remember { mutableStateOf(false) }
+    var deactivatePassword by remember { mutableStateOf("") }
+    val accountActions = remember { AccountActionsRepository(context) }
 
     var startDestination by remember {
         mutableStateOf<String?>(null)
@@ -130,11 +136,54 @@ fun AppNavigation(
     }
 
     if (startDestination == null) {
-        CircularProgressIndicator()
+        RietiStartupScreen()
         return
     }
 
     Box(Modifier.fillMaxSize()) {
+    if (pendingDeactivate) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { if (!accountBusy) pendingDeactivate = false },
+            title = { androidx.compose.material3.Text("Desactivar mi cuenta") },
+            text = {
+                androidx.compose.foundation.layout.Column {
+                    androidx.compose.material3.Text("Tu acceso se desactivara. Los reportes institucionales se conservaran.")
+                    androidx.compose.material3.OutlinedTextField(
+                        value = deactivatePassword,
+                        onValueChange = { deactivatePassword = it },
+                        label = { androidx.compose.material3.Text("Confirma tu contrasena") },
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                    )
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    enabled = !accountBusy && deactivatePassword.isNotBlank(),
+                    onClick = {
+                        accountBusy = true
+                        scope.launch {
+                            try {
+                                accountActions.deactivate(deactivatePassword)
+                                sessionManager.clear()
+                                pendingDeactivate = false
+                                deactivatePassword = ""
+                                navController.navigate(Routes.ACCOUNT_DELETED) {
+                                    popUpTo(navController.graph.id) { inclusive = true }
+                                }
+                            } catch (e: Exception) {
+                                RietiFeedback.show(e.message ?: "No se pudo desactivar la cuenta", error = true)
+                            } finally { accountBusy = false }
+                        }
+                    }
+                ) { androidx.compose.material3.Text("Desactivar") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { pendingDeactivate = false }) {
+                    androidx.compose.material3.Text("Cancelar")
+                }
+            }
+        )
+    }
     NavHost(
         navController = navController,
         startDestination = startDestination!!
@@ -646,6 +695,7 @@ fun AppNavigation(
                 },
 
                 onSendReportClick = { folio ->
+                    lastReportAnonymous = false
                     lastReportFolio = folio
                     navController.navigate(Routes.REPORT_SUCCESS) {
                         launchSingleTop = true
@@ -706,6 +756,7 @@ fun AppNavigation(
                 },
 
                 onSendReportClick = { folio ->
+                    lastReportAnonymous = true
                     lastReportFolio = folio
                     navController.navigate(Routes.REPORT_SUCCESS) {
                         launchSingleTop = true
@@ -806,6 +857,7 @@ fun AppNavigation(
                     },
 
                     onSendReportClick = { folio ->
+                    lastReportAnonymous = (mode == "ANONYMOUS")
                     lastReportFolio = folio
                     navController.navigate(Routes.REPORT_SUCCESS) {
                         launchSingleTop = true
@@ -850,6 +902,7 @@ fun AppNavigation(
                  */
 
                 folio = lastReportFolio,
+                isAnonymous = lastReportAnonymous,
 
                 // -------------------------------------------------
                 // CONSULTAR ESTADO
@@ -1039,22 +1092,7 @@ fun AppNavigation(
                 // -------------------------------------------------
 
                 onDeleteAccountClick = {
-
-                    /*
-                     * TODO(BACKEND):
-                     *
-                     * Posteriormente se deberá eliminar
-                     * la cuenta mediante ViewModel/API.
-                     *
-                     * Solo navegar cuando el backend
-                     * confirme la eliminación.
-                     */
-
-                    navController.navigate(
-                        Routes.ACCOUNT_DELETED
-                    ) {
-                        launchSingleTop = true
-                    }
+                    pendingDeactivate = true
                 },
 
                 // -------------------------------------------------
@@ -1118,50 +1156,26 @@ fun AppNavigation(
                 // ACTUALIZAR CONTRASEÑA
                 // -------------------------------------------------
 
-                onChangePasswordClick = {
-                        currentPassword,
-                        newPassword,
-                        confirmPassword ->
-
-                    /*
-                     * TODO(BACKEND):
-                     *
-                     * Enviar al backend:
-                     *
-                     * - Contraseña actual.
-                     * - Nueva contraseña.
-                     * - Confirmación de contraseña.
-                     *
-                     * El backend deberá:
-                     *
-                     * 1. Verificar la contraseña actual.
-                     * 2. Validar la nueva contraseña.
-                     * 3. Actualizar la contraseña.
-                     * 4. Invalidar la sesión correspondiente.
-                     *
-                     * IMPORTANTE:
-                     *
-                     * Solo regresar a START cuando el
-                     * backend confirme el cambio.
-                     */
-
-                    /*
-                     * TEMPORAL:
-                     *
-                     * Conservamos la navegación existente
-                     * mientras se conecta el backend.
-                     */
-
-                    navController.navigate(
-                        Routes.START
-                    ) {
-                        popUpTo(
-                            navController.graph.id
-                        ) {
-                            inclusive = true
+                onChangePasswordClick = { currentPassword, newPassword, confirmPassword ->
+                    if (!accountBusy) {
+                        if (newPassword != confirmPassword) {
+                            RietiFeedback.show("Las contrasenas no coinciden", error = true)
+                        } else {
+                            accountBusy = true
+                            scope.launch {
+                                try {
+                                    accountActions.changePassword(currentPassword, newPassword)
+                                    sessionManager.clear()
+                                    RietiFeedback.show("Contrasena actualizada. Inicia sesion nuevamente")
+                                    navController.navigate(Routes.START) {
+                                        popUpTo(navController.graph.id) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                } catch (e: Exception) {
+                                    RietiFeedback.show(e.message ?: "No se pudo cambiar la contrasena", error = true)
+                                } finally { accountBusy = false }
+                            }
                         }
-
-                        launchSingleTop = true
                     }
                 },
 
@@ -1261,6 +1275,7 @@ fun AppNavigation(
         }
 
     } // Fin de NavHost
+    if (accountBusy) RietiLoadingOverlay("Procesando solicitud...")
     RietiMessageOverlay()
     val loadingMessage = when {
         registerBusy -> "Creando cuenta..."

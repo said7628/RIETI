@@ -2,6 +2,35 @@
 package com.example.rieti.view
 
 import android.content.res.Configuration
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import java.util.Calendar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +43,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,12 +64,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
@@ -49,6 +84,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.BitmapFactory
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -136,20 +175,90 @@ fun ReportFormScreen(
     val context = LocalContext.current
     val sending by reportViewModel.sending.collectAsState()
     val sendError by reportViewModel.sendError.collectAsState()
+    val reportSnackbar = remember { SnackbarHostState() }
+    LaunchedEffect(sendError) {
+        sendError?.takeIf { it.isNotBlank() }?.let {
+            reportSnackbar.showSnackbar(it, duration = SnackbarDuration.Short)
+        }
+    }
     val picker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenMultipleDocuments()
+        ActivityResultContracts.GetMultipleContents()
     ) { uris ->
         val selected = uris.take(5)
         selected.forEach { uri ->
-            runCatching {
-                context.contentResolver.takePersistableUriPermission(
-                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            }
+            runCatching { context.contentResolver.takePersistableUriPermission(
+                uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+            ) }
         }
         reportViewModel.onEvidenceReferencesChange(
             (reportState.evidenceReferences + selected.map { it.toString() }).distinct().take(5)
         )
+    }
+
+
+    val showLocationQuestion = remember { mutableStateOf(false) }
+    val locationConsentGiven = remember { mutableStateOf(false) }
+    val locationConfirmed = remember { mutableStateOf(false) }
+    val locationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        if (results.values.any { it }) {
+            locationConfirmed.value = true
+            reportViewModel.fetchCurrentLocation(context)
+        }
+    }
+    val useDeviceLocation: () -> Unit = {
+        val granted = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            .any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+        if (granted) {
+            locationConfirmed.value = true
+            reportViewModel.fetchCurrentLocation(context)
+        }
+        else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+    }
+    LaunchedEffect(reportState.currentStep, isDraftLoaded) {
+        if (reportState.currentStep == 2 && isDraftLoaded && !locationConsentGiven.value) {
+            showLocationQuestion.value = true
+        }
+    }
+    if (showLocationQuestion.value) AlertDialog(
+        onDismissRequest = { showLocationQuestion.value = false },
+        title = { Text("¿Estás en el lugar donde ocurrió?") },
+        text = { Text("Si estás ahí, tomaremos tu ubicación. Si no, podrás elegir el punto en el mapa.") },
+        confirmButton = { TextButton(onClick = {
+            showLocationQuestion.value = false
+            locationConsentGiven.value = true
+            useDeviceLocation()
+        }) { Text("Sí, estoy aquí") } },
+        dismissButton = { TextButton(onClick = {
+            showLocationQuestion.value = false
+            locationConsentGiven.value = true
+            locationConfirmed.value = false
+        }) { Text("No, elegir en mapa") } }
+    )
+    // Al mover el mapa actualizamos los campos sugeridos por geocodificación inversa.
+    LaunchedEffect(reportState.selectedLocation, reportState.currentStep, locationConsentGiven.value) {
+        if (reportState.currentStep == 2 && locationConsentGiven.value) {
+            val point = reportState.selectedLocation
+            val address = withContext(Dispatchers.IO) {
+                runCatching {
+                    @Suppress("DEPRECATION")
+                    Geocoder(context, java.util.Locale("es", "MX"))
+                        .getFromLocation(point.latitude, point.longitude, 1)?.firstOrNull()
+                }.getOrNull()
+            }
+            address?.let {
+                reportViewModel.onFullAddressChange(it.getAddressLine(0).orEmpty())
+                reportViewModel.onNeighborhoodChange(it.subLocality ?: it.locality.orEmpty())
+                reportViewModel.onPostalCodeChange(it.postalCode.orEmpty())
+                reportViewModel.onMunicipalityChange(it.subAdminArea ?: it.locality.orEmpty())
+            }
+        }
+    }
+    val selectReportPoint: (LatLng) -> Unit = { point ->
+        locationConsentGiven.value = true
+        locationConfirmed.value = true
+        reportViewModel.onMapLocationChanged(point)
     }
 
 
@@ -240,6 +349,17 @@ fun ReportFormScreen(
 
     Scaffold(
         containerColor = colors.surface,
+        snackbarHost = {
+            SnackbarHost(hostState = reportSnackbar) { data ->
+                Snackbar(
+                    data,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    containerColor = colors.pinkPrincipal,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        },
 
         bottomBar = {
 
@@ -518,11 +638,8 @@ fun ReportFormScreen(
                                         selectedLocation =
                                             selectedLocation,
 
-                                        onLocationSelected = {
-
-                                            reportViewModel
-                                                .onMapLocationChanged(it)
-                                        },
+                                        onLocationSelected = selectReportPoint,
+                                        hasConfirmedLocation = locationConfirmed.value,
 
                                         fullAddress = fullAddress,
 
@@ -544,11 +661,37 @@ fun ReportFormScreen(
                                         onMunicipalityChange =
                                             reportViewModel::onMunicipalityChange,
 
-                                        onCurrentLocationClick =
-                                            onCurrentLocationClick,
+                                        onCurrentLocationClick = {
+                                            locationConsentGiven.value = true
+                                            locationConfirmed.value = true
+                                            useDeviceLocation()
+                                        },
+                                        onSearchAddressClick = {
+                                            coroutineScope.launch {
+                                                val query = listOf(reportState.fullAddress, reportState.neighborhood,
+                                                    reportState.municipality, reportState.postalCode)
+                                                    .filter { it.isNotBlank() }.joinToString(", ")
+                                                if (query.isNotBlank()) {
+                                                    val point = withContext(Dispatchers.IO) {
+                                                        runCatching { @Suppress("DEPRECATION")
+                                                            Geocoder(context, java.util.Locale("es", "MX"))
+                                                                .getFromLocationName(query, 1)?.firstOrNull()
+                                                        }.getOrNull()
+                                                    }
+                                                    if (point != null) {
+                                                        val street = reportState.fullAddress.trim().substringBefore(",").lowercase(java.util.Locale.ROOT)
+                                                        val actualStreet = (point.thoroughfare ?: "").lowercase(java.util.Locale.ROOT)
+                                                        // No aceptar un resultado aproximado cuando el usuario escribió una calle distinta.
+                                                        if (street.length >= 5 && actualStreet.isNotBlank() &&
+                                                            !street.contains(actualStreet) && !actualStreet.contains(street)) {
+                                                            Toast.makeText(context, "La calle encontrada no coincide. Selecciona el punto en el mapa.", Toast.LENGTH_LONG).show()
+                                                        } else selectReportPoint(LatLng(point.latitude, point.longitude))
+                                                    } else Toast.makeText(context, "No se encontró una dirección exacta. Usa el mapa.", Toast.LENGTH_LONG).show()
+                                                }
+                                            }
+                                        },
 
                                         onNextClick = {
-
                                             reportViewModel.onStepChange(3)
                                         }
                                     )
@@ -562,9 +705,10 @@ fun ReportFormScreen(
 
                                     ReportEvidenceStep(
                                         onSelectFilesClick = {
-                                            if (!sending) picker.launch(arrayOf("image/jpeg", "image/png", "image/webp"))
+                                            if (!sending) picker.launch("image/*")
                                         },
                                         selectedCount = reportState.evidenceReferences.size,
+                                        evidenceReferences = reportState.evidenceReferences,
 
                                         onNextClick = {
 
@@ -606,6 +750,7 @@ fun ReportFormScreen(
                                             reportViewModel.onStepChange(2)
                                         },
 
+                                        evidenceReferences = reportState.evidenceReferences,
                                         onEditEvidenceClick = {
 
                                             reportViewModel.onStepChange(3)
@@ -619,10 +764,25 @@ fun ReportFormScreen(
                                         }
                                     )
                                     if (sending) {
-                                        CircularProgressIndicator()
-                                        Text("Enviando reporte e imagenes...")
+                                        Dialog(onDismissRequest = {}) {
+                                            Surface(shape = RoundedCornerShape(20.dp), color = AppTheme.colors.surface) {
+                                                Column(
+                                                    Modifier.fillMaxWidth().padding(28.dp),
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    CircularProgressIndicator(color = AppTheme.colors.pinkPrincipal)
+                                                    Spacer(Modifier.height(18.dp))
+                                                    Text("Enviando tu reporte", color = AppTheme.colors.text,
+                                                        fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                                                    Spacer(Modifier.height(8.dp))
+                                                    Text("Guardando los datos y las fotografías...",
+                                                        color = AppTheme.colors.text.copy(alpha = 0.7f),
+                                                        fontSize = 13.sp, textAlign = TextAlign.Center)
+                                                }
+                                            }
+                                        }
                                     }
-                                    sendError?.let { Text(it, color = Color(0xFFD32F2F)) }
+
                                 }
                             }
                         }
@@ -685,6 +845,7 @@ private fun ReportProgressIndicator(
     val colors = AppTheme.colors
     val pink = colors.pinkPrincipal
     val inactiveColor = colors.text.copy(alpha = 0.30f)
+    val animatedProgress by animateFloatAsState(targetValue = currentStep.toFloat(), animationSpec = tween(450), label = "progreso reporte")
 
     val labels = listOf(
         "Detalles",
@@ -722,8 +883,8 @@ private fun ReportProgressIndicator(
                                 .weight(1f)
                                 .height(1.dp)
                                 .background(
-                                    if (step <= currentStep) pink
-                                    else inactiveColor
+                                    if (animatedProgress >= step) pink
+                                    else pink.copy(alpha = (0.25f + (animatedProgress - (step - 1)).coerceIn(0f, 1f) * 0.75f))
                                 )
                         )
                     } else {
@@ -779,8 +940,8 @@ private fun ReportProgressIndicator(
                                 .weight(1f)
                                 .height(1.dp)
                                 .background(
-                                    if (step < currentStep) pink
-                                    else inactiveColor
+                                    if (animatedProgress >= step + 1) pink
+                                    else pink.copy(alpha = (0.25f + (animatedProgress - step).coerceIn(0f, 1f) * 0.75f))
                                 )
                         )
                     } else {
@@ -810,6 +971,79 @@ private fun ReportProgressIndicator(
 // =================================================================
 
 @Composable
+private fun ReportCatalogSelector(
+    label: String,
+    value: String,
+    options: List<String>,
+    onSelect: (String) -> Unit
+) {
+    val expanded = remember { mutableStateOf(false) }
+    Column {
+        Text(label, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(7.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth().clickable { expanded.value = true },
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, AppTheme.colors.pinkPrincipal.copy(alpha = 0.5f)),
+            color = AppTheme.colors.surface
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = value.ifBlank { "Pulsa para seleccionar" },
+                    modifier = Modifier.weight(1f),
+                    color = AppTheme.colors.text,
+                    fontSize = 14.sp
+                )
+                Text("▾", color = AppTheme.colors.pinkPrincipal)
+            }
+        }
+        if (expanded.value) {
+            Dialog(onDismissRequest = { expanded.value = false }) {
+                Surface(
+                    shape = RoundedCornerShape(22.dp),
+                    color = AppTheme.colors.surface,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(label, color = AppTheme.colors.pinkPrincipal,
+                            fontFamily = FontFamily.Serif, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(12.dp))
+                        Column(modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                            options.forEach { option ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        onSelect(option)
+                                        expanded.value = false
+                                    }.padding(vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = value == option,
+                                        onClick = { onSelect(option); expanded.value = false },
+                                        colors = RadioButtonDefaults.colors(selectedColor = AppTheme.colors.pinkPrincipal)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(option, color = AppTheme.colors.text, fontSize = 14.sp,
+                                        modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = { expanded.value = false }, modifier = Modifier.align(Alignment.End)) {
+                            Text("Cancelar", color = AppTheme.colors.pinkPrincipal)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun ReportDetailsStep(
     mode: ReportMode,
 
@@ -836,6 +1070,8 @@ private fun ReportDetailsStep(
 
     onNextClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val validationError = remember { mutableStateOf<String?>(null) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -870,7 +1106,7 @@ private fun ReportDetailsStep(
         StepTitle(
             title = "Detalles del reporte",
             description =
-                "Proporciona la información disponible sobre la situación observada. No es necesario contar con todos los datos para continuar."
+                "Completa los datos obligatorios. La descripción es opcional."
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -879,35 +1115,127 @@ private fun ReportDetailsStep(
             label = "Número de niñas, niños",
             value = numberOfChildren,
             placeholder = "Ingresa una cantidad",
-            onValueChange = onNumberOfChildrenChange
+            onValueChange = { onNumberOfChildrenChange(it.filter(Char::isDigit).take(3)) },
+            keyboardType = KeyboardType.Number
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        ReportFieldWithLabel(
+        ReportCatalogSelector(
             label = "Rango de edad aproximado",
             value = childrenAges,
-            placeholder = "Ej: 6 - 12 años",
-            onValueChange = onChildrenAgesChange
+            options = listOf("0-5", "6-11", "12-14", "15-17"),
+            onSelect = onChildrenAgesChange
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        ReportFieldWithLabel(
+        ReportCatalogSelector(
             label = "Tipo de actividad observada",
             value = workType,
-            placeholder = "Describe la actividad observada",
-            onValueChange = onWorkTypeChange
+            options = listOf(
+                "Venta en semáforos", "Repartiendo volantes", "Venta en mercado",
+                "Despachador en tortillería", "Trabajo en construcción", "Lavado de autos",
+                "Despachador de gasolina", "Cerillo en supermercado", "Limpiaparabrisas",
+                "Mendicidad forzada o inducida", "Explotación sexual comercial de NNA"
+            ),
+            onSelect = onWorkTypeChange
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        ReportFieldWithLabel(
-            label = "Horario aproximado",
-            value = workSchedule,
-            placeholder = "Ej: 8:00 am - 6:00 pm",
-            onValueChange = onWorkScheduleChange
-        )
+        // Un horario puede ser una hora puntual o un rango de horas.
+        val scheduleMode = remember { mutableStateOf(if (workSchedule.contains(" - ")) "Rango" else "Hora exacta") }
+        val startHour = remember { mutableStateOf(workSchedule.substringBefore(" - ").takeIf { it.matches(Regex("[0-9]{2}:[0-9]{2}")) }.orEmpty()) }
+        val endHour = remember { mutableStateOf(workSchedule.substringAfter(" - ", "").takeIf { it.matches(Regex("[0-9]{2}:[0-9]{2}")) }.orEmpty()) }
+        val editingTime = remember { mutableStateOf<String?>(null) }
+        if (editingTime.value != null) {
+            val initial = if (editingTime.value == "start") startHour.value else endHour.value
+            val now = Calendar.getInstance()
+            val picker = rememberTimePickerState(
+                initialHour = initial.substringBefore(":").toIntOrNull() ?: now.get(Calendar.HOUR_OF_DAY),
+                initialMinute = initial.substringAfter(":", "").toIntOrNull() ?: now.get(Calendar.MINUTE),
+                is24Hour = true
+            )
+            Dialog(onDismissRequest = { editingTime.value = null }) {
+                MaterialTheme(colorScheme = lightColorScheme(
+                    primary = AppTheme.colors.pinkPrincipal,
+                    surface = AppTheme.colors.surface,
+                    onSurface = AppTheme.colors.text
+                )) {
+                    Surface(shape = RoundedCornerShape(24.dp), color = AppTheme.colors.surface) {
+                        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(if (editingTime.value == "start") "Seleccionar hora" else "Seleccionar hora final",
+                                color = AppTheme.colors.pinkPrincipal, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(14.dp))
+                            TimePicker(state = picker, colors = TimePickerDefaults.colors(
+                                clockDialColor = AppTheme.colors.surface,
+                                selectorColor = AppTheme.colors.pinkPrincipal,
+                                timeSelectorSelectedContainerColor = AppTheme.colors.pinkPrincipal
+                            ))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                TextButton(onClick = { editingTime.value = null }) {
+                                    Text("Cancelar", color = AppTheme.colors.pinkPrincipal)
+                                }
+                                TextButton(onClick = {
+                                    val time = "%02d:%02d".format(picker.hour, picker.minute)
+                                    if (editingTime.value == "start") startHour.value = time else endHour.value = time
+                                    if (scheduleMode.value == "Hora exacta") onWorkScheduleChange(startHour.value)
+                                    else if (startHour.value.isNotBlank() && endHour.value.isNotBlank())
+                                        onWorkScheduleChange("${startHour.value} - ${endHour.value}")
+                                    editingTime.value = null
+                                }) { Text("Aceptar", color = AppTheme.colors.pinkPrincipal) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Column {
+            Text("Horario aproximado", color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Hora exacta", "Rango").forEach { option ->
+                    val selected = scheduleMode.value == option
+                    Surface(
+                        modifier = Modifier.weight(1f).clickable {
+                            scheduleMode.value = option
+                            if (option == "Hora exacta") onWorkScheduleChange(startHour.value)
+                            else if (startHour.value.isNotBlank() && endHour.value.isNotBlank())
+                                onWorkScheduleChange("${startHour.value} - ${endHour.value}")
+                            else onWorkScheduleChange("")
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (selected) AppTheme.colors.pinkPrincipal else AppTheme.colors.surface,
+                        border = BorderStroke(1.dp, AppTheme.colors.pinkPrincipal)
+                    ) {
+                        Text(option, modifier = Modifier.padding(12.dp), textAlign = TextAlign.Center,
+                            color = if (selected) Color.White else AppTheme.colors.pinkPrincipal)
+                    }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val entries = if (scheduleMode.value == "Rango") listOf("start", "end") else listOf("start")
+                entries.forEach { entry ->
+                    val time = if (entry == "start") startHour.value else endHour.value
+                    Surface(
+                        modifier = Modifier.weight(1f).height(108.dp).clickable { editingTime.value = entry },
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, AppTheme.colors.pinkPrincipal.copy(alpha = 0.55f)),
+                        color = AppTheme.colors.surface
+                    ) {
+                        Column(Modifier.fillMaxSize().padding(13.dp)) {
+                            Text(if (scheduleMode.value == "Hora exacta") "Hora" else if (entry == "start") "Desde" else "Hasta",
+                                fontSize = 12.sp, color = AppTheme.colors.pinkPrincipal)
+                            Spacer(Modifier.height(4.dp))
+                            Text(time.ifBlank { "Pulsa para elegir hora" }, fontSize = 14.sp,
+                                color = AppTheme.colors.text)
+                        }
+                    }
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(18.dp))
 
@@ -937,8 +1265,19 @@ private fun ReportDetailsStep(
 
         NextButton(
             text = "Siguiente",
-            onClick = onNextClick
+            onClick = {
+                validationError.value = when {
+                    numberOfChildren.toIntOrNull() == null || numberOfChildren.toInt() < 1 -> "Ingresa una cantidad válida de niñas o niños."
+                    childrenAges !in setOf("0-5", "6-11", "12-14", "15-17") -> "Selecciona un rango de edad válido."
+                    workType.isBlank() -> "Selecciona el tipo de actividad."
+                    workSchedule.isBlank() -> "Selecciona el horario."
+                    mode == ReportMode.ANONYMOUS && (email.isBlank() || !email.equals(confirmEmail, true)) -> "Confirma correctamente tu correo."
+                    else -> null
+                }
+                if (validationError.value == null) onNextClick()
+            }
         )
+        validationError.value?.let { Text(it, color = Color(0xFFD32F2F), fontSize = 13.sp) }
     }
 }
 
@@ -1032,6 +1371,7 @@ private fun AnonymousModeCard(
 private fun ReportLocationStep(
     selectedLocation: LatLng,
     onLocationSelected: (LatLng) -> Unit,
+    hasConfirmedLocation: Boolean,
 
     fullAddress: String,
     onFullAddressChange: (String) -> Unit,
@@ -1046,6 +1386,7 @@ private fun ReportLocationStep(
     onMunicipalityChange: (String) -> Unit,
 
     onCurrentLocationClick: () -> Unit,
+    onSearchAddressClick: () -> Unit,
     onNextClick: () -> Unit
 ) {
     Column(
@@ -1059,6 +1400,7 @@ private fun ReportLocationStep(
                 bottom = 24.dp
             )
     ) {
+        val locationError = remember { mutableStateOf<String?>(null) }
         StepTitle(
             title = "Ubicación del reporte",
             description =
@@ -1076,7 +1418,11 @@ private fun ReportLocationStep(
             onLocationSelected = onLocationSelected
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        TextButton(onClick = onCurrentLocationClick) { Text("Usar mi ubicación actual") }
+        Text("Pulsa Modificar ubicación, mueve el mapa y confirma el punto.", fontSize = 12.sp)
+        if (!hasConfirmedLocation) Text("Selecciona un punto real en el mapa o usa tu ubicación actual.", color = Color(0xFFD32F2F), fontSize = 12.sp)
+        Spacer(modifier = Modifier.height(12.dp))
 
         ReportFieldWithLabel(
             label = "Dirección completa",
@@ -1105,7 +1451,8 @@ private fun ReportLocationStep(
                 label = "Código postal",
                 value = postalCode,
                 placeholder = "Ingresar",
-                onValueChange = onPostalCodeChange,
+                onValueChange = { onPostalCodeChange(it.filter(Char::isDigit).take(5)) },
+            keyboardType = KeyboardType.Number,
                 modifier = Modifier.weight(0.8f)
             )
         }
@@ -1119,12 +1466,21 @@ private fun ReportLocationStep(
             onValueChange = onMunicipalityChange
         )
 
-        Spacer(modifier = Modifier.height(28.dp))
-
-        NextButton(
-            text = "Siguiente",
-            onClick = onNextClick
-        )
+        Spacer(modifier = Modifier.height(12.dp))
+        TextButton(onClick = onSearchAddressClick) { Text("Buscar esta dirección en el mapa") }
+        Spacer(modifier = Modifier.height(16.dp))
+        NextButton(text = "Siguiente", onClick = {
+            locationError.value = when {
+                !hasConfirmedLocation -> "Debes confirmar la ubicación del reporte."
+                fullAddress.isBlank() -> "Ingresa la dirección del reporte."
+                neighborhood.isBlank() -> "Ingresa la colonia."
+                !Regex("[0-9]{5}").matches(postalCode) -> "Ingresa un código postal de 5 dígitos."
+                municipality.isBlank() -> "Ingresa el municipio."
+                else -> null
+            }
+            if (locationError.value == null) onNextClick()
+        })
+        locationError.value?.let { Text(it, color = Color(0xFFD32F2F), fontSize = 13.sp) }
     }
 }
 
@@ -1136,6 +1492,7 @@ private fun ReportLocationStep(
 private fun ReportEvidenceStep(
     onSelectFilesClick: () -> Unit,
     selectedCount: Int,
+    evidenceReferences: List<String>,
     onNextClick: () -> Unit
 ) {
     Column(
@@ -1160,7 +1517,7 @@ private fun ReportEvidenceStep(
         EvidenceSelector(
             onClick = onSelectFilesClick
         )
-        Text("Imagenes seleccionadas: $selectedCount de 5")
+        ReportPhotoStrip(evidenceReferences, modifier = Modifier.padding(top = 14.dp))
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -1170,6 +1527,38 @@ private fun ReportEvidenceStep(
             text = "Siguiente",
             onClick = onNextClick
         )
+    }
+}
+
+@Composable
+private fun ReportPhotoStrip(
+    photos: List<String>,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    if (photos.isEmpty()) return
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(photos.size) { index ->
+            val uriString = photos[index]
+            val bitmap = remember(uriString) {
+                runCatching {
+                    context.contentResolver.openInputStream(android.net.Uri.parse(uriString))?.use {
+                        BitmapFactory.decodeStream(it)?.asImageBitmap()
+                    }
+                }.getOrNull()
+            }
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "Evidencia ${index + 1}",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(83.dp).clip(RoundedCornerShape(9.dp))
+                )
+            }
+        }
     }
 }
 
@@ -1196,8 +1585,9 @@ private fun ReportReviewStep(
     onEditDetailsClick: () -> Unit,
     onEditLocationClick: () -> Unit,
     onEditEvidenceClick: () -> Unit,
+    evidenceReferences: List<String>,
 
-    onSendReportClick: (String) -> Unit
+    onSendReportClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -1320,13 +1710,7 @@ private fun ReportReviewStep(
             title = "Evidencias",
             onEditClick = onEditEvidenceClick
         ) {
-            Text(
-                text =
-                    "Las evidencias seleccionadas aparecerán aquí cuando se conecte el selector de archivos.",
-                color = AppTheme.colors.text.copy(alpha = 0.70f),
-                fontSize = 13.sp,
-                lineHeight = 18.sp
-            )
+ReportPhotoStrip(evidenceReferences)
         }
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -1337,7 +1721,7 @@ private fun ReportReviewStep(
 
         Button(
             onClick = onSendReportClick,
-            enabled = false,
+            enabled = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(58.dp),
@@ -1360,12 +1744,7 @@ private fun ReportReviewStep(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text(
-            text = "El envío estará disponible cuando se conecte el servicio de registro.",
-            color = AppTheme.colors.text.copy(alpha = 0.65f),
-            fontSize = 12.sp,
-            lineHeight = 17.sp
-        )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -1419,7 +1798,10 @@ private fun ReportFieldWithLabel(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     minHeight: Dp = 52.dp,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    readOnly: Boolean = false,
+    onFieldClick: (() -> Unit)? = null
 ) {
     Column(modifier = modifier) {
 
@@ -1438,6 +1820,9 @@ private fun ReportFieldWithLabel(
             onValueChange = onValueChange,
             minHeight = minHeight,
             singleLine = singleLine,
+            keyboardType = keyboardType,
+            readOnly = readOnly,
+            onFieldClick = onFieldClick,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -1454,7 +1839,10 @@ private fun RietiTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     minHeight: Dp = 52.dp,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    readOnly: Boolean = false,
+    onFieldClick: (() -> Unit)? = null
 ) {
     val colors = AppTheme.colors
 
@@ -1462,6 +1850,8 @@ private fun RietiTextField(
         value = value,
         onValueChange = onValueChange,
         singleLine = singleLine,
+        readOnly = readOnly,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
 
         textStyle = TextStyle(
             color = colors.text,
@@ -1473,6 +1863,7 @@ private fun RietiTextField(
 
         modifier = modifier
             .heightIn(min = minHeight)
+            .then(if (onFieldClick != null) Modifier.clickable { onFieldClick() } else Modifier)
             .clip(RoundedCornerShape(9.dp))
             .background(colors.surface)
             .border(

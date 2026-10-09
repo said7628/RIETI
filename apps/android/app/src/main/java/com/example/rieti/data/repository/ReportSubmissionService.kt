@@ -7,10 +7,13 @@ import com.example.rieti.model.ReportUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.text.Normalizer
+import java.util.Locale
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -47,19 +50,43 @@ class ReportSubmissionService(private val context: Context) {
     suspend fun submit(state: ReportUiState, submissionId: String): String = withContext(Dispatchers.IO) {
         val token = SessionManager(context).accessToken()
             ?.takeIf { it.isNotBlank() } ?: error("Debes iniciar sesion nuevamente")
-        require(state.details.isNotBlank()) { "Describe la situacion antes de enviar" }
         require(state.municipality.isNotBlank()) { "Selecciona el municipio" }
         require(state.workType.isNotBlank()) { "Selecciona el tipo de trabajo" }
         require(state.childrenAges.isNotBlank()) { "Selecciona la edad aproximada" }
 
+        val ageIds = mapOf("0-5" to 1, "6-11" to 2, "12-14" to 3, "15-17" to 4)
+        val workIds = mapOf(
+            "Venta en semáforos" to 1, "Repartiendo volantes" to 2,
+            "Venta en mercado" to 3, "Despachador en tortillería" to 4,
+            "Trabajo en construcción" to 5, "Lavado de autos" to 6,
+            "Despachador de gasolina" to 7, "Cerillo en supermercado" to 8,
+            "Limpiaparabrisas" to 9, "Mendicidad forzada o inducida" to 10,
+            "Explotación sexual comercial de NNA" to 11
+        )
+        val ageId = ageIds[state.childrenAges] ?: error("Selecciona un rango de edad válido")
+        val workId = workIds[state.workType] ?: error("Selecciona una actividad válida")
+
+        // El geocodificador puede devolver nombres abreviados.
+        // La API recibe el ID oficial del municipio adherido.
+        val municipioNormalizado = Normalizer.normalize(
+            state.municipality.trim().lowercase(Locale.ROOT), Normalizer.Form.NFD
+        ).replace(Regex("\\p{Mn}+"), "")
+        val municipioId = when {
+            "cuautitlan izcalli" in municipioNormalizado -> 3
+            "atizapan de zaragoza" in municipioNormalizado ||
+                municipioNormalizado == "atizapan" -> 1
+            "tlalnepantla" in municipioNormalizado -> 4
+            else -> error("RIETI no recibe reportes en este municipio")
+        }
+
         val request = JSONObject()
             .put("mode", state.mode)
             .put("clientReportUuid", submissionId)
-            .put("municipality", state.municipality)
+            .put("municipalityId", municipioId)
             .put("neighborhood", state.neighborhood)
-            .put("ages", state.childrenAges)
+            .put("ageRangeId", ageId)
             .put("children", state.numberOfChildren)
-            .put("workType", state.workType)
+            .put("workTypeId", workId)
             .put("details", state.details)
             .put("latitude", state.selectedLocation.latitude)
             .put("longitude", state.selectedLocation.longitude)
@@ -68,6 +95,7 @@ class ReportSubmissionService(private val context: Context) {
             .put("schedule", state.workSchedule)
 
         val created = jsonRequest("mobile/reportes", token, request)
+        val uploadToken = created.optString("uploadToken").takeIf { it.isNotBlank() }
         val id = created.getLong("id")
         val folio = created.getString("folio")
 
@@ -85,19 +113,51 @@ class ReportSubmissionService(private val context: Context) {
             }
             val sha = MessageDigest.getInstance("SHA-256").digest(bytes)
                 .joinToString("") { "%02x".format(it) }
-            val metadata = JSONObject().put("reportId", id).put("mimeType", mime)
+            val metadata = JSONObject().put("reportId", id).put("uploadToken", uploadToken).put("mimeType", mime)
                 .put("sizeBytes", bytes.size).put("sha256Hex", sha)
             val signed = jsonRequest("mobile/evidencias/presign", token, metadata)
-            val put = Request.Builder().url(signed.getString("uploadUrl"))
+            // En un PUT prefirmado, los headers deben coincidir con los firmados por Lambda.
+            // No añadir el Bearer token de RIETI a esta solicitud de S3.
+            // El presigner de AWS puede colocar la metadata en la query firmada.
+            // En ese caso no enviamos otra copia como header HTTP.
+            val signedUrl = signed.getString("uploadUrl")
+            val parsedUrl = signedUrl.toHttpUrl()
+            val metadataInUrl = parsedUrl.queryParameterNames.any {
+                it.equals("x-amz-meta-sha256", ignoreCase = true)
+            }
+            val putBuilder = Request.Builder().url(signedUrl)
                 .put(bytes.toRequestBody(mime.toMediaType()))
-                .header("x-amz-meta-sha256", sha)
-                .build()
+                .header("Content-Type", mime)
+            if (!metadataInUrl) {
+                putBuilder.header("x-amz-meta-sha256", sha)
+            }
+            val put = putBuilder.build()
             http.newCall(put).execute().use { response ->
-                if (!response.isSuccessful) error("No se pudo subir una imagen a S3 (HTTP ${response.code})")
+                if (!response.isSuccessful) {
+                    // S3 devuelve XML con Code y Message; nunca mostramos la URL
+                    // prefirmada, firmas, tokens ni detalles internos de la petición.
+                    val xml = response.body?.string().orEmpty()
+                    val code = Regex("<Code>\\s*([^<]+)\\s*</Code>")
+                        .find(xml)?.groupValues?.getOrNull(1)?.trim()
+                        ?.takeIf { it.matches(Regex("[A-Za-z0-9]{1,80}")) }
+                    val label = when (code) {
+                        "SignatureDoesNotMatch" -> "Firma S3 incorrecta"
+                        "AccessDenied" -> "S3 denegó el acceso"
+                        "RequestTimeTooSkewed" -> "Reloj del dispositivo desfasado"
+                        "ExpiredToken" -> "Credenciales AWS vencidas"
+                        "AuthorizationQueryParametersError" -> "Parámetros de firma S3 inválidos"
+                        else -> "S3 rechazó la imagen"
+                    }
+                    error("$label (HTTP ${response.code}; código S3: ${code ?: "no disponible"}). " +
+                        "El reporte puede haberse creado; no comiences uno nuevo todavía.")
+                }
             }
             jsonRequest("mobile/evidencias/confirmar", token, JSONObject(metadata.toString())
                 .put("evidenceUuid", signed.getString("evidenceUuid"))
                 .put("objectKey", signed.getString("objectKey")))
+        }
+        if (uploadToken != null) {
+            jsonRequest("mobile/reportes/finalizar", token, JSONObject().put("reportId", id).put("uploadToken", uploadToken))
         }
         folio
     }

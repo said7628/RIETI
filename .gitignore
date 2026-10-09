@@ -20,3 +20,5 @@ captures/
 # macOS
 .DS_Storenode_modules/
 *.zip
+
+/apps/android/.kotlin/
