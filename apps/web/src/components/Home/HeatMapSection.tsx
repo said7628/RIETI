@@ -114,6 +114,30 @@ function HeatMapSection() {
       position: 'bottomright',
     }).addTo(map)
 
+    const FitToReports = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd() {
+        const button = L.DomUtil.create('button', 'leaflet-bar heatmap-fit-button')
+        button.type = 'button'
+        button.textContent = '⌖'
+        button.title = 'Centrar mapa en los reportes'
+        button.setAttribute('aria-label', 'Centrar mapa en los reportes')
+        button.style.cssText = 'width:34px;height:34px;background:white;font-size:25px;cursor:pointer;border:1px solid #aaa;border-radius:4px;margin-top:7px'
+        L.DomEvent.disableClickPropagation(button)
+        L.DomEvent.on(button, 'click', () => {
+          const layer = markersLayerRef.current
+          const all = layer?.getLayers().filter((item): item is L.Marker => item instanceof L.Marker) ?? []
+          if (all.length) {
+            map.fitBounds(L.latLngBounds(all.map(item => item.getLatLng())), { padding: [45, 45], maxZoom: 16 })
+          } else {
+            map.setView([19.5576, -99.2655], 10)
+          }
+        })
+        return button
+      },
+    })
+    new FitToReports().addTo(map)
+
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       {

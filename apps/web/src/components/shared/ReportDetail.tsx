@@ -58,6 +58,21 @@ function ReportLocationMap({
     L.control.zoom({
       position: 'bottomright',
     }).addTo(map)
+    const Recenter = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd() {
+        const button = L.DomUtil.create('button', 'leaflet-bar report-recenter-button')
+        button.type = 'button'
+        button.textContent = '⌖'
+        button.title = 'Centrar en la ubicación del reporte'
+        button.setAttribute('aria-label', 'Centrar en la ubicación del reporte')
+        button.style.cssText = 'display:block;width:34px;height:34px;background:white;font-size:25px;cursor:pointer;border:1px solid #aaa;border-radius:4px;margin-top:7px'
+        L.DomEvent.disableClickPropagation(button)
+        L.DomEvent.on(button, 'click', () => map.setView([latitude, longitude], 16))
+        return button
+      },
+    })
+    new Recenter().addTo(map)
 
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

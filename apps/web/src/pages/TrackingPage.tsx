@@ -229,7 +229,7 @@ function TrackingPage() {
 
     return (
       <>
-        {!selectedReport.caseHolder && (
+        {(user?.roleCode === 'ADMINISTRADOR_FUNDACION' || user?.roleCode === 'GESTOR_MUNICIPAL') && (
           <AssignSelect
             folio={
               selectedReport.folio

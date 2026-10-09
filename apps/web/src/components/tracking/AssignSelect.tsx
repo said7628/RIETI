@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getUsers, type ApiUser } from '../../api/users'
+import { getAssignableUsers, type ApiUser } from '../../api/users'
 import Modal from '../shared/Modal'
 
 interface AssignSelectProps {
@@ -14,22 +14,20 @@ function AssignSelect({
   const [staff, setStaff] = useState<ApiUser[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     let active = true
 
-    getUsers()
+    getAssignableUsers()
       .then((users) => {
         if (!active) return
 
-        setStaff(
-          users.filter(
-            (user) =>
-              user.active &&
-              user.roleCode !== 'GESTOR_MUNICIPAL',
-          ),
-        )
+        setStaff(users)
+      })
+      .catch(() => {
+        if (active) setLoadError('No fue posible cargar los titulares disponibles.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -82,6 +80,8 @@ function AssignSelect({
           ))}
         </select>
       </label>
+
+      {loadError && <p role="alert" className="tracking-error">{loadError}</p>}
 
       {selected && (
         <Modal title="Confirmar asignación">

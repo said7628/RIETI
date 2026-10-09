@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   deactivateUser,
+  createUser,
   getUsers,
   updateUser,
   type ApiUser,
@@ -17,6 +19,7 @@ import type { Report } from '../data/shared/reportsData'
 import {
   useReports,
   useSessionUser,
+  refreshReports,
 } from '../data/shared/session'
 
 import { semaforoByStatus } from '../data/shared/catalogs'
@@ -47,10 +50,8 @@ type AccountSort =
 function AccountsPage() {
   const user = useSessionUser()
 
-  const [, setSearchParams] =
-    useSearchParams()
-
-  const view: AccountsView = 'administrar'
+  const [searchParams, setSearchParams] = useSearchParams()
+  const view: AccountsView = searchParams.get('vista') === 'administrar' ? 'administrar' : 'crear'
 
   const isAdmin =
     user?.roleCode === 'ADMINISTRADOR_FUNDACION'
@@ -85,46 +86,185 @@ function AccountsPage() {
   return (
     <main className="accounts-page">
       <div className="accounts-layout">
-        <nav
-          className="accounts-side"
-          aria-label="Secciones de cuentas"
-        >
-
-          <button
-            type="button"
-            className={
-              view === 'administrar'
-                ? 'accounts-side-active'
-                : ''
-            }
-            onClick={() =>
-              openView('administrar')
-            }
-          >
-            Administrar
-          </button>
+        <nav className="accounts-side" aria-label="Secciones de cuentas">
+          <button type="button" className={view === 'crear' ? 'accounts-side-active' : ''}
+            onClick={() => openView('crear')}>Crear cuenta</button>
+          <button type="button" className={view === 'administrar' ? 'accounts-side-active' : ''}
+            onClick={() => openView('administrar')}>Administrar</button>
         </nav>
-
-        <ManageAccounts
-            currentUserId={user.id}
-          />
-
+        {view === 'crear' ? (
+          <CreateAccount onCreated={() => openView('administrar')} />
+        ) : (
+          <ManageAccounts currentUserId={user.id} />
+        )}
       </div>
     </main>
   )
 }
 
 
+function RoleEditor({account, roles, municipalities, dependencies, saving, disabled, onSave}: {
+  account: ApiUser
+  roles: RoleCatalog[]
+  municipalities: MunicipalityCatalog[]
+  dependencies: DependencyCatalog[]
+  saving: boolean
+  disabled: boolean
+  onSave: (roleId: number, municipalityId: number | null, dependencyId: number | null) => void
+}) {
+  const [roleId, setRoleId] = useState<number>(roles.find(r => r.codigo === account.roleCode)?.id ?? 0)
+  const [municipalityId, setMunicipalityId] = useState<number | null>(account.municipalityId)
+  const [dependencyId, setDependencyId] = useState<number | null>(account.dependencyId)
+  const [error, setError] = useState('')
+  const role = roles.find(r => r.id === roleId)
+  const needsMunicipality = Boolean(role && !role.es_administrador && role.acceso_web)
+  const changed = roleId !== (roles.find(r => r.codigo === account.roleCode)?.id ?? 0) || municipalityId !== account.municipalityId || dependencyId !== account.dependencyId
+  function save() {
+    if (!roleId) {setError('Selecciona un rol.');return}
+    if (needsMunicipality && !municipalityId) {setError('Este rol requiere un municipio asignado.');return}
+    setError('')
+    onSave(roleId, needsMunicipality ? municipalityId : null, needsMunicipality ? dependencyId : null)
+  }
+  return <div className="accounts-role-editor">
+    <label className="accounts-field">Cambiar tipo de cuenta
+      <select value={roleId} disabled={saving || disabled} onChange={e => {setRoleId(Number(e.target.value));setError('')}}>
+        {!roleId && <option value={0} disabled>{accountRoleLabel(account)} (rol actual)</option>}
+        {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+      </select>
+    </label>
+    {needsMunicipality && <label className="accounts-field">Municipio asignado
+      <select value={municipalityId ?? ''} disabled={saving || disabled} onChange={e => {setMunicipalityId(e.target.value ? Number(e.target.value) : null);setDependencyId(null)}}>
+        <option value="">Selecciona un municipio</option>
+        {municipalities.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+      </select>
+    </label>}
+    {needsMunicipality && <label className="accounts-field">Dependencia (opcional)
+      <select value={dependencyId ?? ''} disabled={saving || disabled} onChange={e => setDependencyId(e.target.value ? Number(e.target.value) : null)}>
+        <option value="">Sin dependencia</option>
+        {dependencies.filter(d => !d.municipio_id || d.municipio_id === municipalityId).map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
+      </select>
+    </label>}
+    {error && <p className="accounts-error" role="alert">{error}</p>}
+    {disabled && <p>No puedes modificar tus propios permisos desde esta sesión.</p>}
+    <button type="button" className="accounts-dialog-primary" disabled={saving || disabled || !changed} onClick={save}>
+      {saving ? 'Guardando...' : 'Guardar permisos y municipio'}
+    </button>
+  </div>
+}
+
+function CreateAccount({ onCreated }: { onCreated: () => void }) {
+  const [roles, setRoles] = useState<RoleCatalog[]>([])
+  const [municipalities, setMunicipalities] = useState<MunicipalityCatalog[]>([])
+  const [dependencies, setDependencies] = useState<DependencyCatalog[]>([])
+  const [roleId, setRoleId] = useState<number | null>(null)
+  const [municipalityId, setMunicipalityId] = useState<number | null>(null)
+  const [dependencyId, setDependencyId] = useState<number | null>(null)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    Promise.all([getRoles(), getMunicipalities(), getDependencies()])
+      .then(([r, m, d]) => {
+        if (!active) return
+        setRoles(r)
+        setMunicipalities(m)
+        setDependencies(d)
+        setRoleId(r.find(x => x.codigo === 'GESTOR_MUNICIPAL')?.id ?? r[0]?.id ?? null)
+      })
+      .catch(() => { if (active) setError('No fue posible cargar los catálogos de cuentas.') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+  const role = roles.find(r => r.id === roleId)
+  const requiresMunicipality = Boolean(role && !role.es_administrador && role.acceso_web)
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    if (!name.trim() || !email.trim() || !password || !confirmation || !roleId) {
+      setError('Completa el nombre, correo, rol y ambas contraseñas.')
+      return
+    }
+    if (password.length < 10 || password !== confirmation) {
+      setError('La contraseña debe tener al menos 10 caracteres y ambas deben coincidir.')
+      return
+    }
+    if (requiresMunicipality && !municipalityId) {
+      setError('Selecciona el municipio asignado a esta cuenta.')
+      return
+    }
+    setSaving(true)
+    try {
+      await createUser({
+        name: name.trim(), email: email.trim().toLowerCase(), password, roleId,
+        municipalityId: requiresMunicipality ? municipalityId : null,
+        dependencyId: requiresMunicipality ? dependencyId : null,
+      })
+      onCreated()
+    } catch (e) { setError(e instanceof Error ? e.message : 'No fue posible crear la cuenta.') }
+    finally { setSaving(false) }
+  }
+  return (
+    <section className="accounts-panel">
+      <div className="accounts-title"><h1>Crear una nueva cuenta</h1><div className="accounts-title-line" /></div>
+      <form className="accounts-form" onSubmit={event => void submit(event)}>
+        <label className="accounts-field accounts-field-wide">Nombre
+          <input value={name} disabled={saving} onChange={e => setName(e.target.value)} required />
+        </label>
+        <label className="accounts-field">Correo electrónico
+          <input type="email" value={email} disabled={saving} onChange={e => setEmail(e.target.value)} required />
+        </label>
+        <div className="accounts-password-row">
+          <label className="accounts-field">Contraseña
+            <input type="password" autoComplete="new-password" value={password} disabled={saving}
+              onChange={e => setPassword(e.target.value)} required minLength={10} />
+          </label>
+          <label className="accounts-field">Confirmar contraseña
+            <input type="password" autoComplete="new-password" value={confirmation} disabled={saving}
+              onChange={e => setConfirmation(e.target.value)} required minLength={10} />
+          </label>
+        </div>
+        <label className="accounts-field">Tipo de cuenta
+          <select value={roleId ?? ''} disabled={loading || saving} onChange={e => {setRoleId(Number(e.target.value));setMunicipalityId(null);setDependencyId(null)}} required>
+            <option value="" disabled>Selecciona un tipo de cuenta</option>
+            {roles.map(r => <option value={r.id} key={r.id}>{r.nombre}</option>)}
+          </select>
+        </label>
+        {requiresMunicipality && <label className="accounts-field">Municipio asignado
+          <select value={municipalityId ?? ''} disabled={saving} onChange={e => {setMunicipalityId(Number(e.target.value));setDependencyId(null)}} required>
+            <option value="">Selecciona un municipio</option>
+            {municipalities.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+          </select>
+        </label>}
+        {requiresMunicipality && <label className="accounts-field">Dependencia (opcional)
+          <select value={dependencyId ?? ''} disabled={saving} onChange={e => setDependencyId(e.target.value ? Number(e.target.value) : null)}>
+            <option value="">Sin dependencia</option>
+            {dependencies.filter(d => !d.municipio_id || d.municipio_id === municipalityId).map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
+          </select>
+        </label>}
+        {error && <p className="accounts-error" role="alert">{error}</p>}
+        <button type="submit" className="accounts-submit" disabled={loading || saving}>{saving ? 'Creando...' : 'Crear cuenta'}</button>
+      </form>
+    </section>
+  )
+}
+
 function countActiveReports(
   reports: Report[],
   name: string,
+  userId: number,
 ) {
   return reports.filter((report) => {
     const semaforo =
       semaforoByStatus[report.status]
 
     return (
-      report.caseHolder === name &&
+      (report.assignedUserId === userId || (!report.assignedUserId && report.caseHolder === name)) &&
       (semaforo === 'SIN_ATENDER' ||
         semaforo === 'ATENDIENDO')
     )
@@ -173,6 +313,7 @@ function ManageAccounts({
     setError('')
 
     try {
+      void refreshReports().catch(() => undefined)
       const [usersResult, rolesResult, municipalitiesResult, dependenciesResult] =
         await Promise.all([getUsers(), getRoles(), getMunicipalities(), getDependencies()])
 
@@ -209,6 +350,7 @@ function ManageAccounts({
           countActiveReports(
             reports,
             account.name,
+            account.id,
           ),
       }))
       .sort((a, b) => {
@@ -235,27 +377,19 @@ function ManageAccounts({
       })
   }, [accounts, reports, sort])
 
-  async function changeRole(
-    account: ApiUser,
-    roleId: number,
-  ) {
+  async function changeRole(account: ApiUser, roleId: number, municipalityId: number | null, dependencyId: number | null) {
+    if (account.id === currentUserId) {
+      setError('Para proteger la sesión no puedes cambiar tus propios permisos.')
+      return
+    }
     setSaving(true)
     setError('')
-
     try {
-      await updateUser(account.id, {
-        roleId,
-      })
-
+      await updateUser(account.id, {roleId, municipalityId, dependencyId})
       await loadData()
-
       setSelectedUserId(null)
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'No fue posible actualizar la cuenta.',
-      )
+      setError(err instanceof Error ? err.message : 'No fue posible actualizar la cuenta.')
     } finally {
       setSaving(false)
     }
@@ -354,6 +488,9 @@ function ManageAccounts({
         </p>
       )}
 
+      <p className="accounts-metrics-note">
+        Reportes visibles en tu sesión: {reports.length}. La columna «Reportes activos asignados» cuenta únicamente los casos con titular asignado a cada persona; no representa todos los reportes de la fundación.
+      </p>
       <div className="accounts-table-wrap">
         <table className="accounts-table">
           <thead>
@@ -363,7 +500,7 @@ function ManageAccounts({
               <th>Tipo de cuenta</th>
               <th>Estado</th>
               <th>
-                Cantidad de reportes activos
+                Reportes activos asignados
               </th>
             </tr>
           </thead>
@@ -489,50 +626,25 @@ function ManageAccounts({
 
             <p>
               <strong>
-                Cantidad de reportes activos:
+                Reportes activos asignados:
               </strong>{' '}
               {countActiveReports(
                 reports,
                 selected.name,
+                selected.id,
               )}
             </p>
 
-            <label className="accounts-field">
-              Cambiar tipo de cuenta
-
-              <select
-                value={
-                  roles.find(
-                    (role) =>
-                      role.codigo ===
-                      selected.roleCode,
-                  )?.id ?? ''
-                }
-                disabled={saving}
-                onChange={(event) =>
-                  void changeRole(
-                    selected,
-                    Number(
-                      event.target.value,
-                    ),
-                  )
-                }
-              >
-                {!roles.some(role => role.codigo === selected.roleCode) && (
-                  <option value="" disabled>
-                    {accountRoleLabel(selected)} (rol actual)
-                  </option>
-                )}
-                {roles.map((role) => (
-                  <option
-                    key={role.id}
-                    value={role.id}
-                  >
-                    {role.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <RoleEditor
+              key={selected.id}
+              account={selected}
+              roles={roles}
+              municipalities={municipalities}
+              dependencies={dependencies}
+              saving={saving}
+              disabled={selected.id === currentUserId}
+              onSave={(roleId, municipalityId, dependencyId) => void changeRole(selected, roleId, municipalityId, dependencyId)}
+            />
 
             <div className="accounts-dialog-actions">
               {selected.active ? (

@@ -73,7 +73,7 @@ function App() {
         void refreshSession()
       }
     }
-    const interval = window.setInterval(update, 4 * 60 * 1000)
+    const interval = window.setInterval(update, 20 * 1000)
     document.addEventListener('visibilitychange', update)
     window.addEventListener('focus', update)
     return () => {

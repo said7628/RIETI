@@ -276,11 +276,6 @@ function StatisticsSection() {
     [data],
   )
 
-  const sexData = useMemo(
-    () => objectToChart(data?.bySex ?? {}),
-    [data],
-  )
-
   const ageData = useMemo(
     () =>
       objectToChart(
@@ -322,6 +317,7 @@ function StatisticsSection() {
   )
 
   function applyFilters() {
+    if (from && to && from > to) return
     setAppliedFrom(from)
     setAppliedTo(to)
   }
@@ -372,9 +368,12 @@ function StatisticsSection() {
                 id="stats-from"
                 type="date"
                 value={from}
-                onChange={(event) =>
-                  setFrom(event.target.value)
-                }
+                max={to || undefined}
+                onChange={(event) => {
+                  const value = event.target.value
+                  setFrom(value)
+                  if (to && value && value > to) setTo(value)
+                }}
               />
             </div>
 
@@ -387,9 +386,11 @@ function StatisticsSection() {
                 id="stats-to"
                 type="date"
                 value={to}
-                onChange={(event) =>
-                  setTo(event.target.value)
-                }
+                min={from || undefined}
+                onChange={(event) => {
+                  const value = event.target.value
+                  if (!from || !value || value >= from) setTo(value)
+                }}
               />
             </div>
 
@@ -543,45 +544,6 @@ function StatisticsSection() {
                       strokeWidth={3}
                     />
                   </LineChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-
-              <ChartCard
-                title="Distribución por sexo"
-                subtitle="Sexo observado en los reportes"
-              >
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <PieChart>
-                    <Pie
-                      data={sexData}
-                      dataKey="total"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={90}
-                      paddingAngle={3}
-                    >
-                      {sexData.map(
-                        (_, index) => (
-                          <Cell
-                            key={index}
-                            fill={
-                              chartColors[
-                                index %
-                                  chartColors.length
-                              ]
-                            }
-                          />
-                        ),
-                      )}
-                    </Pie>
-
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
                 </ResponsiveContainer>
               </ChartCard>
 
