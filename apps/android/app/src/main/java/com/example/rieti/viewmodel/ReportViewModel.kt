@@ -601,39 +601,36 @@ class ReportViewModel(
      * un folio hasta confirmar que el servidor
      * registró correctamente el reporte.
      */
-    fun sendReport() {
+    private val _sending = MutableStateFlow(false)
+    val sending: StateFlow<Boolean> = _sending.asStateFlow()
+    private val _sendError = MutableStateFlow<String?>(null)
+    val sendError: StateFlow<String?> = _sendError.asStateFlow()
 
-        if (!_isDraftLoaded.value) return
-
-        if (activeDraftId == null) return
-
-        /*
-         * TODO(BACKEND):
-         *
-         * 1. Validar los campos del reporte.
-         *
-         * 2. Preparar la solicitud con la modalidad:
-         *    ANONYMOUS o TRACKING.
-         *
-         * 3. Enviar mediante el repositorio/API.
-         *
-         * 4. Gestionar los errores de conexión.
-         *
-         * 5. Confirmar el registro con la respuesta
-         *    real del servidor.
-         *
-         * 6. Eliminar el borrador únicamente después
-         *    de confirmar el registro exitoso.
-         *
-         * 7. Navegar a ReportSuccessScreen utilizando
-         *    el folio real devuelto por el backend.
-         */
-
+    /** Envia el reporte y sus imagenes sin borrar el borrador ante errores. */
+    suspend fun sendReport(): String? {
+        if (!_isDraftLoaded.value || activeDraftId == null || _sending.value) return null
+        _sending.value = true
+        _sendError.value = null
+        return try {
+            saveDraftNow()
+            val folio = com.example.rieti.data.repository.ReportSubmissionService(
+                getApplication()
+            ).submit(_uiState.value, activeDraftId!!)
+            saveJob?.cancel()
+            repository.deleteDraft(activeDraftId!!)
+            activeDraftId = null
+            _isDraftLoaded.value = false
+            folio
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _sendError.value = e.message ?: "No se pudo enviar el reporte"
+            null
+        } finally {
+            _sending.value = false
+        }
     }
-
-// =============================================================
-// FIN DEL VIEWMODEL
-// =============================================================
-
 }
+
+
 

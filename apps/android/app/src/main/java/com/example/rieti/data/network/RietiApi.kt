@@ -25,4 +25,14 @@ interface RietiApi {
     suspend fun logout(
         @Body request: LogoutRequest
     ): Response<BasicResponse>
+
+    @POST("auth/recovery/request")
+    suspend fun requestRecovery(
+        @Body request: RecoveryRequest
+    ): Response<BasicResponse>
+
+    @POST("auth/recovery/reset")
+    suspend fun resetPassword(
+        @Body request: RecoveryResetRequest
+    ): Response<BasicResponse>
 }

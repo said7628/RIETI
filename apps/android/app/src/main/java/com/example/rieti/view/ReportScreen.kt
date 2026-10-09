@@ -38,6 +38,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,7 +50,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextStyle
@@ -86,7 +90,7 @@ fun ReportScreen(
     onSettingsClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
     onSelectFilesClick: () -> Unit,
-    onSendReportClick: () -> Unit
+    onSendReportClick: (String) -> Unit
 ) {
     ReportFormScreen(
         mode = ReportMode.TRACKING,
@@ -111,7 +115,7 @@ fun ReportFormScreen(
     onSettingsClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
     onSelectFilesClick: () -> Unit,
-    onSendReportClick: () -> Unit,
+    onSendReportClick: (String) -> Unit,
     draftId: String? = null
 ) {
 
@@ -129,6 +133,25 @@ fun ReportFormScreen(
     reportViewModel.draftError.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val sending by reportViewModel.sending.collectAsState()
+    val sendError by reportViewModel.sendError.collectAsState()
+    val picker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        val selected = uris.take(5)
+        selected.forEach { uri ->
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+        }
+        reportViewModel.onEvidenceReferencesChange(
+            (reportState.evidenceReferences + selected.map { it.toString() }).distinct().take(5)
+        )
+    }
+
 
     val colors = AppTheme.colors
 
@@ -538,8 +561,10 @@ fun ReportFormScreen(
                                 3 -> {
 
                                     ReportEvidenceStep(
-                                        onSelectFilesClick =
-                                            onSelectFilesClick,
+                                        onSelectFilesClick = {
+                                            if (!sending) picker.launch(arrayOf("image/jpeg", "image/png", "image/webp"))
+                                        },
+                                        selectedCount = reportState.evidenceReferences.size,
 
                                         onNextClick = {
 
@@ -587,18 +612,17 @@ fun ReportFormScreen(
                                         },
 
                                         onSendReportClick = {
-
-                                            /*
-                                             * TODO(BACKEND):
-                                             *
-                                             * No mostrar éxito hasta que
-                                             * el servidor confirme el
-                                             * registro del reporte.
-                                             *
-                                             * onSendReportClick()
-                                             */
+                                            if (!sending) coroutineScope.launch {
+                                                val folio = reportViewModel.sendReport()
+                                                if (folio != null) onSendReportClick(folio)
+                                            }
                                         }
                                     )
+                                    if (sending) {
+                                        CircularProgressIndicator()
+                                        Text("Enviando reporte e imagenes...")
+                                    }
+                                    sendError?.let { Text(it, color = Color(0xFFD32F2F)) }
                                 }
                             }
                         }
@@ -1111,6 +1135,7 @@ private fun ReportLocationStep(
 @Composable
 private fun ReportEvidenceStep(
     onSelectFilesClick: () -> Unit,
+    selectedCount: Int,
     onNextClick: () -> Unit
 ) {
     Column(
@@ -1135,33 +1160,9 @@ private fun ReportEvidenceStep(
         EvidenceSelector(
             onClick = onSelectFilesClick
         )
+        Text("Imagenes seleccionadas: $selectedCount de 5")
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        // TODO(EVIDENCE):
-        // Mostrar aquí las fotografías seleccionadas
-        // cuando se integre el selector real.
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            repeat(4) { index ->
-                EvidencePlaceholder(
-                    showAdd = index == 0,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        EvidencePlaceholder(
-            showAdd = false,
-            modifier = Modifier
-                .width(76.dp)
-                .height(76.dp)
-        )
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -1196,7 +1197,7 @@ private fun ReportReviewStep(
     onEditLocationClick: () -> Unit,
     onEditEvidenceClick: () -> Unit,
 
-    onSendReportClick: () -> Unit
+    onSendReportClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier

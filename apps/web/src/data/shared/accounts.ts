@@ -1,4 +1,4 @@
-﻿import { useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 import { type UserRole } from './catalogs'
 
 export interface Account {
@@ -11,21 +11,21 @@ export interface Account {
 
 let accounts: Account[] = [
   {
-    name: 'Manolo SÃ¡nchez',
+    name: 'Manolo Sánchez',
     email: 'manolo@rieti.mx',
     password: 'rieti',
     role: 'ADMINISTRADOR_FUNDACION',
     active: true,
   },
   {
-    name: 'JoaquÃ­n MondragÃ³n',
+    name: 'Joaquín Mondragón',
     email: 'joaquin@rieti.mx',
     password: 'rieti',
     role: 'GESTOR_MUNICIPAL',
     active: true,
   },
   {
-    name: 'MarÃ­a Posada',
+    name: 'María Posada',
     email: 'maria@rieti.mx',
     password: 'rieti',
     role: 'GESTOR_MUNICIPAL',
@@ -126,7 +126,7 @@ export function resetPassword(email: string, code: string, password: string) {
     recoveryCode.email !== normalizedEmail ||
     recoveryCode.code !== code.trim()
   ) {
-    return 'El cÃ³digo no coincide.'
+    return 'El código no coincide.'
   }
 
   accounts = accounts.map((account) =>

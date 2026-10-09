@@ -1,4 +1,4 @@
-﻿import {
+import {
   useEffect,
   useMemo,
   useRef,
@@ -103,12 +103,16 @@ function HeatMapSection() {
     }
 
     const map = L.map(mapElementRef.current, {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: true,
     }).setView(
       [19.5576, -99.2655],
       14,
     )
+
+    L.control.zoom({
+      position: 'bottomright',
+    }).addTo(map)
 
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

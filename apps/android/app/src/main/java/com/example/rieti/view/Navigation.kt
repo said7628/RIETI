@@ -1,8 +1,11 @@
 
 package com.example.rieti.view
 
-import android.widget.Toast
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -98,6 +101,10 @@ fun AppNavigation(
         SessionManager(context.applicationContext)
     }
 
+    var lastReportFolio by remember { mutableStateOf("") }
+    var registerBusy by remember { mutableStateOf(false) }
+    var loginBusy by remember { mutableStateOf(false) }
+
     var startDestination by remember {
         mutableStateOf<String?>(null)
     }
@@ -127,6 +134,7 @@ fun AppNavigation(
         return
     }
 
+    Box(Modifier.fillMaxSize()) {
     NavHost(
         navController = navController,
         startDestination = startDestination!!
@@ -172,8 +180,10 @@ fun AppNavigation(
 
             LoginScreen(
                 onLoginClick = { email, password ->
-
+                    if (!loginBusy) {
+                    loginBusy = true
                     scope.launch {
+                        try {
 
                         when (
                             val result = authRepository.login(
@@ -202,13 +212,11 @@ fun AppNavigation(
                             }
 
                             is AuthResult.Error -> {
-                                Toast.makeText(
-                                    context,
-                                    result.message,
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                RietiFeedback.show(result.message, error = true)
                             }
                         }
+                        } finally { loginBusy = false }
+                    }
                     }
                 },
 
@@ -235,7 +243,8 @@ fun AppNavigation(
                 },
 
                 darkTheme = darkTheme,
-                onThemeChange = onThemeChange
+                onThemeChange = onThemeChange,
+                cargando = loginBusy
             )
         }
 
@@ -249,8 +258,10 @@ fun AppNavigation(
 
             RegisterScreen(
                 onCreateAccountClick = { name, email, password ->
-
+                    if (!registerBusy) {
+                    registerBusy = true
                     scope.launch {
+                        try {
 
                         when (
                             val result = authRepository.register(
@@ -262,11 +273,7 @@ fun AppNavigation(
 
                             is AuthResult.Success -> {
 
-                                Toast.makeText(
-                                    context,
-                                    "Cuenta creada correctamente. Inicia sesión.",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                RietiFeedback.show("Cuenta creada correctamente. Inicia sesion.")
 
                                 navController.navigate(
                                     Routes.LOGIN
@@ -282,13 +289,11 @@ fun AppNavigation(
                             }
 
                             is AuthResult.Error -> {
-                                Toast.makeText(
-                                    context,
-                                    result.message,
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                RietiFeedback.show(result.message, error = true)
                             }
                         }
+                        } finally { registerBusy = false }
+                    }
                     }
                 },
 
@@ -307,7 +312,8 @@ fun AppNavigation(
                 },
 
                 darkTheme = darkTheme,
-                onThemeChange = onThemeChange
+                onThemeChange = onThemeChange,
+                cargando = registerBusy
             )
         }
 
@@ -639,18 +645,11 @@ fun AppNavigation(
                      */
                 },
 
-                onSendReportClick = {
-                    /*
-                     * TODO(BACKEND):
-                     *
-                     * Enviar el reporte mediante ViewModel/API.
-                     *
-                     * Navegar a REPORT_SUCCESS únicamente
-                     * cuando el servidor confirme el registro
-                     * y devuelva un folio válido.
-                     *
-                     * No mostrar éxito de forma simulada.
-                     */
+                onSendReportClick = { folio ->
+                    lastReportFolio = folio
+                    navController.navigate(Routes.REPORT_SUCCESS) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -706,15 +705,11 @@ fun AppNavigation(
                      */
                 },
 
-                onSendReportClick = {
-                    /*
-                     * TODO(BACKEND):
-                     *
-                     * Enviar el reporte en modalidad ANONYMOUS.
-                     *
-                     * Navegar a REPORT_SUCCESS únicamente
-                     * cuando el backend confirme el registro.
-                     */
+                onSendReportClick = { folio ->
+                    lastReportFolio = folio
+                    navController.navigate(Routes.REPORT_SUCCESS) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -810,16 +805,12 @@ fun AppNavigation(
                          */
                     },
 
-                    onSendReportClick = {
-                        /*
-                         * TODO(BACKEND):
-                         *
-                         * Enviar reporte recuperado.
-                         *
-                         * No eliminar el borrador ni mostrar
-                         * éxito hasta confirmar el registro.
-                         */
+                    onSendReportClick = { folio ->
+                    lastReportFolio = folio
+                    navController.navigate(Routes.REPORT_SUCCESS) {
+                        launchSingleTop = true
                     }
+                }
                 )
 
             } else {
@@ -858,7 +849,7 @@ fun AppNavigation(
                  * antes de recibir confirmación real.
                  */
 
-                folio = "261908-1017S",
+                folio = lastReportFolio,
 
                 // -------------------------------------------------
                 // CONSULTAR ESTADO
@@ -1270,4 +1261,14 @@ fun AppNavigation(
         }
 
     } // Fin de NavHost
+    RietiMessageOverlay()
+    val loadingMessage = when {
+        registerBusy -> "Creando cuenta..."
+        loginBusy -> "Iniciando sesion..."
+        else -> RietiFeedback.loading
+    }
+    if (loadingMessage != null) {
+        RietiLoadingOverlay(loadingMessage)
+    }
+    } // Fin de Box
 } // Fin de AppNavigation

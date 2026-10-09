@@ -1,10 +1,26 @@
-﻿const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL
 
 if (!API_URL) {
   throw new Error('VITE_API_URL no está configurada')
 }
 
 let accessToken = sessionStorage.getItem('rieti_access_token')
+
+export class ApiError extends Error {
+  status: number
+  code: string | null
+
+  constructor(
+    message: string,
+    status: number,
+    code: string | null = null,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
 
 export function setAccessToken(token: string | null) {
   accessToken = token
@@ -42,8 +58,10 @@ export async function apiRequest<T>(
       headers,
     })
   } catch {
-    throw new Error(
+    throw new ApiError(
       'No fue posible conectar con el servidor. Verifica tu conexión e intenta nuevamente.',
+      0,
+      'NETWORK_ERROR',
     )
   }
 
@@ -60,32 +78,40 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    if (response.status === 401) {
-      setAccessToken(null)
-    }
+    const code =
+      typeof data?.error?.code === 'string'
+        ? data.error.code
+        : null
 
-    if (data?.error?.message) {
-      throw new Error(data.error.message)
-    }
-
-    if (data?.message) {
-      throw new Error(data.message)
-    }
+    const serverMessage =
+      typeof data?.error?.message === 'string'
+        ? data.error.message
+        : typeof data?.message === 'string'
+          ? data.message
+          : null
 
     if (response.status >= 500) {
-      throw new Error(
-        `El servidor presentó un problema temporal (HTTP ${response.status}). Intenta nuevamente.`,
+      throw new ApiError(
+        serverMessage ??
+          `El servidor presentó un problema temporal (HTTP ${response.status}). Intenta nuevamente.`,
+        response.status,
+        code,
       )
     }
 
-    throw new Error(
-      `La solicitud no pudo completarse (HTTP ${response.status}).`,
+    throw new ApiError(
+      serverMessage ??
+        `La solicitud no pudo completarse (HTTP ${response.status}).`,
+      response.status,
+      code,
     )
   }
 
   if (data === null) {
-    throw new Error(
+    throw new ApiError(
       `El servidor devolvió una respuesta inválida (HTTP ${response.status}).`,
+      response.status,
+      'INVALID_RESPONSE',
     )
   }
 

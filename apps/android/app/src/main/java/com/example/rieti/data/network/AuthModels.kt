@@ -53,6 +53,16 @@ data class LogoutRequest(
     val refreshToken: String
 )
 
+data class RecoveryRequest(
+    val email: String
+)
+
+data class RecoveryResetRequest(
+    val email: String,
+    val code: String,
+    val password: String
+)
+
 data class BasicResponse(
     val ok: Boolean,
     val message: String? = null

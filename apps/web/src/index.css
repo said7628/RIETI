@@ -2819,3 +2819,144 @@ a {
   }
 }
 
+
+
+/* =========================================================
+   QA FIXES — 2026-10-08
+   ========================================================= */
+
+/* Mantiene nombre/usuario con el mismo tamaño y anclaje entre vistas. */
+.topbar-brand-slot {
+  flex: 0 0 clamp(160px, 13vw, 230px);
+  min-width: 0;
+}
+
+.topbar-nav {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 0;
+  justify-content: flex-start;
+}
+
+.topbar-user-slot {
+  flex: 0 0 190px;
+  min-width: 190px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.topbar-user-slot .user-menu,
+.topbar-user-slot .user-button {
+  width: 190px;
+  min-width: 190px;
+}
+
+.topbar-user-slot .user-button {
+  min-height: 46px;
+  padding: 9px 16px;
+  font-size: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* El texto libre nunca debe romper el layout aunque no tenga espacios. */
+.report-information,
+.report-information p,
+.report-description,
+.report-description p,
+.report-details-modal,
+.report-details-modal p,
+.report-solution,
+.report-solution p {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.report-description p,
+.report-solution p {
+  white-space: pre-wrap;
+}
+
+.report-solution {
+  margin: 14px 0;
+}
+
+.report-solution > strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.report-solution > p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Modal de estatus: feedback visible y protección de doble envío. */
+.modal-help {
+  margin: -4px 0 12px;
+  color: #555;
+  font-size: 13px;
+}
+
+.modal-saving-message {
+  margin: 12px 0 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e7fffb;
+  color: #000;
+  font-weight: 700;
+  text-align: center;
+}
+
+.modal-field textarea {
+  resize: vertical;
+  min-height: 130px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.modal-buttons button:disabled,
+.button-primary:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+/* Leaflet: controles dentro de la esquina inferior, lejos de la navbar. */
+.leaflet-bottom.leaflet-right {
+  z-index: 500;
+}
+
+.report-location-map .leaflet-control-zoom,
+.heatmap-map .leaflet-control-zoom {
+  margin-right: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1440px) {
+  .topbar-user-slot,
+  .topbar-user-slot .user-menu,
+  .topbar-user-slot .user-button {
+    width: 170px;
+    min-width: 170px;
+  }
+
+  .topbar-user-slot .user-button {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .topbar-brand-slot {
+    flex-basis: 120px;
+  }
+
+  .topbar-user-slot,
+  .topbar-user-slot .user-menu,
+  .topbar-user-slot .user-button {
+    width: 150px;
+    min-width: 150px;
+  }
+}

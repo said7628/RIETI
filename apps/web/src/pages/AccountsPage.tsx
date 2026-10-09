@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -635,6 +635,31 @@ function ManageAccounts({
     }
   }
 
+  async function reactivateAccount(
+    account: ApiUser,
+  ) {
+    setSaving(true)
+    setError('')
+
+    try {
+      await updateUser(account.id, {
+        active: true,
+      })
+
+      await loadData()
+
+      setSelectedUserId(null)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No fue posible reactivar la cuenta.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <section className="accounts-panel">
@@ -845,26 +870,42 @@ function ManageAccounts({
             </label>
 
             <div className="accounts-dialog-actions">
-              <button
-                type="button"
-                className="accounts-dialog-secondary"
-                disabled={
-                  saving ||
-                  selected.id ===
-                    currentUserId ||
-                  !selected.active
-                }
-                onClick={() =>
-                  setConfirmDelete(true)
-                }
-              >
-                {selected.id ===
-                currentUserId
-                  ? 'Sesión actual'
-                  : selected.active
-                    ? 'Desactivar cuenta'
-                    : 'Cuenta inactiva'}
-              </button>
+              {selected.active ? (
+                <button
+                  type="button"
+                  className="accounts-dialog-secondary"
+                  disabled={
+                    saving ||
+                    selected.id ===
+                      currentUserId
+                  }
+                  onClick={() =>
+                    setConfirmDelete(true)
+                  }
+                >
+                  {selected.id ===
+                  currentUserId
+                    ? 'Sesión actual'
+                    : saving
+                      ? 'Guardando...'
+                      : 'Desactivar cuenta'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="accounts-dialog-primary"
+                  disabled={saving}
+                  onClick={() =>
+                    void reactivateAccount(
+                      selected,
+                    )
+                  }
+                >
+                  {saving
+                    ? 'Reactivando...'
+                    : 'Reactivar cuenta'}
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -355,9 +355,9 @@ function StatisticsSection() {
         <div className="analytics-filters">
           <div className="analytics-filter-header">
             <div>
-              <strong>Periodo de an?lisis</strong>
+              <strong>Periodo de análisis</strong>
               <span>
-                Filtra todas las m?tricas y gr?ficas por fecha de registro.
+                Filtra todas las métricas y gráficas por fecha de registro.
               </span>
             </div>
           </div>

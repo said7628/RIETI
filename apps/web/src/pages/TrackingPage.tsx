@@ -94,6 +94,9 @@ function TrackingPage() {
   const [actionError, setActionError] =
     useState('')
 
+  const [isSavingStatus, setIsSavingStatus] =
+    useState(false)
+
   const colonias = [
     ...new Set(
       reports.map(
@@ -185,9 +188,10 @@ function TrackingPage() {
     status: ReportStatus,
     solution: string | null,
   ) {
-    if (!selectedReport) return
+    if (!selectedReport || isSavingStatus) return
 
     setActionError('')
+    setIsSavingStatus(true)
 
     try {
       await updateReportApi(
@@ -198,15 +202,23 @@ function TrackingPage() {
         },
       )
 
-      await refreshReports()
-
       setIsStatusModalOpen(false)
+
+      void refreshReports().catch((error) => {
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : 'El cambio se guardó, pero no fue posible refrescar la lista.',
+        )
+      })
     } catch (error) {
       setActionError(
         error instanceof Error
           ? error.message
           : 'No fue posible actualizar el estatus.',
       )
+    } finally {
+      setIsSavingStatus(false)
     }
   }
 
@@ -415,6 +427,7 @@ function TrackingPage() {
         selectedReport && (
           <UpdateStatusModal
             report={selectedReport}
+            saving={isSavingStatus}
             onCancel={() =>
               setIsStatusModalOpen(
                 false,

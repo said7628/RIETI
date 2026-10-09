@@ -17,7 +17,7 @@ fun AnonymousReportScreen(
     onSettingsClick: () -> Unit,
     onCurrentLocationClick: () -> Unit,
     onSelectFilesClick: () -> Unit,
-    onSendReportClick: () -> Unit
+    onSendReportClick: (String) -> Unit
 ) {
 
     /*

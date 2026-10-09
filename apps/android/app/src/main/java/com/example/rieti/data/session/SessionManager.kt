@@ -71,6 +71,23 @@ class SessionManager(
             .apply()
     }
 
+    fun saveRecoveryEmail(
+        email: String
+    ) {
+        prefs.edit()
+            .putString(
+                "recovery_email",
+                email.trim().lowercase()
+            )
+            .apply()
+    }
+
+    fun recoveryEmail(): String? =
+        prefs.getString(
+            "recovery_email",
+            null
+        )
+
     fun accessToken(): String? =
         prefs.getString(
             "access_token",

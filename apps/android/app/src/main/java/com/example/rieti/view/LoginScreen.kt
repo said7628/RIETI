@@ -65,7 +65,8 @@ fun LoginScreen(
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
     darkTheme: Boolean,
-    onThemeChange: () -> Unit
+    onThemeChange: () -> Unit,
+    cargando: Boolean = false
 ) {
 
     // =========================================================
@@ -160,9 +161,6 @@ fun LoginScreen(
     // que permita regresarlo a false.
     // =========================================================
 
-    var cargando by remember {
-        mutableStateOf(false)
-    }
 
 
     // =========================================================

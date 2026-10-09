@@ -1,4 +1,4 @@
-﻿import {
+import {
   useEffect,
   useRef,
   useState,
@@ -47,13 +47,17 @@ function ReportLocationMap({
     }
 
     const map = L.map(elementRef.current, {
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: true,
       scrollWheelZoom: false,
     }).setView(
       [latitude, longitude],
       16,
     )
+
+    L.control.zoom({
+      position: 'bottomright',
+    }).addTo(map)
 
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -229,10 +233,10 @@ function ReportDetail({
         </div>
 
         {report.solution && (
-          <p>
-            <strong>Solución:</strong>{' '}
-            {report.solution}
-          </p>
+          <div className="report-solution">
+            <strong>Solución:</strong>
+            <p>{report.solution}</p>
+          </div>
         )}
       </div>
 

@@ -1,5 +1,5 @@
-﻿/* =========================
-   PÃGINA DE SEGUIMIENTO
+/* =========================
+   PÁGINA DE SEGUIMIENTO
    ========================= */
 
 .tracking-page {
@@ -29,7 +29,7 @@
 
 
 /* =========================
-   MENÃš LATERAL
+   MENÚ LATERAL
    ========================= */
 
 .sidebar {
@@ -99,7 +99,7 @@
 }
 
 .sidebar-nav {
-  /* Ancho fijo para que el texto no se reacomode mientras el menÃº se anima. */
+  /* Ancho fijo para que el texto no se reacomode mientras el menú se anima. */
   width: 220px;
 
   display: flex;
@@ -148,7 +148,7 @@
 
 
 /* =========================
-   BARRA DE BÃšSQUEDA Y FILTROS
+   BARRA DE BÚSQUEDA Y FILTROS
    ========================= */
 
 .tracking-toolbar {
@@ -259,7 +259,7 @@
 
 
 /* =========================
-   PAGINACIÃ“N
+   PAGINACIÓN
    ========================= */
 
 .pagination {
@@ -305,7 +305,7 @@
   position: sticky;
   top: 24px;
 
-  /* Cabe en el alto visible: barra, pie y el padding de esta pÃ¡gina. */
+  /* Cabe en el alto visible: barra, pie y el padding de esta página. */
   height: calc(100vh - 95px - 78px - 48px);
 
   overflow-x: hidden;
@@ -349,7 +349,7 @@
 
 
 /* =========================
-   BOTONES Y VENTANAS DE CONFIRMACIÃ“N
+   BOTONES Y VENTANAS DE CONFIRMACIÓN
    ========================= */
 
 .button-primary {
@@ -531,7 +531,7 @@
 
 
 /* =========================
-   PIE DE PÃGINA
+   PIE DE PÁGINA
    ========================= */
 
 .footer {
@@ -568,3 +568,21 @@
 }
 
 
+
+
+/* QA: cadenas largas no deben salir del panel ni del modal. */
+.tracking-content .report-detail-card,
+.report-details-modal,
+.report-details-modal p,
+.report-details-modal .report-description p,
+.report-details-modal .report-solution,
+.report-details-modal .report-solution p {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.report-details-modal .report-solution p {
+  white-space: pre-wrap;
+}

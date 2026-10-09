@@ -1,5 +1,9 @@
 import { useSyncExternalStore } from 'react'
-import { apiRequest, setAccessToken } from '../../api/api'
+import {
+  ApiError,
+  apiRequest,
+  setAccessToken,
+} from '../../api/api'
 import type { UserRole } from './catalogs'
 import type { Report } from './reportsData'
 
@@ -16,16 +20,14 @@ export interface SessionUser {
 
 interface LoginResponse {
   ok: boolean
-  user: {
-    id: number
-    name: string
-    email: string
-    role: UserRole
-    roleCode: string
-    roleName: string
-    municipalityId: number | null
-    dependencyId: number | null
-  }
+  user: SessionUser
+  accessToken: string
+  refreshToken: string
+}
+
+interface RefreshResponse {
+  ok: boolean
+  user: SessionUser
   accessToken: string
   refreshToken: string
 }
@@ -35,18 +37,52 @@ interface ReportsResponse {
   reports: Report[]
 }
 
-const savedUser = sessionStorage.getItem('rieti_user')
+function readSavedUser(): SessionUser | null {
+  const raw = sessionStorage.getItem('rieti_user')
 
-let user: SessionUser | null = savedUser
-  ? JSON.parse(savedUser)
-  : null
+  if (!raw) {
+    return null
+  }
 
+  try {
+    return JSON.parse(raw) as SessionUser
+  } catch {
+    sessionStorage.removeItem('rieti_user')
+    return null
+  }
+}
+
+let user: SessionUser | null = readSavedUser()
 let reports: Report[] = []
 
 const listeners = new Set<() => void>()
+let refreshSessionPromise: Promise<boolean> | null = null
 
 function emit() {
   listeners.forEach((listener) => listener())
+}
+
+function saveSession(
+  nextUser: SessionUser,
+  accessToken: string,
+  refreshToken?: string,
+) {
+  user = nextUser
+  setAccessToken(accessToken)
+
+  sessionStorage.setItem(
+    'rieti_user',
+    JSON.stringify(nextUser),
+  )
+
+  if (refreshToken) {
+    sessionStorage.setItem(
+      'rieti_refresh_token',
+      refreshToken,
+    )
+  }
+
+  emit()
 }
 
 export function subscribeSession(listener: () => void) {
@@ -80,23 +116,18 @@ export async function login(email: string, password: string) {
       }),
     })
 
-    setAccessToken(response.accessToken)
-
-    sessionStorage.setItem(
-      'rieti_refresh_token',
+    saveSession(
+      response.user,
+      response.accessToken,
       response.refreshToken,
     )
 
-    user = response.user
-
-    sessionStorage.setItem(
-      'rieti_user',
-      JSON.stringify(user),
-    )
-
-    await refreshReports()
-
-    emit()
+    try {
+      await refreshReports()
+    } catch {
+      // El login ya fue válido. Un fallo temporal cargando reportes
+      // no debe invalidar la sesión recién creada.
+    }
 
     return null
   } catch (error) {
@@ -106,7 +137,46 @@ export async function login(email: string, password: string) {
   }
 }
 
-export async function refreshSession() {
+async function renewSessionWithRefreshToken() {
+  const refreshToken =
+    sessionStorage.getItem('rieti_refresh_token')
+
+  if (!refreshToken) {
+    return false
+  }
+
+  try {
+    const response = await apiRequest<RefreshResponse>(
+      '/auth/refresh',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          refreshToken,
+        }),
+      },
+    )
+
+    saveSession(
+      response.user,
+      response.accessToken,
+      response.refreshToken,
+    )
+
+    return true
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      (error.status === 401 ||
+        error.status === 403)
+    ) {
+      logout()
+    }
+
+    return false
+  }
+}
+
+async function refreshSessionInternal() {
   try {
     const response = await apiRequest<{
       ok: boolean
@@ -120,15 +190,59 @@ export async function refreshSession() {
       JSON.stringify(user),
     )
 
-    await refreshReports()
-
     emit()
 
+    try {
+      await refreshReports()
+    } catch {
+      // Mantener sesión aunque falle temporalmente /reportes.
+    }
+
     return true
-  } catch {
-    logout()
-    return false
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      error.status === 401
+    ) {
+      const renewed =
+        await renewSessionWithRefreshToken()
+
+      if (!renewed) {
+        return false
+      }
+
+      try {
+        await refreshReports()
+      } catch {
+        // Sesión renovada correctamente; no expulsar al usuario.
+      }
+
+      return true
+    }
+
+    if (
+      error instanceof ApiError &&
+      error.status === 403
+    ) {
+      logout()
+      return false
+    }
+
+    // Network error / 5xx / abort temporal:
+    // conservar la sesión local en lugar de expulsar al usuario.
+    return Boolean(user)
   }
+}
+
+export function refreshSession() {
+  if (!refreshSessionPromise) {
+    refreshSessionPromise =
+      refreshSessionInternal().finally(() => {
+        refreshSessionPromise = null
+      })
+  }
+
+  return refreshSessionPromise
 }
 
 export async function refreshReports() {
@@ -138,7 +252,8 @@ export async function refreshReports() {
     return
   }
 
-  const response = await apiRequest<ReportsResponse>('/reportes')
+  const response =
+    await apiRequest<ReportsResponse>('/reportes')
 
   reports = response.reports
   emit()

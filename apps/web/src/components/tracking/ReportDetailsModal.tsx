@@ -92,9 +92,10 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
         </div>
 
         {report.solution && (
-          <p>
-            <strong>Solución:</strong> {report.solution}
-          </p>
+          <div className="report-solution">
+            <strong>Solución:</strong>
+            <p>{report.solution}</p>
+          </div>
         )}
 
         <h3>Evidencia fotográfica</h3>

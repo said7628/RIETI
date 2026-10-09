@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getUsers, type ApiUser } from '../../api/users'
 import Modal from '../shared/Modal'
 
@@ -84,9 +84,9 @@ function AssignSelect({
       </label>
 
       {selected && (
-        <Modal title="Confirmar asignaciÃ³n">
+        <Modal title="Confirmar asignación">
           <p>
-            Â¿Asignar el reporte{' '}
+            ¿Asignar el reporte{' '}
             <strong>{folio}</strong> a{' '}
             <strong>{selected.name}</strong>?
           </p>

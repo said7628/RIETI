@@ -22,48 +22,11 @@ const pool = mysql.createPool({
 const s3 = new S3Client({ region: process.env.AWS_REGION || "us-east-1" });
 
 const STATUS_NAME_TO_CODE = new Map([
-  ["Registrado","REGISTRADO"],["En revisiÃ³n","EN_REVISION"],["En seguimiento","EN_SEGUIMIENTO"],
+  ["Registrado","REGISTRADO"],["En revisión","EN_REVISION"],["En seguimiento","EN_SEGUIMIENTO"],
   ["Canalizado","CANALIZADO"],["Concluido","CONCLUIDO"],["Archivado","ARCHIVADO"],
   ["Cancelado","CANCELADO"],["Reincidente","REINCIDENTE"]
 ])
 
-const ALLOWED_STATUS_TRANSITIONS = new Map([
-  ["REGISTRADO", new Set([
-    "EN_REVISION",
-    "REINCIDENTE",
-    "CANCELADO",
-  ])],
-
-  ["REINCIDENTE", new Set([
-    "EN_REVISION",
-    "CANCELADO",
-  ])],
-
-  ["EN_REVISION", new Set([
-    "EN_SEGUIMIENTO",
-    "CANALIZADO",
-    "CANCELADO",
-  ])],
-
-  ["EN_SEGUIMIENTO", new Set([
-    "CANALIZADO",
-    "CONCLUIDO",
-    "CANCELADO",
-  ])],
-
-  ["CANALIZADO", new Set([
-    "EN_SEGUIMIENTO",
-    "CONCLUIDO",
-    "CANCELADO",
-  ])],
-
-  ["CONCLUIDO", new Set([
-    "ARCHIVADO",
-  ])],
-
-  ["ARCHIVADO", new Set([])],
-  ["CANCELADO", new Set([])],
-]);
 
 function httpError(status, code, message, details) {
   const e = new Error(message); e.status=status; e.code=code; e.details=details; return e;
@@ -79,7 +42,7 @@ function parseBody(event) {
   try {
     const raw = event.isBase64Encoded ? Buffer.from(event.body,"base64").toString("utf8") : event.body;
     return JSON.parse(raw);
-  } catch { throw httpError(400,"INVALID_JSON","El cuerpo JSON no es vÃ¡lido"); }
+  } catch { throw httpError(400,"INVALID_JSON","El cuerpo JSON no es válido"); }
 }
 function getRequest(event) {
   const method=(event?.requestContext?.http?.method || event.httpMethod || "GET").toUpperCase();
@@ -102,14 +65,14 @@ function signAccessToken(user) {
 }
 function verifyAccessToken(token) {
   const secret=process.env.JWT_SECRET;
-  if(!secret || !token) throw httpError(401,"UNAUTHORIZED","SesiÃ³n invÃ¡lida");
+  if(!secret || !token) throw httpError(401,"UNAUTHORIZED","Sesión inválida");
   const parts=token.split(".");
-  if(parts.length!==3) throw httpError(401,"UNAUTHORIZED","SesiÃ³n invÃ¡lida");
+  if(parts.length!==3) throw httpError(401,"UNAUTHORIZED","Sesión inválida");
   const [h,p,s]=parts, expected=crypto.createHmac("sha256",secret).update(`${h}.${p}`).digest("base64url");
   const a=Buffer.from(s), b=Buffer.from(expected);
-  if(a.length!==b.length || !crypto.timingSafeEqual(a,b)) throw httpError(401,"UNAUTHORIZED","SesiÃ³n invÃ¡lida");
+  if(a.length!==b.length || !crypto.timingSafeEqual(a,b)) throw httpError(401,"UNAUTHORIZED","Sesión inválida");
   const payload=JSON.parse(Buffer.from(p,"base64url").toString("utf8"));
-  if(!payload.exp || payload.exp < Math.floor(Date.now()/1000)) throw httpError(401,"TOKEN_EXPIRED","La sesiÃ³n expirÃ³");
+  if(!payload.exp || payload.exp < Math.floor(Date.now()/1000)) throw httpError(401,"TOKEN_EXPIRED","La sesión expiró");
   return payload;
 }
 function bearer(headers){ const m=/^Bearer\s+(.+)$/i.exec(headers.authorization||""); return m?.[1]||null; }
@@ -408,7 +371,7 @@ async function refreshSession(req){
   try{
     await conn.beginTransaction();
     const [ss]=await conn.execute(`SELECT * FROM sesiones WHERE refresh_token_hash=? AND revocada_at IS NULL AND expira_at>UTC_TIMESTAMP(6) LIMIT 1 FOR UPDATE`,[sha256(token)]);
-    const s=ss[0]; if(!s) throw httpError(401,"INVALID_REFRESH_TOKEN","SesiÃ³n invÃ¡lida o vencida");
+    const s=ss[0]; if(!s) throw httpError(401,"INVALID_REFRESH_TOKEN","Sesión inválida o vencida");
     const [us]=await conn.execute(`SELECT u.*,r.codigo rol_codigo,r.nombre rol_nombre,r.acceso_web,r.acceso_android,r.es_administrador
       FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE u.id=? LIMIT 1`,[s.usuario_id]);
     const user=us[0]; if(!user||!user.activo) throw httpError(401,"UNAUTHORIZED","Cuenta inactiva");
@@ -433,7 +396,7 @@ async function bootstrapAdmin(req){
   const [cnt]=await pool.query(`SELECT COUNT(*) n FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE r.es_administrador=1 AND r.acceso_web=1 AND u.activo=1`);
   if(Number(cnt[0].n)>0) throw httpError(409,"ADMIN_EXISTS","Ya existe un administrador web activo");
   const name=String(req.body.name||"").trim(), email=String(req.body.email||"").trim().toLowerCase(), password=String(req.body.password||"");
-  if(!name||!email||password.length<10) throw httpError(400,"INVALID_INPUT","Nombre, correo y contraseÃ±a de al menos 10 caracteres son obligatorios");
+  if(!name||!email||password.length<10) throw httpError(400,"INVALID_INPUT","Nombre, correo y contraseña de al menos 10 caracteres son obligatorios");
   const roleCode=String(req.body.roleCode||"ADMINISTRADOR_FUNDACION").trim().toUpperCase();
   const [roles]=await pool.execute(`SELECT id FROM roles WHERE codigo=? AND es_administrador=1 AND acceso_web=1 AND activo=1 LIMIT 1`,[roleCode]);
   if(!roles[0]) throw httpError(500,"ADMIN_ROLE_MISSING","No existe el rol administrador web solicitado");
@@ -466,12 +429,12 @@ async function createUser(req){
   await requireUser(req,{web:true,admin:true});
   const {name,email,password,roleId,municipalityId=null,dependencyId=null,phone=null}=req.body;
   if(!name||!email||!password||!roleId) throw httpError(400,"INVALID_INPUT","Faltan datos obligatorios");
-  if(String(password).length<10) throw httpError(400,"WEAK_PASSWORD","La contraseÃ±a debe tener al menos 10 caracteres");
+  if(String(password).length<10) throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");
   try{
     await pool.execute(`INSERT INTO usuarios(uuid,rol_id,municipio_id,dependencia_id,nombre,correo,telefono,password_hash,activo,created_at,updated_at)
       VALUES(?,?,?,?,?,?,?,?,1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))`,
       [crypto.randomUUID(),roleId,municipalityId,dependencyId,String(name).trim(),String(email).trim().toLowerCase(),phone,await bcrypt.hash(String(password),12)]);
-  }catch(e){ if(e.code==="ER_DUP_ENTRY") throw httpError(409,"EMAIL_EXISTS","Ese correo ya estÃ¡ registrado"); throw e; }
+  }catch(e){ if(e.code==="ER_DUP_ENTRY") throw httpError(409,"EMAIL_EXISTS","Ese correo ya está registrado"); throw e; }
   return response(201,{ok:true});
 }
 async function updateUser(req,id){
@@ -479,7 +442,7 @@ async function updateUser(req,id){
   const allowed={name:"nombre",roleId:"rol_id",municipalityId:"municipio_id",dependencyId:"dependencia_id",phone:"telefono",active:"activo"};
   const sets=[],params=[];
   for(const [k,c] of Object.entries(allowed)) if(Object.hasOwn(req.body,k)){sets.push(`${c}=?`);params.push(req.body[k]);}
-  if(req.body.password){if(String(req.body.password).length<10)throw httpError(400,"WEAK_PASSWORD","La contraseÃ±a debe tener al menos 10 caracteres");sets.push("password_hash=?");params.push(await bcrypt.hash(String(req.body.password),12));}
+  if(req.body.password){if(String(req.body.password).length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");sets.push("password_hash=?");params.push(await bcrypt.hash(String(req.body.password),12));}
   if(!sets.length) throw httpError(400,"NO_CHANGES","No hay cambios");
   sets.push("updated_at=UTC_TIMESTAMP(6)");params.push(id);
   await pool.execute(`UPDATE usuarios SET ${sets.join(",")} WHERE id=?`,params);
@@ -585,7 +548,7 @@ function requirePermission(user,permission){
     throw httpError(
       403,
       "ROLE_REQUIRED",
-      "El usuario no tiene rol vÃ¡lido"
+      "El usuario no tiene rol válido"
     )
   }
 
@@ -595,7 +558,7 @@ function requirePermission(user,permission){
     throw httpError(
       403,
       "FORBIDDEN",
-      "No tienes permiso para realizar esta acciÃ³n"
+      "No tienes permiso para realizar esta acción"
     )
   }
 }
@@ -621,7 +584,7 @@ async function createReport(req){
   if(!riskId) riskId=await lookupId("niveles_riesgo","MEDIO","codigo") || await lookupId("niveles_riesgo","Medio");
   const[st]=await pool.query(`SELECT id FROM estatus_operacionales WHERE codigo='REGISTRADO' OR LOWER(nombre)='registrado' ORDER BY id LIMIT 1`);
   const[pr]=await pool.query(`SELECT id FROM prioridades WHERE codigo='MEDIA' OR LOWER(nombre)='media' ORDER BY id LIMIT 1`);
-  if(!municipalityId||!ageId||!workId||!riskId||!st[0]||!pr[0]) throw httpError(400,"CATALOG_VALUE_MISSING","No se pudieron resolver catÃ¡logos requeridos");
+  if(!municipalityId||!ageId||!workId||!riskId||!st[0]||!pr[0]) throw httpError(400,"CATALOG_VALUE_MISSING","No se pudieron resolver catálogos requeridos");
   const lat=Number(b.latitude),lon=Number(b.longitude); if(!Number.isFinite(lat)||!Number.isFinite(lon))throw httpError(400,"LOCATION_REQUIRED","Latitud y longitud son obligatorias");
   const raw=String(b.children||b.nnaEstimate||"1"), nna=Number(raw)>=5?"5_MAS":(["1","2","3","4"].includes(raw)?raw:"1");
   const conn=await pool.getConnection();
@@ -713,7 +676,7 @@ async function updateReport(req,key){
         throw httpError(
           400,
           "INVALID_PRIORITY",
-          "Prioridad invÃ¡lida"
+          "Prioridad inválida"
         )
       }
 
@@ -750,7 +713,7 @@ async function updateReport(req,key){
         throw httpError(
           400,
           "INVALID_STATUS",
-          "Estatus invÃ¡lido"
+          "Estatus inválido"
         )
       }
 
@@ -758,19 +721,6 @@ async function updateReport(req,key){
 
       const currentStatus=r.estatus_codigo
       const nextStatus=newStatus.codigo
-
-      if(nextStatus!==currentStatus){
-        const allowed=
-          ALLOWED_STATUS_TRANSITIONS.get(currentStatus)
-
-        if(!allowed || !allowed.has(nextStatus)){
-          throw httpError(
-            409,
-            "INVALID_STATUS_TRANSITION",
-            `No se permite cambiar de ${currentStatus} a ${nextStatus}`
-          )
-        }
-      }
 
       const solution=String(
         req.body.solution ||
@@ -785,7 +735,7 @@ async function updateReport(req,key){
         throw httpError(
           400,
           "SOLUTION_REQUIRED",
-          "Debes registrar la soluciÃ³n"
+          "Debes registrar la solución"
         )
       }
 
@@ -797,8 +747,10 @@ async function updateReport(req,key){
         params.push(req.body.solution||null)
       }
 
-      if(nextStatus==="CONCLUIDO"){
-        sets.push("cerrado_at=UTC_TIMESTAMP(6)")
+      if(["CONCLUIDO","ARCHIVADO"].includes(nextStatus)){
+        sets.push("cerrado_at=COALESCE(cerrado_at,UTC_TIMESTAMP(6))")
+      }else{
+        sets.push("cerrado_at=NULL")
       }
     }else if(Object.hasOwn(req.body,"solution")){
       sets.push("descripcion_solucion=?")
@@ -1024,7 +976,7 @@ async function assignReport(req,key){
         throw httpError(
           400,
           "DEPENDENCY_INACTIVE",
-          "La dependencia seleccionada estÃ¡ inactiva"
+          "La dependencia seleccionada está inactiva"
         )
       }
 
@@ -1197,7 +1149,7 @@ async function recoveryRequest(req){
   if(!rows[0]){
     return response(200,{
       ok:true,
-      message:"Si existe una cuenta activa con ese correo, recibirÃ¡s un cÃ³digo de recuperaciÃ³n."
+      message:"Si existe una cuenta activa con ese correo, recibirás un código de recuperación."
     })
   }
 
@@ -1261,7 +1213,7 @@ async function recoveryRequest(req){
         from:emailFrom,
         to:[user.correo],
         reply_to:replyTo,
-        subject:"CÃ³digo para recuperar tu contraseÃ±a de RIETI",
+        subject:"Código para recuperar tu contraseña de RIETI",
         html:`
           <div style="
             font-family:Arial,Helvetica,sans-serif;
@@ -1292,7 +1244,7 @@ async function recoveryRequest(req){
               padding:30px 28px;
             ">
               <h2 style="margin-top:0">
-                RecuperaciÃ³n de contraseÃ±a
+                Recuperación de contraseña
               </h2>
 
               <p>
@@ -1301,11 +1253,11 @@ async function recoveryRequest(req){
 
               <p>
                 Recibimos una solicitud para cambiar
-                la contraseÃ±a de tu cuenta en RIETI.
+                la contraseña de tu cuenta en RIETI.
               </p>
 
               <p>
-                Usa el siguiente cÃ³digo:
+                Usa el siguiente código:
               </p>
 
               <div style="
@@ -1322,14 +1274,14 @@ async function recoveryRequest(req){
               </div>
 
               <p>
-                El cÃ³digo vence en <strong>15 minutos</strong>.
+                El código vence en <strong>15 minutos</strong>.
               </p>
 
               <p style="
                 color:#666;
                 font-size:13px;
               ">
-                Si tÃº no solicitaste este cambio,
+                Si tú no solicitaste este cambio,
                 puedes ignorar este mensaje.
               </p>
             </div>
@@ -1354,17 +1306,17 @@ async function recoveryRequest(req){
     throw httpError(
       502,
       "EMAIL_SEND_FAILED",
-      "No fue posible enviar el correo de recuperaciÃ³n"
+      "El servicio de correo de recuperación no está disponible temporalmente"
     )
   }
 
   return response(200,{
     ok:true,
-    message:"Si existe una cuenta activa con ese correo, recibirÃ¡s un cÃ³digo de recuperaciÃ³n."
+    message:"Si existe una cuenta activa con ese correo, recibirás un código de recuperación."
   })
 }
 
-async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseÃ±a debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","CÃ³digo invÃ¡lido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[await bcrypt.hash(password,12),rows[0].usuario_id]);await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
+async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[await bcrypt.hash(password,12),rows[0].usuario_id]);await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
 
 
 async function presignEvidence(req){
@@ -1397,7 +1349,7 @@ async function presignEvidence(req){
     throw httpError(
       400,
       "INVALID_FILE_SIZE",
-      "El tamaÃ±o del archivo es invÃ¡lido"
+      "El tamaño del archivo es inválido"
     )
   }
 
@@ -1405,7 +1357,7 @@ async function presignEvidence(req){
     throw httpError(
       413,
       "FILE_TOO_LARGE",
-      "MÃ¡ximo 10 MB"
+      "Máximo 10 MB"
     )
   }
 
@@ -1421,7 +1373,7 @@ async function presignEvidence(req){
     throw httpError(
       400,
       "INVALID_SHA256",
-      "SHA-256 invÃ¡lido"
+      "SHA-256 inválido"
     )
   }
 
@@ -1519,7 +1471,7 @@ async function confirmEvidence(req){
     throw httpError(
       400,
       "INVALID_EVIDENCE_UUID",
-      "UUID de evidencia invÃ¡lido"
+      "UUID de evidencia inválido"
     )
   }
 
@@ -1527,7 +1479,7 @@ async function confirmEvidence(req){
     throw httpError(
       400,
       "INVALID_MIME",
-      "Tipo de archivo invÃ¡lido"
+      "Tipo de archivo inválido"
     )
   }
 
@@ -1539,7 +1491,7 @@ async function confirmEvidence(req){
     throw httpError(
       400,
       "INVALID_FILE_SIZE",
-      "TamaÃ±o de archivo invÃ¡lido"
+      "Tamaño de archivo inválido"
     )
   }
 
@@ -1547,7 +1499,7 @@ async function confirmEvidence(req){
     throw httpError(
       400,
       "INVALID_SHA256",
-      "SHA-256 invÃ¡lido"
+      "SHA-256 inválido"
     )
   }
 
@@ -1615,7 +1567,7 @@ async function confirmEvidence(req){
       throw httpError(
         400,
         "EVIDENCE_OBJECT_NOT_FOUND",
-        "El archivo todavÃ­a no existe en almacenamiento"
+        "El archivo todavía no existe en almacenamiento"
       )
     }
 
@@ -1626,7 +1578,7 @@ async function confirmEvidence(req){
     throw httpError(
       400,
       "EVIDENCE_SIZE_MISMATCH",
-      "El tamaÃ±o del archivo no coincide"
+      "El tamaño del archivo no coincide"
     )
   }
 
@@ -1761,7 +1713,7 @@ async function listReportEvidences(req,key){
     )
   }
 
-  // No se devuelve object_key ni informaciÃ³n interna de S3.
+  // No se devuelve object_key ni información interna de S3.
   const[rows]=await pool.execute(
     `
     SELECT
@@ -2456,7 +2408,7 @@ async function dashboardSummary(req){
     topColonies,
     byMunicipality,
 
-    // Compatibilidad con la versiÃ³n anterior del endpoint.
+    // Compatibilidad con la versión anterior del endpoint.
     totalReports:summary.totalReports,
     confirmedDuplicates:
       summary.confirmedDuplicates
@@ -2591,7 +2543,7 @@ async function reportMap(req){
 
   // ----------------------------------------------------------
   // QUERY ANALITICA
-  // No devuelve descripciÃ³n, contacto, direcciÃ³n, notas
+  // No devuelve descripción, contacto, dirección, notas
   // ni evidencia.
   // ----------------------------------------------------------
   const sql=`

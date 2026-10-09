@@ -63,7 +63,8 @@ fun RegisterScreen(
     onLoginClick: () -> Unit,
     onCreateAccountClick: (String, String, String) -> Unit,
     darkTheme: Boolean,
-    onThemeChange: () -> Unit
+    onThemeChange: () -> Unit,
+    cargando: Boolean = false
 ) {
 
     // =========================================================
@@ -705,6 +706,7 @@ fun RegisterScreen(
                 // =====================================================
 
                 Button(
+                    enabled = !cargando,
                     onClick = {
 
                         // =============================================

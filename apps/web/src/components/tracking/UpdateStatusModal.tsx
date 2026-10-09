@@ -1,5 +1,6 @@
-﻿import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
+  reportStatuses,
   semaforoByStatus,
   type ReportStatus,
 } from '../../data/shared/catalogs'
@@ -8,69 +9,22 @@ import Modal from '../shared/Modal'
 
 interface UpdateStatusModalProps {
   report: Report
+  saving?: boolean
   onCancel: () => void
   onConfirm: (
     status: ReportStatus,
     solution: string | null,
-  ) => void
-}
-
-const allowedTransitions: Record<
-  ReportStatus,
-  ReportStatus[]
-> = {
-  Registrado: [
-    'En revisión',
-    'Reincidente',
-    'Cancelado',
-  ],
-
-  Reincidente: [
-    'En revisión',
-    'Cancelado',
-  ],
-
-  'En revisión': [
-    'En seguimiento',
-    'Canalizado',
-    'Cancelado',
-  ],
-
-  'En seguimiento': [
-    'Canalizado',
-    'Concluido',
-    'Cancelado',
-  ],
-
-  Canalizado: [
-    'En seguimiento',
-    'Concluido',
-    'Cancelado',
-  ],
-
-  Concluido: [
-    'Archivado',
-  ],
-
-  Archivado: [],
-
-  Cancelado: [],
+  ) => void | Promise<void>
 }
 
 function UpdateStatusModal({
   report,
+  saving = false,
   onCancel,
   onConfirm,
 }: UpdateStatusModalProps) {
-  const availableStatuses = useMemo(
-    () => allowedTransitions[report.status] ?? [],
-    [report.status],
-  )
-
   const [status, setStatus] =
-    useState<ReportStatus>(
-      availableStatuses[0] ?? report.status,
-    )
+    useState<ReportStatus>(report.status)
 
   const [solution, setSolution] =
     useState(report.solution ?? '')
@@ -81,30 +35,25 @@ function UpdateStatusModal({
     semaforoByStatus[status] === 'ATENDIDO'
 
   function handleConfirm() {
-    setError('')
-
-    if (availableStatuses.length === 0) {
-      setError(
-        'Este caso ya no permite cambios de estatus.',
-      )
+    if (saving) {
       return
     }
+
+    setError('')
 
     if (
       requiresSolution &&
       solution.trim() === ''
     ) {
       setError(
-        'Describe la solución brindada antes de cerrar el caso.',
+        'Describe la solución brindada antes de marcar el caso como atendido.',
       )
       return
     }
 
-    onConfirm(
+    void onConfirm(
       status,
-      requiresSolution
-        ? solution.trim()
-        : null,
+      solution.trim() || null,
     )
   }
 
@@ -113,61 +62,54 @@ function UpdateStatusModal({
       title={`Actualizar estatus: ${report.folio}`}
     >
       <label className="modal-field">
-        Estatus actual
+        Nuevo estatus
 
-        <input
-          value={report.status}
-          disabled
+        <select
+          value={status}
+          disabled={saving}
+          onChange={(event) =>
+            setStatus(
+              event.target.value as ReportStatus,
+            )
+          }
+        >
+          {reportStatuses.map(
+            (option) => (
+              <option
+                key={option}
+                value={option}
+              >
+                {option}
+                {option === report.status
+                  ? ' (actual)'
+                  : ''}
+              </option>
+            ),
+          )}
+        </select>
+      </label>
+
+      <label className="modal-field">
+        Descripción de la solución / seguimiento
+
+        <textarea
+          value={solution}
+          disabled={saving}
+          onChange={(event) =>
+            setSolution(
+              event.target.value,
+            )
+          }
+          rows={6}
+          placeholder="Agrega o amplía la descripción del seguimiento..."
         />
       </label>
 
-      {availableStatuses.length > 0 ? (
-        <label className="modal-field">
-          Nuevo estatus
-
-          <select
-            value={status}
-            onChange={(event) =>
-              setStatus(
-                event.target.value as ReportStatus,
-              )
-            }
-          >
-            {availableStatuses.map(
-              (option) => (
-                <option
-                  key={option}
-                  value={option}
-                >
-                  {option}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
-      ) : (
-        <p className="modal-error">
-          Este caso se encuentra en un estatus final y
-          ya no permite cambios.
+      {requiresSolution && (
+        <p className="modal-help">
+          Para un estado atendido debes registrar una solución.
         </p>
       )}
-
-      {requiresSolution &&
-        availableStatuses.length > 0 && (
-          <label className="modal-field">
-            Descripción de la solución
-
-            <textarea
-              value={solution}
-              onChange={(event) =>
-                setSolution(
-                  event.target.value,
-                )
-              }
-              rows={4}
-            />
-          </label>
-        )}
 
       {error && (
         <p className="modal-error">
@@ -175,28 +117,38 @@ function UpdateStatusModal({
         </p>
       )}
 
+      {saving && (
+        <div
+          className="modal-saving-message"
+          role="status"
+          aria-live="polite"
+        >
+          Guardando cambios...
+        </div>
+      )}
+
       <div className="modal-buttons">
         <button
           type="button"
+          disabled={saving}
           onClick={onCancel}
         >
           Cancelar
         </button>
 
-        {availableStatuses.length > 0 && (
-          <button
-            type="button"
-            className="button-primary"
-            onClick={handleConfirm}
-          >
-            Guardar
-          </button>
-        )}
+        <button
+          type="button"
+          className="button-primary"
+          disabled={saving}
+          onClick={handleConfirm}
+        >
+          {saving
+            ? 'Guardando...'
+            : 'Guardar'}
+        </button>
       </div>
     </Modal>
   )
 }
 
 export default UpdateStatusModal
-
-

@@ -26,13 +26,16 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -44,8 +47,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.rieti.data.repository.AuthRepository
+import com.example.rieti.data.repository.AuthResult
+import com.example.rieti.data.session.SessionManager
 import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
+import kotlinx.coroutines.launch
 
 
 // =====================================================================
@@ -95,6 +102,26 @@ fun ResetPasswordScreen(
 
     val colors = AppTheme.colors
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val authRepository = remember {
+        AuthRepository()
+    }
+
+    val sessionManager = remember {
+        SessionManager(context.applicationContext)
+    }
+
+    var cargando by remember {
+        mutableStateOf(false)
+    }
+
+    DisposableEffect(cargando) {
+        if (cargando) RietiFeedback.loading = "Actualizando contraseña..."
+        onDispose { RietiFeedback.loading = null }
+    }
+
 
     // =============================================================
     // COLORES
@@ -142,6 +169,13 @@ fun ResetPasswordScreen(
 
             errorNewPassword =
                 "Ingresa una nueva contraseña."
+
+            formularioValido = false
+
+        } else if (newPassword.length < 10) {
+
+            errorNewPassword =
+                "La contraseña debe tener al menos 10 caracteres."
 
             formularioValido = false
         }
@@ -426,7 +460,7 @@ fun ResetPasswordScreen(
                                 horizontal = 32.dp
                             )
                             .height(62.dp)
-                            .clickable {
+                            .clickable(enabled = !cargando) {
 
                                 if (
                                     validarFormulario()
@@ -508,11 +542,54 @@ fun ResetPasswordScreen(
                                      * el flujo sin backend.
                                      */
 
-                                    onResetPasswordClick(
-                                        recoveryCode,
-                                        newPassword,
-                                        confirmPassword
-                                    )
+                                    val recoveryEmail =
+                                        sessionManager.recoveryEmail()
+
+                                    if (recoveryEmail.isNullOrBlank()) {
+                                        RietiFeedback.show("Vuelve a solicitar un código de recuperación.", error = true)
+                                    } else {
+                                        scope.launch {
+                                            cargando = true
+
+                                            when (
+                                                val result = authRepository.resetPassword(
+                                                    email = recoveryEmail,
+                                                    code = recoveryCode,
+                                                    password = newPassword
+                                                )
+                                            ) {
+                                                is AuthResult.Success -> {
+                                                    sessionManager.clear()
+
+                                                    RietiFeedback.show("Contraseña restablecida correctamente.")
+
+                                                    onResetPasswordClick(
+                                                        recoveryCode,
+                                                        newPassword,
+                                                        confirmPassword
+                                                    )
+                                                }
+
+                                                is AuthResult.Error -> {
+                                                    when (result.code) {
+                                                        "INVALID_RECOVERY_CODE" -> {
+                                                            errorCode = result.message
+                                                        }
+
+                                                        "WEAK_PASSWORD" -> {
+                                                            errorNewPassword = result.message
+                                                        }
+
+                                                        else -> {
+                                                            RietiFeedback.show(result.message, error = true)
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            cargando = false
+                                        }
+                                    }
                                 }
                             },
 

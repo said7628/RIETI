@@ -5,6 +5,8 @@ import com.example.rieti.data.network.ApiErrorResponse
 import com.example.rieti.data.network.LoginRequest
 import com.example.rieti.data.network.LoginResponse
 import com.example.rieti.data.network.LogoutRequest
+import com.example.rieti.data.network.RecoveryRequest
+import com.example.rieti.data.network.RecoveryResetRequest
 import com.example.rieti.data.network.RegisterRequest
 import com.example.rieti.data.network.RefreshRequest
 import com.example.rieti.data.network.RefreshResponse
@@ -180,38 +182,89 @@ class AuthRepository {
         }
     }
 
-    private fun parseError(
-        raw: String?
-    ): AuthResult.Error {
-
-        if(raw.isNullOrBlank()) {
-            return AuthResult.Error(
-                "Ocurrió un error"
-            )
-        }
+    suspend fun requestRecovery(
+        email: String
+    ): AuthResult<String> {
 
         return try {
 
-            val parsed =
-                gson.fromJson(
-                    raw,
-                    ApiErrorResponse::class.java
+            val response =
+                api.requestRecovery(
+                    RecoveryRequest(
+                        email = email.trim().lowercase()
+                    )
                 )
 
+            if (response.isSuccessful) {
+
+                AuthResult.Success(
+                    response.body()?.message
+                        ?: "Si existe una cuenta activa con ese correo, recibirás un código de recuperación."
+                )
+
+            } else {
+
+                val parsed = parseError(response.errorBody()?.string())
+                if (parsed.message.startsWith("El servidor ") || parsed.message.startsWith("No se pudo interpretar")) {
+                    AuthResult.Error("No fue posible enviar el codigo (HTTP ${response.code()}).", parsed.code)
+                } else parsed
+            }
+
+        } catch (e: Exception) {
+
             AuthResult.Error(
-                message =
-                    parsed.error?.message
-                        ?: "Ocurrió un error",
-
-                code =
-                    parsed.error?.code
+                "No fue posible solicitar el codigo. Revisa tu conexion."
             )
+        }
+    }
 
-        } catch(e: Exception) {
+    suspend fun resetPassword(
+        email: String,
+        code: String,
+        password: String
+    ): AuthResult<Unit> {
+
+        return try {
+
+            val response =
+                api.resetPassword(
+                    RecoveryResetRequest(
+                        email = email.trim().lowercase(),
+                        code = code.trim(),
+                        password = password
+                    )
+                )
+
+            if (response.isSuccessful) {
+                AuthResult.Success(Unit)
+            } else {
+                parseError(
+                    response.errorBody()?.string()
+                )
+            }
+
+        } catch (e: Exception) {
 
             AuthResult.Error(
-                "Ocurrió un error"
+                "No fue posible restablecer la contraseña."
             )
+        }
+    }
+
+    private fun parseError(raw: String?): AuthResult.Error {
+        if (raw.isNullOrBlank()) {
+            return AuthResult.Error("El servidor no devolvio detalles del error. Intenta mas tarde.")
+        }
+        return try {
+            val parsed = gson.fromJson(raw, ApiErrorResponse::class.java)
+            val code = parsed?.error?.code
+            val detail = parsed?.error?.message?.trim()
+            AuthResult.Error(
+                message = if (!detail.isNullOrBlank()) detail else "El servidor rechazo la solicitud. Intenta mas tarde.",
+                code = code
+            )
+        } catch (e: Exception) {
+            AuthResult.Error("No se pudo interpretar la respuesta del servidor.")
         }
     }
 }
