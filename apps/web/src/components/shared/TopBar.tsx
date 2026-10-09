@@ -22,7 +22,6 @@ function TopBar({ showLogo = true }: TopBarProps) {
       </div>
 
       <nav className="topbar-nav">
-        <NavLink to="/crear-reporte">Crear reporte</NavLink>
         <NavLink to="/seguimiento">Seguimiento</NavLink>
         {user?.roleCode === 'ADMINISTRADOR_FUNDACION' && (
           <NavLink to="/cuentas">Cuentas</NavLink>
