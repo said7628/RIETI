@@ -223,8 +223,8 @@ function ReportDetail({
         </div>
 
         <p className="case-holder">
-          <strong>Titular del caso:</strong>{' '}
-          {report.caseHolder ?? 'Sin asignar'}
+          <strong>Asignado a:</strong>{' '}
+          {report.caseHolder ?? report.assignedDependency ?? 'Sin asignar'}
         </p>
 
         <div className="report-description">

@@ -3,6 +3,7 @@ import {
   ApiError,
   apiRequest,
   setAccessToken,
+  registerAccessTokenRefresh,
 } from '../../api/api'
 import type { UserRole } from './catalogs'
 import type { Report } from './reportsData'
@@ -175,6 +176,8 @@ async function renewSessionWithRefreshToken() {
     return false
   }
 }
+
+registerAccessTokenRefresh(renewSessionWithRefreshToken)
 
 async function refreshSessionInternal() {
   try {

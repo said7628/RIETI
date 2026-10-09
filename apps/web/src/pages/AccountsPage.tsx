@@ -20,10 +20,24 @@ import {
 } from '../data/shared/session'
 
 import { semaforoByStatus } from '../data/shared/catalogs'
+import { getMunicipalities, getDependencies, type MunicipalityCatalog, type DependencyCatalog } from '../api/catalogs'
 
 import './AccountsPage.css'
 
 type AccountsView = 'crear' | 'administrar'
+
+function accountRoleLabel(account: ApiUser) {
+  const labels: Record<string, string> = {
+    CIUDADANO: 'Ciudadano',
+    CIUDADANO_REPORTANTE: 'Ciudadano',
+    REPORTANTE: 'Ciudadano',
+    ADMINISTRADOR_FUNDACION: 'Administrador de la fundación',
+    GESTOR_MUNICIPAL: 'Gestor municipal',
+    PROCURADOR: 'Procurador de protección',
+    PROCURADOR_PROTECCION: 'Procurador de protección',
+  }
+  return labels[account.roleCode] ?? account.roleName ?? 'Rol no identificado'
+}
 
 type AccountSort =
   | 'nombre-az'
@@ -129,6 +143,8 @@ function ManageAccounts({
 
   const [roles, setRoles] =
     useState<RoleCatalog[]>([])
+  const [municipalities, setMunicipalities] = useState<MunicipalityCatalog[]>([])
+  const [dependencies, setDependencies] = useState<DependencyCatalog[]>([])
 
   const [loading, setLoading] =
     useState(true)
@@ -157,14 +173,13 @@ function ManageAccounts({
     setError('')
 
     try {
-      const [usersResult, rolesResult] =
-        await Promise.all([
-          getUsers(),
-          getRoles(),
-        ])
+      const [usersResult, rolesResult, municipalitiesResult, dependenciesResult] =
+        await Promise.all([getUsers(), getRoles(), getMunicipalities(), getDependencies()])
 
       setAccounts(usersResult)
       setRoles(rolesResult)
+      setMunicipalities(municipalitiesResult)
+      setDependencies(dependenciesResult)
     } catch (err) {
       setError(
         err instanceof Error
@@ -389,7 +404,7 @@ function ManageAccounts({
                   <td>{account.email}</td>
 
                   <td>
-                    {account.roleName}
+                    {accountRoleLabel(account)}
                   </td>
 
                   <td>
@@ -452,9 +467,19 @@ function ManageAccounts({
 
             <p>
               <strong>Tipo de cuenta:</strong>{' '}
-              {selected.roleName}
+              {accountRoleLabel(selected)}
             </p>
 
+            <p>
+              <strong>Municipio:</strong>{' '}
+              {selected.municipalityId == null ? 'No asignado' :
+                (municipalities.find(m => m.id === selected.municipalityId)?.nombre ?? `ID ${selected.municipalityId}`)}
+            </p>
+            <p>
+              <strong>Dependencia:</strong>{' '}
+              {selected.dependencyId == null ? 'No asignada' :
+                (dependencies.find(d => d.id === selected.dependencyId)?.nombre ?? `ID ${selected.dependencyId}`)}
+            </p>
             <p>
               <strong>Estado:</strong>{' '}
               {selected.active
@@ -493,6 +518,11 @@ function ManageAccounts({
                   )
                 }
               >
+                {!roles.some(role => role.codigo === selected.roleCode) && (
+                  <option value="" disabled>
+                    {accountRoleLabel(selected)} (rol actual)
+                  </option>
+                )}
                 {roles.map((role) => (
                   <option
                     key={role.id}

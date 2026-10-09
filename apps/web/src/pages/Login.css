@@ -719,3 +719,6 @@
   cursor: default;
 }
 
+
+/* En recuperación, volver siempre es navegable, incluso durante una petición. */
+.recovery-form .login-back-button { pointer-events: auto; opacity: 1; cursor: pointer; position: relative; z-index: 2; }

@@ -10,6 +10,12 @@ export interface RoleCatalog {
   activo: number
 }
 
+export interface DependencyCatalog {
+  id: number
+  nombre: string
+  municipio_id?: number | null
+}
+
 export interface MunicipalityCatalog {
   id: number
   clave: string
@@ -22,6 +28,7 @@ interface CatalogsResponse {
   catalogs: {
     roles: RoleCatalog[]
     municipios: MunicipalityCatalog[]
+    dependencias: DependencyCatalog[]
   }
 }
 
@@ -58,3 +65,8 @@ export async function getMunicipalities() {
     )
 }
 
+
+export async function getDependencies() {
+  const response = await getCatalogs()
+  return response.catalogs.dependencias ?? []
+}

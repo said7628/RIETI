@@ -201,7 +201,7 @@ async function mobileChangePassword(req){
   const c=await pool.getConnection();
   try{
     await c.beginTransaction();
-    const [updated]=await c.execute("UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND password_hash=? AND activo=1",[hash,u.id,rows[0].password_hash]);
+    const [updated]=await c.execute("UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND activo=1 AND password_hash=? AND activo=1",[hash,u.id,rows[0].password_hash]);
     if(updated.affectedRows!==1) throw httpError(409,"PASSWORD_CHANGED","La contrasena cambio durante la solicitud");
     await c.execute("UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL",[u.id]);
     await c.commit();
@@ -296,14 +296,14 @@ const REPORT_SELECT=`SELECT r.id,r.uuid,r.folio,r.municipio_id,r.colonia_id,r.mo
  r.asignado_usuario_id,r.asignado_dependencia_id,r.descripcion_solucion,r.cerrado_at,r.created_at,r.updated_at,
  r.direccion_referencia,r.codigo_postal,r.horario_observado,m.nombre municipio,c.nombre colonia,t.nombre work_type,
  nr.nombre nivel_riesgo,re.nombre age_range,eo.nombre status,eo.codigo status_code,p.nombre priority,p.codigo priority_code,
- au.nombre case_holder FROM reportes r JOIN municipios m ON m.id=r.municipio_id LEFT JOIN colonias c ON c.id=r.colonia_id
+ au.nombre case_holder, ad.nombre assigned_dependency FROM reportes r JOIN municipios m ON m.id=r.municipio_id LEFT JOIN colonias c ON c.id=r.colonia_id
  JOIN tipos_trabajo_infantil t ON t.id=r.tipo_trabajo_id JOIN niveles_riesgo nr ON nr.id=r.nivel_riesgo_id
  JOIN rangos_edad re ON re.id=r.rango_edad_id JOIN estatus_operacionales eo ON eo.id=r.estatus_id
- JOIN prioridades p ON p.id=r.prioridad_id LEFT JOIN usuarios au ON au.id=r.asignado_usuario_id`;
+ JOIN prioridades p ON p.id=r.prioridad_id LEFT JOIN usuarios au ON au.id=r.asignado_usuario_id LEFT JOIN dependencias ad ON ad.id=r.asignado_dependencia_id`;
 function mapReport(r){return{
   id:Number(r.id),uuid:r.uuid,folio:r.folio,createdAt:r.created_at,updatedAt:r.updated_at,workType:r.work_type,
   colonia:r.colonia||r.municipio,municipality:r.municipio,address:[r.direccion_referencia,r.colonia,r.municipio,r.codigo_postal].filter(Boolean).join(", "),
-  postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,
+  postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,assignedUserId:r.asignado_usuario_id==null?null:Number(r.asignado_usuario_id),assignedDependency:r.assigned_dependency||null,
   nnaEstimate:r.estimacion_nna==="5_MAS"?"5+":r.estimacion_nna,ageRange:r.age_range,schedule:r.horario_observado||"—",description:r.descripcion,solution:r.descripcion_solucion||null,
   latitude:Number(r.latitud),longitude:Number(r.longitud),risk:r.nivel_riesgo,modality:r.modalidad,origin:r.origen
 };}
@@ -1295,7 +1295,7 @@ async function recoveryRequest(req){
   })
 }
 
-async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[await bcrypt.hash(password,12),rows[0].usuario_id]);await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
+async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND u.activo=1 AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();const [changed]=await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND activo=1`,[await bcrypt.hash(password,12),rows[0].usuario_id]);if(changed.affectedRows!==1)throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o cuenta inactiva");await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
 
 
 

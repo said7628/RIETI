@@ -1,4 +1,4 @@
-﻿import {
+import {
   useState,
   type FormEvent,
 } from 'react'
@@ -122,6 +122,7 @@ function RecuperarContrasena() {
         <Link
           to="/login"
           className="login-back-button"
+          aria-disabled={false}
         >
           Volver a iniciar sesión
         </Link>

@@ -66,6 +66,23 @@ function App() {
     }
   }, [isAuthPage])
 
+  useEffect(() => {
+    if (isAuthPage || !user) return
+    const update = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSession()
+      }
+    }
+    const interval = window.setInterval(update, 4 * 60 * 1000)
+    document.addEventListener('visibilitychange', update)
+    window.addEventListener('focus', update)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', update)
+      window.removeEventListener('focus', update)
+    }
+  }, [isAuthPage, user?.id])
+
   if (isAuthPage) {
     return (
       <Routes>

@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   AgeRange,
   NnaEstimate,
   Priority,
@@ -20,6 +20,8 @@ export interface Report {
   statusCode?: string
   priority: Priority
   caseHolder: string | null
+  assignedUserId?: number | null
+  assignedDependency?: string | null
   nnaEstimate: NnaEstimate
   ageRange: AgeRange
   schedule: string
