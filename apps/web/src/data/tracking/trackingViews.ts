@@ -9,6 +9,7 @@ export type TrackingView =
   | 'cerrados'
   | 'cancelados'
 
+/** Vistas del menú lateral de Seguimiento. */
 export const trackingViews: { id: TrackingView; label: string }[] = [
   { id: 'mis-reportes', label: 'Mis reportes' },
   { id: 'todos', label: 'Todos los reportes' },

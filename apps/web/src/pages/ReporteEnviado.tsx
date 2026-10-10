@@ -21,6 +21,7 @@ function ReporteEnviado() {
     const location = useLocation();
     const state = location.state as SuccessState | null;
 
+    /** Si se abrió sin folio, no muestra el éxito y regresa a crear reporte. */
     useEffect(() => {
         if (!state?.folio || !state.draft) {
             navigate("/crear-reporte", { replace: true });

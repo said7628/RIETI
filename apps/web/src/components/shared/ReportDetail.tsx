@@ -24,6 +24,7 @@ interface EvidenceWithUrl extends ReportEvidence {
   url: string
 }
 
+/** Mapa pequeño del reporte. Si no hay coordenadas, avisa que no hay ubicación. */
 function ReportLocationMap({
   latitude,
   longitude,
@@ -34,6 +35,7 @@ function ReportLocationMap({
   const elementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
 
+  /** Dibuja el mapa en las coordenadas del reporte. */
   useEffect(() => {
     if (
       !elementRef.current ||
@@ -142,6 +144,7 @@ function ReportDetail({
   const [selectedImage, setSelectedImage] =
     useState<string | null>(null)
 
+  /** Al cambiar de folio, carga las evidencias y pide el enlace de cada una. */
   useEffect(() => {
     let cancelled = false
 

@@ -16,6 +16,7 @@ function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeView = parseTrackingView(searchParams.get('vista'))
 
+  /** Cambia la vista de Seguimiento en la URL, por ejemplo ?vista=cerrados. */
   function selectView(view: TrackingView) {
     setSearchParams({ vista: view })
   }

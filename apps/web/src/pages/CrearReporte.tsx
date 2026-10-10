@@ -28,6 +28,7 @@ function CrearReporte() {
         setError("");
     }
 
+    /** Revisa los campos obligatorios, arma el folio y pasa a reporte enviado. */
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 

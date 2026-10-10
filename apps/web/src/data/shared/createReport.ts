@@ -33,6 +33,7 @@ export function createFolio(now = new Date()) {
   return `${stamp}${letter}`
 }
 
+/** Pasa el número de niños al valor que usa el reporte: 1, 2, 3, 4 o 5+. */
 function toNnaEstimate(value: string): NnaEstimate {
   const count = Number.parseInt(value, 10)
 
@@ -43,6 +44,7 @@ function toNnaEstimate(value: string): NnaEstimate {
   return '1'
 }
 
+/** Pasa la edad a un rango: 0-5, 6-11, 12-14 o 15-17. */
 function toAgeRange(ages: string): AgeRange {
   const age = Number.parseInt(ages, 10)
 

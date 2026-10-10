@@ -12,6 +12,7 @@ function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  /** Cierra el menú si se toca afuera o se presiona Escape. */
   useEffect(() => {
     if (!isOpen) {
       return

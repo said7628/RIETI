@@ -12,6 +12,7 @@ function Login() {
   const navigate = useNavigate()
   const location = useLocation()
 
+  /** El aviso llega desde recuperar contraseña, por ejemplo al cambiarla. */
   const notice =
     (location.state as { notice?: string } | null)?.notice ?? ''
 

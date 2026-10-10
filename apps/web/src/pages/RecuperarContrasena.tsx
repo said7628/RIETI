@@ -27,6 +27,7 @@ function RecuperarContrasena() {
   const [loading, setLoading] =
     useState(false)
 
+  /** Pide el código y, si sale bien, pasa a /recuperar/codigo con el correo. */
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {

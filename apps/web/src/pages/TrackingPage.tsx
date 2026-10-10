@@ -47,6 +47,7 @@ import './TrackingPage.css'
 function TrackingPage() {
   const [searchParams] = useSearchParams()
 
+  /** La vista llega en la URL, por ejemplo ?vista=cerrados. */
   const view = parseTrackingView(
     searchParams.get('vista'),
   )
@@ -109,6 +110,7 @@ function TrackingPage() {
     ),
   ].sort()
 
+  /** Deja solo los reportes de la vista, el folio, la prioridad y la colonia elegidos. */
   const filteredReports = reports.filter(
     (report) =>
       matchesView(
@@ -228,6 +230,7 @@ function TrackingPage() {
     }
   }
 
+  /** Asignar solo lo ven el administrador de la fundación y el gestor municipal. */
   function renderActions() {
     if (!selectedReport) {
       return null

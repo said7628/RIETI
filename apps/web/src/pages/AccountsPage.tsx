@@ -29,6 +29,7 @@ import './AccountsPage.css'
 
 type AccountsView = 'crear' | 'administrar'
 
+/** Nombre corto del rol para mostrarlo en Cuentas. */
 function accountRoleLabel(account: ApiUser) {
   const labels: Record<string, string> = {
     CIUDADANO: 'Ciudadano',
@@ -58,6 +59,7 @@ function AccountsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const view: AccountsView = searchParams.get('vista') === 'administrar' ? 'administrar' : 'crear'
 
+  /** Si el rol no es administrador de la fundación, no entra a Cuentas. */
   const isAdmin =
     user?.roleCode === 'ADMINISTRADOR_FUNDACION'
 
@@ -125,6 +127,7 @@ function RoleEditor({account, roles, municipalities, dependencies, saving, disab
   const role = roles.find(r => r.id === roleId)
   const needsMunicipality = Boolean(role && !role.es_administrador && role.acceso_web)
   const changed = roleId !== (roles.find(r => r.codigo === account.roleCode)?.id ?? 0) || municipalityId !== account.municipalityId || dependencyId !== account.dependencyId
+  /** Guarda el rol nuevo. El gestor municipal y roles parecidos piden municipio. */
   function save() {
     if (!roleId) {setError('Selecciona un rol.');return}
     if (needsMunicipality && !municipalityId) {setError('Este rol requiere un municipio asignado.');return}
@@ -190,6 +193,7 @@ function CreateAccount({ onCreated }: { onCreated: () => void }) {
   }, [])
   const role = roles.find(r => r.id === roleId)
   const requiresMunicipality = Boolean(role && !role.es_administrador && role.acceso_web)
+  /** Crea la cuenta. El gestor municipal y roles parecidos piden municipio. */
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
@@ -261,6 +265,7 @@ function CreateAccount({ onCreated }: { onCreated: () => void }) {
   )
 }
 
+/** Cuenta los reportes sin atender o en atención que tiene asignada esa persona. */
 function countActiveReports(
   reports: Report[],
   name: string,
@@ -316,6 +321,7 @@ function ManageAccounts({
   const [saving, setSaving] =
     useState(false)
 
+  /** Carga cuentas, roles, municipios y dependencias. */
   async function loadData() {
     setLoading(true)
     setError('')
@@ -385,6 +391,7 @@ function ManageAccounts({
       })
   }, [accounts, reports, sort])
 
+  /** Cambia rol, municipio y dependencia. No deja cambiar la cuenta de esta sesión. */
   async function changeRole(account: ApiUser, roleId: number, municipalityId: number | null, dependencyId: number | null) {
     if (account.id === currentUserId) {
       setError('Para proteger la sesión no puedes cambiar tus propios permisos.')
@@ -403,6 +410,7 @@ function ManageAccounts({
     }
   }
 
+  /** Desactiva la cuenta. No la borra. */
   async function removeAccount(
     account: ApiUser,
   ) {
@@ -427,6 +435,7 @@ function ManageAccounts({
     }
   }
 
+  /** Vuelve a activar una cuenta desactivada. */
   async function reactivateAccount(
     account: ApiUser,
   ) {

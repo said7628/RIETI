@@ -32,6 +32,7 @@ function UpdateStatusModal({
 
   const [error, setError] = useState('')
 
+  /** Si el estatus queda atendido, hay que escribir la solución. */
   const requiresSolution =
     semaforoByStatus[status] === 'ATENDIDO'
 

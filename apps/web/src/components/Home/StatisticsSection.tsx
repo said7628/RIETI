@@ -38,6 +38,7 @@ const chartColors = [
   '#ff5c5c',
 ]
 
+/** Pasa códigos como CRITICO a un texto para la gráfica. */
 function labelCode(value: string) {
   const labels: Record<string, string> = {
     MASCULINO: 'Masculino',
@@ -91,6 +92,7 @@ function labelCode(value: string) {
   )
 }
 
+/** Convierte un conteo del servidor en datos para una gráfica. */
 function objectToChart(
   value: Record<string, number>,
 ) {
@@ -102,6 +104,7 @@ function objectToChart(
   )
 }
 
+/** Pasa 2026-03 a Mar 2026. */
 function formatMonth(value: string) {
   const [year, month] = value.split('-')
 
@@ -127,6 +130,7 @@ function formatMonth(value: string) {
   } ${year}`
 }
 
+/** Muestra las horas de atención. Si pasa de un día, las muestra en días. */
 function formatHours(hours: number | null) {
   if (hours == null) {
     return '—'
@@ -139,6 +143,7 @@ function formatHours(hours: number | null) {
   return `${(hours / 24).toFixed(1)} días`
 }
 
+/** Tarjeta con un número del inicio, por ejemplo reportes atendidos. */
 function MetricCard({
   title,
   value,
@@ -167,6 +172,7 @@ function MetricCard({
   )
 }
 
+/** Recuadro de una gráfica del inicio. */
 function ChartCard({
   title,
   subtitle,
@@ -224,6 +230,7 @@ function StatisticsSection() {
   const [appliedTo, setAppliedTo] =
     useState('')
 
+  /** Carga las estadísticas cuando se aplica un periodo. */
   useEffect(() => {
     let cancelled = false
 
@@ -317,12 +324,14 @@ function StatisticsSection() {
     [data],
   )
 
+  /** Aplica las fechas solo si la inicial no es posterior a la final. */
   function applyFilters() {
     if (from && to && from > to) return
     setAppliedFrom(from)
     setAppliedTo(to)
   }
 
+  /** Quita el periodo y vuelve a mostrar todas las fechas. */
   function clearFilters() {
     setFrom('')
     setTo('')

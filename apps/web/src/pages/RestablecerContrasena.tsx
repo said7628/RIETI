@@ -59,6 +59,7 @@ function RestablecerContrasena() {
   const [resending, setResending] =
     useState(false)
 
+  /** Si no llegó el correo desde recuperar contraseña, regresa a esa pantalla. */
   if (!email) {
     return (
       <Navigate
@@ -68,6 +69,7 @@ function RestablecerContrasena() {
     )
   }
 
+  /** Guarda la contraseña nueva y manda al login. */
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -137,6 +139,7 @@ function RestablecerContrasena() {
     }
   }
 
+  /** Vuelve a pedir el código al mismo correo. */
   async function resendCode() {
     try {
       setResending(true)

@@ -15,6 +15,7 @@ import {
   type MapPoint,
 } from '../../api/map'
 
+/** Da más peso en el mapa a los reportes de mayor riesgo. */
 function riskWeight(risk: string) {
   switch (risk) {
     case 'CRITICO':
@@ -34,6 +35,7 @@ function riskWeight(risk: string) {
   }
 }
 
+/** Pasa un texto como CRITICO a "Critico" para mostrarlo. */
 function prettyCode(value: string) {
   return value
     .replaceAll('_', ' ')
@@ -57,6 +59,7 @@ function HeatMapSection() {
   const [priority, setPriority] = useState('')
   const [status, setStatus] = useState('')
 
+  /** Carga los puntos otra vez cuando cambian riesgo, prioridad o estatus. */
   useEffect(() => {
     let cancelled = false
 
@@ -98,6 +101,7 @@ function HeatMapSection() {
     }
   }, [risk, priority, status])
 
+  /** Crea el mapa una sola vez, centrado en la zona de los reportes. */
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) {
       return
@@ -166,6 +170,7 @@ function HeatMapSection() {
     }
   }, [])
 
+  /** Dibuja el calor y los puntos cada vez que llega una lista nueva. */
   useEffect(() => {
     const map = mapRef.current
     const markers = markersLayerRef.current

@@ -9,6 +9,7 @@ export interface Account {
   active: boolean
 }
 
+/** Cuentas de prueba guardadas en este archivo. Cuentas de la app salen del servidor. */
 let accounts: Account[] = [
   {
     name: 'Manolo Sánchez',

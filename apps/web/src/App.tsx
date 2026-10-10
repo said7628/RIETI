@@ -44,6 +44,7 @@ function App() {
     location.pathname === '/recuperar' ||
     location.pathname === '/recuperar/codigo'
 
+  /** Seguimiento es la única pantalla con menú lateral y pie. */
   const isTracking = location.pathname === '/seguimiento'
 
   /** Al abrir la app, comprueba si ya hay una sesión. */
@@ -117,6 +118,7 @@ function App() {
     )
   }
 
+  /** Mientras revisa la sesión, muestra este aviso y no deja pasar. */
   if (checkingSession) {
     return (
       <main
@@ -183,6 +185,7 @@ function App() {
             element={<PendingPage title="Perfil" />}
           />
 
+          {/* Crear reporte ya no se abre. Estas rutas regresan al inicio. */}
           <Route
             path="/crear-reporte"
             element={<Navigate to="/" replace />}

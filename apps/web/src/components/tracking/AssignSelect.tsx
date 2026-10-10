@@ -18,6 +18,7 @@ function AssignSelect({
   const [loadError, setLoadError] = useState('')
   const [saving, setSaving] = useState(false)
 
+  /** Carga las personas a las que se les puede asignar el reporte. */
   useEffect(() => {
     let active = true
 

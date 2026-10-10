@@ -10,6 +10,7 @@ import UserMenu from "../shared/UserMenu";
 function ReportHeader() {
     const user = useSessionUser();
     const location = useLocation();
+    /** Casos cerrados es Seguimiento con ?vista=cerrados. Ahí Seguimiento no se marca activo. */
     const isClosedCases =
         location.pathname === "/seguimiento" &&
         new URLSearchParams(location.search).get("vista") === "cerrados";
