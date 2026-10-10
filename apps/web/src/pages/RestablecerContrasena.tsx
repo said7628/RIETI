@@ -21,6 +21,11 @@ interface RecoveryState {
   email?: string
 }
 
+/**
+ * Pantalla para poner el código y la contraseña nueva.
+ * Si no hay correo, regresa a recuperar contraseña.
+ * Si todo sale bien, manda al login.
+ */
 function RestablecerContrasena() {
   const navigate = useNavigate()
   const location = useLocation()

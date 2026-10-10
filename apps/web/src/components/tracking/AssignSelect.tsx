@@ -7,6 +7,7 @@ interface AssignSelectProps {
   onConfirm: (user: ApiUser) => Promise<void>
 }
 
+/** Elige a quién se le asigna el reporte de ese folio. */
 function AssignSelect({
   folio,
   onConfirm,

@@ -8,6 +8,7 @@ interface ReportsTableProps {
   onSelect: (folio: string) => void
 }
 
+/** Tabla de reportes en Seguimiento. Al elegir una fila, marca ese folio. */
 function ReportsTable({ reports, selectedFolio, onSelect }: ReportsTableProps) {
   if (reports.length === 0) {
     return (

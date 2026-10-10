@@ -7,6 +7,7 @@ interface ModalProps {
   large?: boolean
 }
 
+/** Ventana encima de la página. Se cierra con la X, con Escape o al tocar afuera. */
 function Modal({ title, children, onClose, large = false }: ModalProps) {
   useEffect(() => {
     if (!onClose) return

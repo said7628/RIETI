@@ -11,6 +11,7 @@ interface SidebarProps {
   onToggle: () => void
 }
 
+/** Menú lateral de Seguimiento. Cambia la vista de reportes. */
 function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeView = parseTrackingView(searchParams.get('vista'))

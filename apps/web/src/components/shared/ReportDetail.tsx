@@ -125,6 +125,7 @@ function ReportLocationMap({
   )
 }
 
+/** Ficha de un reporte: folio, mapa, datos y evidencias. */
 function ReportDetail({
   report,
   actions,

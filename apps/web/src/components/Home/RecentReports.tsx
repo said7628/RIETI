@@ -2,6 +2,7 @@ import { sortReports } from '../../data/shared/reportUtils'
 import { useReports } from '../../data/shared/session'
 import StatusBadge from '../shared/StatusBadge'
 
+/** Lista de los 10 reportes más recientes. */
 function RecentReports() {
   const recentReports = sortReports(useReports(), 'recientes').slice(0, 10)
 

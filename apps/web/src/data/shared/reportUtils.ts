@@ -9,6 +9,7 @@ export const sortOptions: { id: SortOption; label: string }[] = [
   { id: 'prioridad', label: 'Prioridad' },
 ]
 
+/** Ordena los reportes por fecha o por prioridad. */
 export function sortReports(reports: Report[], sort: SortOption) {
   return [...reports].sort((a, b) => {
     if (sort === 'prioridad') {
@@ -26,6 +27,7 @@ export function sortReports(reports: Report[], sort: SortOption) {
   })
 }
 
+/** Muestra la fecha como día, mes y año. */
 export function formatDate(isoDate: string) {
   return new Date(isoDate).toLocaleDateString('es-MX', {
     day: '2-digit',

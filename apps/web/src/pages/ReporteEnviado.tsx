@@ -12,6 +12,10 @@ interface SuccessState {
     fileNames?: string[];
 }
 
+/**
+ * Pantalla de reporte enviado.
+ * Si no hay folio, regresa a crear reporte.
+ */
 function ReporteEnviado() {
     const navigate = useNavigate();
     const location = useLocation();

@@ -41,6 +41,7 @@ function prettyCode(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
+/** Mapa de calor con la ubicación de los reportes. */
 function HeatMapSection() {
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)

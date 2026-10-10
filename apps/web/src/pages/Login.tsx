@@ -4,6 +4,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout from '../components/auth/AuthLayout'
 import { login } from '../data/shared/session'
 
+/**
+ * Pantalla de login.
+ * Si el correo y la contraseña son correctos, abre la sesión y va al inicio.
+ */
 function Login() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -16,6 +20,7 @@ function Login() {
   const [message, setMessage] = useState(notice)
   const [loading, setLoading] = useState(false)
 
+  /** Envía el correo y la contraseña para entrar. */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 

@@ -25,6 +25,7 @@ export const emptyReportDraft: ReportDraft = {
   postalCode: '',
 }
 
+/** Arma el folio de un reporte nuevo. */
 export function createFolio(now = new Date()) {
   const pad = (value: number) => String(value).padStart(2, '0')
   const stamp = `${String(now.getFullYear()).slice(2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`
@@ -51,6 +52,7 @@ function toAgeRange(ages: string): AgeRange {
   return '15-17'
 }
 
+/** Convierte el formulario en un reporte. */
 export function draftToReport(draft: ReportDraft, folio: string): Report {
   const address = [
     draft.address.trim(),

@@ -23,6 +23,11 @@ import RecuperarContrasena from './pages/RecuperarContrasena'
 import RestablecerContrasena from './pages/RestablecerContrasena'
 import TrackingPage from './pages/TrackingPage'
 
+/**
+ * Controla qué pantalla se muestra.
+ * Si la persona no ha entrado, la manda al login.
+ * Si ya entró, muestra la TopBar y la página que eligió.
+ */
 function App() {
   const location = useLocation()
   const user = useSessionUser()
@@ -33,6 +38,7 @@ function App() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
+  /** Pantallas de login y de recuperar contraseña. */
   const isAuthPage =
     location.pathname === '/login' ||
     location.pathname === '/recuperar' ||
@@ -40,6 +46,7 @@ function App() {
 
   const isTracking = location.pathname === '/seguimiento'
 
+  /** Al abrir la app, comprueba si ya hay una sesión. */
   useEffect(() => {
     if (isAuthPage) {
       setCheckingSession(false)
@@ -66,6 +73,7 @@ function App() {
     }
   }, [isAuthPage])
 
+  /** De vez en cuando vuelve a comprobar que la sesión siga activa. */
   useEffect(() => {
     if (isAuthPage || !user) return
     const update = () => {
@@ -125,6 +133,7 @@ function App() {
     )
   }
 
+  /** Si no hay sesión, manda al login. */
   if (!user || !getAccessToken()) {
     return (
       <Navigate

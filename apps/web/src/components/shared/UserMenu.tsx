@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { logout, useSessionUser } from '../../data/shared/session'
 
+/**
+ * Menú de la persona con sesión.
+ * Si no hay sesión, manda al login. Si hay sesión, permite cerrarla.
+ */
 function UserMenu() {
   const user = useSessionUser()
   const navigate = useNavigate()
@@ -42,6 +46,7 @@ function UserMenu() {
     )
   }
 
+  /** Cierra la sesión y manda al login. */
   function handleLogout() {
     logout()
     setIsOpen(false)

@@ -1,4 +1,5 @@
-﻿export type ReportStatus =
+﻿/** Nombres que usa la app: estatus del reporte, prioridad, rol y semáforo. */
+export type ReportStatus =
   | 'Registrado'
   | 'En revisión'
   | 'En seguimiento'

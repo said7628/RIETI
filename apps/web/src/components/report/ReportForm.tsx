@@ -12,6 +12,7 @@ interface ReportFormProps {
     onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
 }
 
+/** Campos del formulario para crear un reporte. */
 function ReportForm({
     draft,
     readOnly = false,

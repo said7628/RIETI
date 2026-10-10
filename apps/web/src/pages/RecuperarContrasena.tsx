@@ -11,6 +11,10 @@ import {
 import AuthLayout from '../components/auth/AuthLayout'
 import { requestPasswordRecovery } from '../api/recovery'
 
+/**
+ * Pantalla para pedir el código de recuperar contraseña.
+ * Si el correo es válido, pasa a /recuperar/codigo.
+ */
 function RecuperarContrasena() {
   const navigate = useNavigate()
 

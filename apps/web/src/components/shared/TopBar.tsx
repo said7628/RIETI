@@ -7,6 +7,10 @@ interface TopBarProps {
   showLogo?: boolean
 }
 
+/**
+ * Barra de arriba, la TopBar.
+ * Lleva a Seguimiento y, si el rol es administrador de la fundación, a Cuentas.
+ */
 function TopBar({ showLogo = true }: TopBarProps) {
   const user = useSessionUser()
 

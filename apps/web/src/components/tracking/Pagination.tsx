@@ -8,6 +8,7 @@ interface PaginationProps {
   onPageSizeChange: (pageSize: number) => void
 }
 
+/** Pasa de página en la lista de Seguimiento y elige cuántos reportes se ven. */
 function Pagination({
   page,
   totalPages,

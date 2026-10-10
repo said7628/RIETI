@@ -201,6 +201,7 @@ function ChartCard({
   )
 }
 
+/** Gráficas y números del inicio. Se pueden filtrar por fechas. */
 function StatisticsSection() {
   const [data, setData] =
     useState<DashboardResponse | null>(null)

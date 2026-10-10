@@ -11,6 +11,7 @@ function countBySemaforo(reports: Report[], semaforo: Semaforo) {
   ).length
 }
 
+/** Tarjetas del inicio que cuentan reportes sin asignar, en atención y cerrados. */
 function StatusCards() {
   const reports = useReports()
   const statusData = [

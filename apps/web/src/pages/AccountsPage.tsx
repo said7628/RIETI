@@ -47,6 +47,11 @@ type AccountSort =
   | 'nombre-za'
   | 'reportes'
 
+/**
+ * Pantalla de Cuentas.
+ * Solo la ve el rol administrador de la fundación.
+ * Permite crear cuentas y administrarlas.
+ */
 function AccountsPage() {
   const user = useSessionUser()
 
@@ -103,6 +108,7 @@ function AccountsPage() {
 }
 
 
+/** Cambia el rol, el municipio y la dependencia de una cuenta. */
 function RoleEditor({account, roles, municipalities, dependencies, saving, disabled, onSave}: {
   account: ApiUser
   roles: RoleCatalog[]
@@ -152,6 +158,7 @@ function RoleEditor({account, roles, municipalities, dependencies, saving, disab
   </div>
 }
 
+/** Formulario para crear una cuenta. */
 function CreateAccount({ onCreated }: { onCreated: () => void }) {
   const [roles, setRoles] = useState<RoleCatalog[]>([])
   const [municipalities, setMunicipalities] = useState<MunicipalityCatalog[]>([])
@@ -271,6 +278,7 @@ function countActiveReports(
   }).length
 }
 
+/** Lista las cuentas para verlas y cambiarlas. */
 function ManageAccounts({
   currentUserId,
 }: {

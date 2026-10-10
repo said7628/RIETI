@@ -99,14 +99,17 @@ export function getReports() {
   return reports
 }
 
+/** La persona que tiene la sesión abierta. */
 export function useSessionUser() {
   return useSyncExternalStore(subscribeSession, getSessionUser)
 }
 
+/** Los reportes de la sesión actual. */
 export function useReports() {
   return useSyncExternalStore(subscribeSession, getReports)
 }
 
+/** Entra con correo y contraseña y guarda la sesión. */
 export async function login(email: string, password: string) {
   try {
     const response = await apiRequest<LoginResponse>('/auth/login', {
@@ -237,6 +240,7 @@ async function refreshSessionInternal() {
   }
 }
 
+/** Vuelve a comprobar que la sesión siga activa. */
 export function refreshSession() {
   if (!refreshSessionPromise) {
     refreshSessionPromise =
@@ -248,6 +252,7 @@ export function refreshSession() {
   return refreshSessionPromise
 }
 
+/** Vuelve a cargar los reportes de la sesión. */
 export async function refreshReports() {
   if (!user) {
     reports = []
@@ -262,6 +267,7 @@ export async function refreshReports() {
   emit()
 }
 
+/** Cierra la sesión. */
 export function logout() {
   user = null
   reports = []
@@ -274,6 +280,7 @@ export function logout() {
   emit()
 }
 
+/** Agrega un reporte a la lista de la sesión. */
 export function addReport(report: Report) {
   reports = [report, ...reports]
   emit()

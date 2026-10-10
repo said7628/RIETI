@@ -2,6 +2,7 @@ interface PendingPageProps {
   title: string
 }
 
+/** Pantalla de una sección que todavía no está lista. Perfil usa esta página. */
 function PendingPage({ title }: PendingPageProps) {
   return (
     <main className="pending-page">

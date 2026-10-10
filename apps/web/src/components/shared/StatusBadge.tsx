@@ -11,6 +11,7 @@ interface StatusBadgeProps {
   status: ReportStatus
 }
 
+/** Muestra el estatus del reporte con su color de semáforo. */
 function StatusBadge({ status }: StatusBadgeProps) {
   const semaforoClass = semaforoClassNames[semaforoByStatus[status]]
 

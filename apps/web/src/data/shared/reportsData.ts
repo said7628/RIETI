@@ -5,6 +5,7 @@ import type {
   ReportStatus,
 } from './catalogs'
 
+/** Datos de un reporte: folio, estatus, prioridad, colonia y titular del caso. */
 export interface Report {
   id?: number
   uuid?: string

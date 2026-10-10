@@ -8,6 +8,7 @@ interface ReportDetailsModalProps {
   onClose: () => void
 }
 
+/** Ventana con los datos del reporte: folio, ubicación, estatus y prioridad. */
 function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
   return (
     <Modal

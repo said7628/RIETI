@@ -40,6 +40,10 @@ import {
 
 import './TrackingPage.css'
 
+/**
+ * Pantalla de Seguimiento.
+ * Lista los reportes y permite filtrarlos, asignarlos y cambiar su estatus.
+ */
 function TrackingPage() {
   const [searchParams] = useSearchParams()
 
@@ -157,6 +161,7 @@ function TrackingPage() {
     pageReports[0] ??
     null
 
+  /** Asigna el reporte seleccionado a una persona. */
   async function assignCaseHolder(
     assignedUser: ApiUser,
   ) {
@@ -184,6 +189,7 @@ function TrackingPage() {
     }
   }
 
+  /** Cambia el estatus del reporte seleccionado. */
   async function updateStatus(
     status: ReportStatus,
     solution: string | null,

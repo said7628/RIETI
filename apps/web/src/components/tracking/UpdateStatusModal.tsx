@@ -17,6 +17,7 @@ interface UpdateStatusModalProps {
   ) => void | Promise<void>
 }
 
+/** Ventana para cambiar el estatus del reporte. Si queda atendido, pide la solución. */
 function UpdateStatusModal({
   report,
   saving = false,

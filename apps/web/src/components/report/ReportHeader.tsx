@@ -3,6 +3,10 @@ import spinnaLogo from "../../assets/spinna-logo.png";
 import { useSessionUser } from "../../data/shared/session";
 import UserMenu from "../shared/UserMenu";
 
+/**
+ * Barra de las pantallas de reporte.
+ * Lleva a Seguimiento y, si el rol es administrador de la fundación, a Cuentas.
+ */
 function ReportHeader() {
     const user = useSessionUser();
     const location = useLocation();

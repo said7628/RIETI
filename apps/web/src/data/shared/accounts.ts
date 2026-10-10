@@ -52,6 +52,7 @@ export function useAccounts() {
   return useSyncExternalStore(subscribeAccounts, getAccounts)
 }
 
+/** Busca una cuenta activa con ese correo y contraseña. */
 export function findActiveAccount(email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase()
 
@@ -63,6 +64,7 @@ export function findActiveAccount(email: string, password: string) {
   )
 }
 
+/** Crea una cuenta en la lista local. */
 export function createAccount(input: {
   name: string
   email: string
@@ -89,6 +91,7 @@ export function createAccount(input: {
   return null
 }
 
+/** Cambia el rol de una cuenta. */
 export function updateAccountRole(email: string, role: UserRole) {
   accounts = accounts.map((account) =>
     account.email === email ? { ...account, role } : account,
@@ -97,6 +100,7 @@ export function updateAccountRole(email: string, role: UserRole) {
   return accounts.find((account) => account.email === email) ?? null
 }
 
+/** Quita una cuenta de la lista local. */
 export function deleteAccount(email: string) {
   accounts = accounts.filter((account) => account.email !== email)
   emit()
@@ -104,6 +108,7 @@ export function deleteAccount(email: string) {
 
 let recoveryCode: { email: string; code: string } | null = null
 
+/** Crea el código para recuperar la contraseña. */
 export function requestPasswordCode(email: string) {
   const account = accounts.find(
     (item) => item.active && item.email === email.trim().toLowerCase(),
@@ -118,6 +123,7 @@ export function requestPasswordCode(email: string) {
   return code
 }
 
+/** Cambia la contraseña si el código coincide. */
 export function resetPassword(email: string, code: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase()
 
