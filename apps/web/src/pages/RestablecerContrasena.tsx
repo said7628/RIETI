@@ -21,6 +21,11 @@ interface RecoveryState {
   email?: string
 }
 
+/**
+ * Pantalla para poner el código y la contraseña nueva.
+ * Si no hay correo, regresa a recuperar contraseña.
+ * Si todo sale bien, manda al login.
+ */
 function RestablecerContrasena() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -54,6 +59,7 @@ function RestablecerContrasena() {
   const [resending, setResending] =
     useState(false)
 
+  /** Si no llegó el correo desde recuperar contraseña, regresa a esa pantalla. */
   if (!email) {
     return (
       <Navigate
@@ -63,6 +69,7 @@ function RestablecerContrasena() {
     )
   }
 
+  /** Guarda la contraseña nueva y manda al login. */
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -132,6 +139,7 @@ function RestablecerContrasena() {
     }
   }
 
+  /** Vuelve a pedir el código al mismo correo. */
   async function resendCode() {
     try {
       setResending(true)

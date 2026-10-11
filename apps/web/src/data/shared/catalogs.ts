@@ -1,4 +1,5 @@
-﻿export type ReportStatus =
+﻿/** Nombres que usa la app: estatus del reporte, prioridad, rol y semáforo. */
+export type ReportStatus =
   | 'Registrado'
   | 'En revisión'
   | 'En seguimiento'
@@ -47,6 +48,7 @@ export const reportStatuses: ReportStatus[] = [
 // Ordenadas de mayor a menor urgencia.
 export const priorities: Priority[] = ['URGENTE', 'ALTA', 'MEDIA']
 
+/** Cada estatus del reporte pertenece a un color de semáforo. */
 export const semaforoByStatus: Record<ReportStatus, Semaforo> = {
   Registrado: 'SIN_ATENDER',
   Reincidente: 'SIN_ATENDER',

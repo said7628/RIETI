@@ -9,6 +9,7 @@ export type TrackingView =
   | 'cerrados'
   | 'cancelados'
 
+/** Vistas del menú lateral de Seguimiento. */
 export const trackingViews: { id: TrackingView; label: string }[] = [
   { id: 'mis-reportes', label: 'Mis reportes' },
   { id: 'todos', label: 'Todos los reportes' },
@@ -18,11 +19,13 @@ export const trackingViews: { id: TrackingView; label: string }[] = [
   { id: 'cancelados', label: 'Cancelados' },
 ]
 
+/** Lee la vista de Seguimiento. Si no viene una válida, usa Mis reportes. */
 export function parseTrackingView(value: string | null): TrackingView {
   const view = trackingViews.find((item) => item.id === value)
   return view ? view.id : 'mis-reportes'
 }
 
+/** Dice si un reporte entra en esa vista de Seguimiento. */
 export function matchesView(
   report: Report,
   view: TrackingView,

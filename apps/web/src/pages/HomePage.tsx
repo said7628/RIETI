@@ -8,6 +8,11 @@ import ReportDetail from '../components/shared/ReportDetail'
 import { sortReports } from '../data/shared/reportUtils'
 import { useReports, useSessionUser } from '../data/shared/session'
 
+/**
+ * Pantalla de inicio.
+ * Muestra el resumen y los reportes recientes.
+ * Si hay sesión, también muestra el mapa y las estadísticas.
+ */
 function HomePage() {
   const user = useSessionUser()
   const reports = useReports()

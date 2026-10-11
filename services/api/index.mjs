@@ -201,7 +201,7 @@ async function mobileChangePassword(req){
   const c=await pool.getConnection();
   try{
     await c.beginTransaction();
-    const [updated]=await c.execute("UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND password_hash=? AND activo=1",[hash,u.id,rows[0].password_hash]);
+    const [updated]=await c.execute("UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND activo=1 AND password_hash=? AND activo=1",[hash,u.id,rows[0].password_hash]);
     if(updated.affectedRows!==1) throw httpError(409,"PASSWORD_CHANGED","La contrasena cambio durante la solicitud");
     await c.execute("UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL",[u.id]);
     await c.commit();
@@ -260,28 +260,109 @@ async function listUsers(req){
     r.codigo rol_codigo,r.nombre rol_nombre,r.es_administrador FROM usuarios u JOIN roles r ON r.id=u.rol_id ORDER BY u.nombre`);
   return response(200,{ok:true,users:rows.map(publicUser)});
 }
+async function listAssignableUsers(req){
+  const actor=await requireUser(req,{web:true});
+  requirePermission(actor,"REPORT_ASSIGN");
+  const params=[];
+  let scope="";
+  if(!actor.es_administrador){
+    if(!actor.municipio_id) throw httpError(403,"MUNICIPALITY_REQUIRED","Tu cuenta necesita un municipio asignado");
+    scope=" AND (u.municipio_id=? OR r.es_administrador=1)";
+    params.push(actor.municipio_id);
+  }
+  const [rows]=await pool.execute(`SELECT u.id,u.uuid,u.nombre,u.correo,u.telefono,u.activo,u.municipio_id,u.dependencia_id,
+    r.codigo rol_codigo,r.nombre rol_nombre,r.es_administrador FROM usuarios u JOIN roles r ON r.id=u.rol_id
+    WHERE u.activo=1 AND r.acceso_web=1 AND r.codigo IN ('ADMINISTRADOR_FUNDACION','GESTOR_MUNICIPAL','PROCURADOR','PROCURADOR_PROTECCION')
+      AND (r.es_administrador=1 OR u.municipio_id IS NOT NULL) ${scope} ORDER BY u.nombre`,params);
+  return response(200,{ok:true,users:rows.map(publicUser)});
+}
 async function createUser(req){
   await requireUser(req,{web:true,admin:true});
   const {name,email,password,roleId,municipalityId=null,dependencyId=null,phone=null}=req.body;
   if(!name||!email||!password||!roleId) throw httpError(400,"INVALID_INPUT","Faltan datos obligatorios");
   if(String(password).length<10) throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");
+  const [roles]=await pool.execute("SELECT id,codigo,es_administrador,acceso_web,activo FROM roles WHERE id=? LIMIT 1",[roleId]);
+  const role=roles[0];
+  if(!role||!role.activo) throw httpError(400,"ROLE_INVALID","El tipo de cuenta seleccionado no está disponible");
+  if(role.acceso_web&&!role.es_administrador&&!municipalityId) throw httpError(400,"MUNICIPALITY_REQUIRED","Selecciona el municipio para este perfil");
+  const finalMunicipality=role.es_administrador?null:municipalityId;
+  const finalDependency=role.es_administrador?null:dependencyId;
   try{
     await pool.execute(`INSERT INTO usuarios(uuid,rol_id,municipio_id,dependencia_id,nombre,correo,telefono,password_hash,activo,created_at,updated_at)
       VALUES(?,?,?,?,?,?,?,?,1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))`,
-      [crypto.randomUUID(),roleId,municipalityId,dependencyId,String(name).trim(),String(email).trim().toLowerCase(),phone,await bcrypt.hash(String(password),12)]);
-  }catch(e){ if(e.code==="ER_DUP_ENTRY") throw httpError(409,"EMAIL_EXISTS","Ese correo ya está registrado"); throw e; }
+      [crypto.randomUUID(),roleId,finalMunicipality,finalDependency,String(name).trim(),String(email).trim().toLowerCase(),phone,await bcrypt.hash(String(password),12)]);
+  }catch(e){if(e.code==="ER_DUP_ENTRY")throw httpError(409,"EMAIL_EXISTS","Ese correo ya está registrado");throw e;}
   return response(201,{ok:true});
 }
 async function updateUser(req,id){
-  await requireUser(req,{web:true,admin:true});
-  const allowed={name:"nombre",roleId:"rol_id",municipalityId:"municipio_id",dependencyId:"dependencia_id",phone:"telefono",active:"activo"};
-  const sets=[],params=[];
-  for(const [k,c] of Object.entries(allowed)) if(Object.hasOwn(req.body,k)){sets.push(`${c}=?`);params.push(req.body[k]);}
-  if(req.body.password){if(String(req.body.password).length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");sets.push("password_hash=?");params.push(await bcrypt.hash(String(req.body.password),12));}
-  if(!sets.length) throw httpError(400,"NO_CHANGES","No hay cambios");
-  sets.push("updated_at=UTC_TIMESTAMP(6)");params.push(id);
-  await pool.execute(`UPDATE usuarios SET ${sets.join(",")} WHERE id=?`,params);
-  return response(200,{ok:true});
+  const actor=await requireUser(req,{web:true,admin:true});
+  const targetId=Number(id);
+  if(!Number.isSafeInteger(targetId)||targetId<1) throw httpError(400,"INVALID_USER","Cuenta inválida");
+  const has=Object.hasOwn(req.body,"roleId");
+  if(Number(actor.id)===targetId && (has||req.body.active===false)){
+    throw httpError(400,"SELF_ROLE_CHANGE","No puedes cambiar tus propios privilegios ni desactivar tu cuenta");
+  }
+  const c=await pool.getConnection();
+  try{
+    await c.beginTransaction();
+    const [users]=await c.execute("SELECT id,rol_id,municipio_id,dependencia_id,activo FROM usuarios WHERE id=? FOR UPDATE",[targetId]);
+    const target=users[0];
+    if(!target)throw httpError(404,"USER_NOT_FOUND","La cuenta no existe");
+    let newRole=null;
+    if(has){
+      const [roles]=await c.execute("SELECT id,codigo,es_administrador,acceso_web,activo FROM roles WHERE id=? LIMIT 1",[req.body.roleId]);
+      newRole=roles[0];
+      if(!newRole||!newRole.activo)throw httpError(400,"ROLE_INVALID","El tipo de cuenta no está disponible");
+      const newMunicipality=Object.hasOwn(req.body,"municipalityId")?req.body.municipalityId:target.municipio_id;
+      if(newRole.acceso_web&&!newRole.es_administrador&&!newMunicipality){
+        throw httpError(400,"MUNICIPALITY_REQUIRED","Selecciona un municipio antes de guardar el nuevo rol");
+      }
+      const [assigned]=await c.execute("SELECT municipio_id FROM reportes WHERE asignado_usuario_id=? AND cerrado_at IS NULL LIMIT 100",[targetId]);
+      if(assigned.length&&(!newRole.acceso_web || (!newRole.es_administrador&&assigned.some(x=>Number(x.municipio_id)!==Number(newMunicipality))))){
+        throw httpError(409,"REPORTS_ASSIGNED","La cuenta tiene reportes activos asignados. Reasígnalos antes de cambiar a un rol sin acceso o a otro municipio");
+      }
+      if(newRole.es_administrador===0){
+        const [currentRole]=await c.execute("SELECT es_administrador FROM roles WHERE id=?",[target.rol_id]);
+        if(currentRole[0]?.es_administrador){
+          const [otherAdmins]=await c.execute(`SELECT COUNT(*) total FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE u.activo=1 AND r.es_administrador=1 AND u.id<>?`,[targetId]);
+          if(!Number(otherAdmins[0].total)) throw httpError(409,"LAST_ADMIN","No puedes quitar el último administrador activo");
+        }
+      }
+    }
+    if(!has && Object.hasOwn(req.body,"municipalityId")){
+      const [currentRoles]=await c.execute("SELECT codigo,es_administrador,acceso_web FROM roles WHERE id=? LIMIT 1",[target.rol_id]);
+      const currentRole=currentRoles[0];
+      const municipality=req.body.municipalityId;
+      if(currentRole?.acceso_web && !currentRole.es_administrador && !municipality){
+        throw httpError(400,"MUNICIPALITY_REQUIRED","Este perfil necesita un municipio asignado");
+      }
+      if(!currentRole?.es_administrador){
+        const [activeReports]=await c.execute("SELECT municipio_id FROM reportes WHERE asignado_usuario_id=? AND cerrado_at IS NULL LIMIT 100",[targetId]);
+        if(activeReports.some(r=>Number(r.municipio_id)!==Number(municipality))){
+          throw httpError(409,"REPORTS_ASSIGNED","Reasigna los reportes activos antes de cambiar de municipio");
+        }
+      }
+    }
+    const allowed={name:"nombre",roleId:"rol_id",municipalityId:"municipio_id",dependencyId:"dependencia_id",phone:"telefono",active:"activo"};
+    const sets=[],params=[];
+    for(const [k,col] of Object.entries(allowed))if(Object.hasOwn(req.body,k)){
+      if(newRole?.es_administrador && (k==="municipalityId"||k==="dependencyId")) continue;
+      sets.push(`${col}=?`);params.push(req.body[k]);
+    }
+    if(newRole?.es_administrador){sets.push("municipio_id=NULL","dependencia_id=NULL");}
+    if(req.body.password){
+      if(String(req.body.password).length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");
+      sets.push("password_hash=?");params.push(await bcrypt.hash(String(req.body.password),12));
+    }
+    if(!sets.length)throw httpError(400,"NO_CHANGES","No hay cambios");
+    sets.push("updated_at=UTC_TIMESTAMP(6)");params.push(targetId);
+    await c.execute(`UPDATE usuarios SET ${sets.join(',')} WHERE id=?`,params);
+    if(req.body.active===false||req.body.password){
+      await c.execute("UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL",[targetId]);
+    }
+    await c.commit();
+    return response(200,{ok:true});
+  }catch(e){await c.rollback();throw e;}finally{c.release();}
 }
 async function deactivateUser(req,id){
   const actor=await requireUser(req,{web:true,admin:true});
@@ -296,14 +377,14 @@ const REPORT_SELECT=`SELECT r.id,r.uuid,r.folio,r.municipio_id,r.colonia_id,r.mo
  r.asignado_usuario_id,r.asignado_dependencia_id,r.descripcion_solucion,r.cerrado_at,r.created_at,r.updated_at,
  r.direccion_referencia,r.codigo_postal,r.horario_observado,m.nombre municipio,c.nombre colonia,t.nombre work_type,
  nr.nombre nivel_riesgo,re.nombre age_range,eo.nombre status,eo.codigo status_code,p.nombre priority,p.codigo priority_code,
- au.nombre case_holder FROM reportes r JOIN municipios m ON m.id=r.municipio_id LEFT JOIN colonias c ON c.id=r.colonia_id
+ au.nombre case_holder, ad.nombre assigned_dependency FROM reportes r JOIN municipios m ON m.id=r.municipio_id LEFT JOIN colonias c ON c.id=r.colonia_id
  JOIN tipos_trabajo_infantil t ON t.id=r.tipo_trabajo_id JOIN niveles_riesgo nr ON nr.id=r.nivel_riesgo_id
  JOIN rangos_edad re ON re.id=r.rango_edad_id JOIN estatus_operacionales eo ON eo.id=r.estatus_id
- JOIN prioridades p ON p.id=r.prioridad_id LEFT JOIN usuarios au ON au.id=r.asignado_usuario_id`;
+ JOIN prioridades p ON p.id=r.prioridad_id LEFT JOIN usuarios au ON au.id=r.asignado_usuario_id LEFT JOIN dependencias ad ON ad.id=r.asignado_dependencia_id`;
 function mapReport(r){return{
   id:Number(r.id),uuid:r.uuid,folio:r.folio,createdAt:r.created_at,updatedAt:r.updated_at,workType:r.work_type,
   colonia:r.colonia||r.municipio,municipality:r.municipio,address:[r.direccion_referencia,r.colonia,r.municipio,r.codigo_postal].filter(Boolean).join(", "),
-  postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,
+  postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,assignedUserId:r.asignado_usuario_id==null?null:Number(r.asignado_usuario_id),assignedDependency:r.assigned_dependency||null,
   nnaEstimate:r.estimacion_nna==="5_MAS"?"5+":r.estimacion_nna,ageRange:r.age_range,schedule:r.horario_observado||"—",description:r.descripcion,solution:r.descripcion_solucion||null,
   latitude:Number(r.latitud),longitude:Number(r.longitud),risk:r.nivel_riesgo,modality:r.modalidad,origin:r.origen
 };}
@@ -1295,7 +1376,7 @@ async function recoveryRequest(req){
   })
 }
 
-async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[await bcrypt.hash(password,12),rows[0].usuario_id]);await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
+async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND u.activo=1 AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();const [changed]=await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND activo=1`,[await bcrypt.hash(password,12),rows[0].usuario_id]);if(changed.affectedRows!==1)throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o cuenta inactiva");await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
 
 
 
@@ -2171,7 +2252,7 @@ async function dashboardSummary(req){
       throw httpError(
         400,
         "INVALID_DATE_FROM",
-        "from debe usar formato YYYY-MM-DD"
+        "La fecha inicial debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2186,7 +2267,7 @@ async function dashboardSummary(req){
       throw httpError(
         400,
         "INVALID_DATE_TO",
-        "to debe usar formato YYYY-MM-DD"
+        "La fecha final debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2205,7 +2286,7 @@ async function dashboardSummary(req){
     throw httpError(
       400,
       "INVALID_DATE_RANGE",
-      "from no puede ser posterior a to"
+      "La fecha Desde no puede ser posterior a Hasta"
     )
   }
 
@@ -2832,7 +2913,7 @@ async function reportMap(req){
       throw httpError(
         400,
         "INVALID_DATE_FROM",
-        "from debe usar formato YYYY-MM-DD"
+        "La fecha inicial debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2847,7 +2928,7 @@ async function reportMap(req){
       throw httpError(
         400,
         "INVALID_DATE_TO",
-        "to debe usar formato YYYY-MM-DD"
+        "La fecha final debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2863,7 +2944,7 @@ async function reportMap(req){
     throw httpError(
       400,
       "INVALID_DATE_RANGE",
-      "from no puede ser posterior a to"
+      "La fecha Desde no puede ser posterior a Hasta"
     )
   }
 
@@ -2958,6 +3039,7 @@ async function router(req){
   if(req.method==="POST"&&req.path==="/auth/recovery/reset")return recoveryReset(req);
   if(req.method==="GET"&&req.path==="/catalogos")return listCatalogs(req);
   if(req.method==="GET"&&req.path==="/usuarios")return listUsers(req);
+  if(req.method==="GET"&&req.path==="/usuarios/asignables")return listAssignableUsers(req);
   if(req.method==="POST"&&req.path==="/usuarios")return createUser(req);
   let m;
   if((m=match(req.path,/^\/usuarios\/([^/]+)$/))&&req.method==="PATCH")return updateUser(req,m[0]);

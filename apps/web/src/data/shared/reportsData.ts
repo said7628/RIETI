@@ -1,10 +1,11 @@
-﻿import type {
+import type {
   AgeRange,
   NnaEstimate,
   Priority,
   ReportStatus,
 } from './catalogs'
 
+/** Datos de un reporte: folio, estatus, prioridad, colonia y titular del caso. */
 export interface Report {
   id?: number
   uuid?: string
@@ -20,6 +21,8 @@ export interface Report {
   statusCode?: string
   priority: Priority
   caseHolder: string | null
+  assignedUserId?: number | null
+  assignedDependency?: string | null
   nnaEstimate: NnaEstimate
   ageRange: AgeRange
   schedule: string

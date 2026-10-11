@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import spinnaLogo from "../../assets/spinna-logo.png";
 import "../../pages/Login.css";
 
+/** Fondo y pie de las pantallas de login y de recuperar contraseña. */
 function AuthLayout({ children }: { children: ReactNode }) {
     return (
         <div className="login-page">

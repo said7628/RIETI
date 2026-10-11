@@ -5,12 +5,14 @@ import type { Report } from '../../data/shared/reportsData'
 import { useReports } from '../../data/shared/session'
 import { matchesView } from '../../data/tracking/trackingViews'
 
+/** Cuenta reportes de un color de semáforo. */
 function countBySemaforo(reports: Report[], semaforo: Semaforo) {
   return reports.filter(
     (report) => semaforoByStatus[report.status] === semaforo,
   ).length
 }
 
+/** Tarjetas del inicio que cuentan reportes sin asignar, en atención y cerrados. */
 function StatusCards() {
   const reports = useReports()
   const statusData = [

@@ -12,6 +12,10 @@ interface ReportFormProps {
     onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
 }
 
+/**
+ * Campos del formulario para crear un reporte.
+ * Si está en solo lectura, muestra los datos y no deja editarlos.
+ */
 function ReportForm({
     draft,
     readOnly = false,
@@ -31,6 +35,7 @@ function ReportForm({
         };
     }
 
+    /** Agrega archivos y no repite uno que ya está en la lista. */
     function addFiles(event: ChangeEvent<HTMLInputElement>) {
         const selected = Array.from(event.target.files ?? []);
         const next = [...files];

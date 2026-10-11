@@ -62,3 +62,8 @@ export async function deactivateUser(id: number) {
     method: 'DELETE',
   })
 }
+/** Perfiles habilitados para recibir asignaciones, segun rol y municipio del operador. */
+export async function getAssignableUsers() {
+  const response = await apiRequest<UsersResponse>('/usuarios/asignables')
+  return response.users
+}

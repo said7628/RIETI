@@ -38,6 +38,7 @@ const chartColors = [
   '#ff5c5c',
 ]
 
+/** Pasa códigos como CRITICO a un texto para la gráfica. */
 function labelCode(value: string) {
   const labels: Record<string, string> = {
     MASCULINO: 'Masculino',
@@ -91,6 +92,7 @@ function labelCode(value: string) {
   )
 }
 
+/** Convierte un conteo del servidor en datos para una gráfica. */
 function objectToChart(
   value: Record<string, number>,
 ) {
@@ -102,6 +104,7 @@ function objectToChart(
   )
 }
 
+/** Pasa 2026-03 a Mar 2026. */
 function formatMonth(value: string) {
   const [year, month] = value.split('-')
 
@@ -127,6 +130,7 @@ function formatMonth(value: string) {
   } ${year}`
 }
 
+/** Muestra las horas de atención. Si pasa de un día, las muestra en días. */
 function formatHours(hours: number | null) {
   if (hours == null) {
     return '—'
@@ -139,6 +143,7 @@ function formatHours(hours: number | null) {
   return `${(hours / 24).toFixed(1)} días`
 }
 
+/** Tarjeta con un número del inicio, por ejemplo reportes atendidos. */
 function MetricCard({
   title,
   value,
@@ -167,6 +172,7 @@ function MetricCard({
   )
 }
 
+/** Recuadro de una gráfica del inicio. */
 function ChartCard({
   title,
   subtitle,
@@ -201,6 +207,7 @@ function ChartCard({
   )
 }
 
+/** Gráficas y números del inicio. Se pueden filtrar por fechas. */
 function StatisticsSection() {
   const [data, setData] =
     useState<DashboardResponse | null>(null)
@@ -223,6 +230,7 @@ function StatisticsSection() {
   const [appliedTo, setAppliedTo] =
     useState('')
 
+  /** Carga las estadísticas cuando se aplica un periodo. */
   useEffect(() => {
     let cancelled = false
 
@@ -276,11 +284,6 @@ function StatisticsSection() {
     [data],
   )
 
-  const sexData = useMemo(
-    () => objectToChart(data?.bySex ?? {}),
-    [data],
-  )
-
   const ageData = useMemo(
     () =>
       objectToChart(
@@ -321,11 +324,14 @@ function StatisticsSection() {
     [data],
   )
 
+  /** Aplica las fechas solo si la inicial no es posterior a la final. */
   function applyFilters() {
+    if (from && to && from > to) return
     setAppliedFrom(from)
     setAppliedTo(to)
   }
 
+  /** Quita el periodo y vuelve a mostrar todas las fechas. */
   function clearFilters() {
     setFrom('')
     setTo('')
@@ -372,9 +378,12 @@ function StatisticsSection() {
                 id="stats-from"
                 type="date"
                 value={from}
-                onChange={(event) =>
-                  setFrom(event.target.value)
-                }
+                max={to || undefined}
+                onChange={(event) => {
+                  const value = event.target.value
+                  setFrom(value)
+                  if (to && value && value > to) setTo(value)
+                }}
               />
             </div>
 
@@ -387,9 +396,11 @@ function StatisticsSection() {
                 id="stats-to"
                 type="date"
                 value={to}
-                onChange={(event) =>
-                  setTo(event.target.value)
-                }
+                min={from || undefined}
+                onChange={(event) => {
+                  const value = event.target.value
+                  if (!from || !value || value >= from) setTo(value)
+                }}
               />
             </div>
 
@@ -543,45 +554,6 @@ function StatisticsSection() {
                       strokeWidth={3}
                     />
                   </LineChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-
-              <ChartCard
-                title="Distribución por sexo"
-                subtitle="Sexo observado en los reportes"
-              >
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <PieChart>
-                    <Pie
-                      data={sexData}
-                      dataKey="total"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={90}
-                      paddingAngle={3}
-                    >
-                      {sexData.map(
-                        (_, index) => (
-                          <Cell
-                            key={index}
-                            fill={
-                              chartColors[
-                                index %
-                                  chartColors.length
-                              ]
-                            }
-                          />
-                        ),
-                      )}
-                    </Pie>
-
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
                 </ResponsiveContainer>
               </ChartCard>
 

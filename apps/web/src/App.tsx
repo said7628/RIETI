@@ -23,6 +23,11 @@ import RecuperarContrasena from './pages/RecuperarContrasena'
 import RestablecerContrasena from './pages/RestablecerContrasena'
 import TrackingPage from './pages/TrackingPage'
 
+/**
+ * Controla qué pantalla se muestra.
+ * Si la persona no ha entrado, la manda al login.
+ * Si ya entró, muestra la TopBar y la página que eligió.
+ */
 function App() {
   const location = useLocation()
   const user = useSessionUser()
@@ -33,13 +38,16 @@ function App() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
+  /** Pantallas de login y de recuperar contraseña. */
   const isAuthPage =
     location.pathname === '/login' ||
     location.pathname === '/recuperar' ||
     location.pathname === '/recuperar/codigo'
 
+  /** Seguimiento es la única pantalla con menú lateral y pie. */
   const isTracking = location.pathname === '/seguimiento'
 
+  /** Al abrir la app, comprueba si ya hay una sesión. */
   useEffect(() => {
     if (isAuthPage) {
       setCheckingSession(false)
@@ -65,6 +73,24 @@ function App() {
       active = false
     }
   }, [isAuthPage])
+
+  /** De vez en cuando vuelve a comprobar que la sesión siga activa. */
+  useEffect(() => {
+    if (isAuthPage || !user) return
+    const update = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSession()
+      }
+    }
+    const interval = window.setInterval(update, 20 * 1000)
+    document.addEventListener('visibilitychange', update)
+    window.addEventListener('focus', update)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', update)
+      window.removeEventListener('focus', update)
+    }
+  }, [isAuthPage, user?.id])
 
   if (isAuthPage) {
     return (
@@ -92,6 +118,7 @@ function App() {
     )
   }
 
+  /** Mientras revisa la sesión, muestra este aviso y no deja pasar. */
   if (checkingSession) {
     return (
       <main
@@ -108,6 +135,7 @@ function App() {
     )
   }
 
+  /** Si no hay sesión, manda al login. */
   if (!user || !getAccessToken()) {
     return (
       <Navigate
@@ -157,6 +185,7 @@ function App() {
             element={<PendingPage title="Perfil" />}
           />
 
+          {/* Crear reporte ya no se abre. Estas rutas regresan al inicio. */}
           <Route
             path="/crear-reporte"
             element={<Navigate to="/" replace />}

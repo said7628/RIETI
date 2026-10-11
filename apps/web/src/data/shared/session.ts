@@ -3,10 +3,12 @@ import {
   ApiError,
   apiRequest,
   setAccessToken,
+  registerAccessTokenRefresh,
 } from '../../api/api'
 import type { UserRole } from './catalogs'
 import type { Report } from './reportsData'
 
+/** Persona que inició sesión: nombre, correo, rol y municipio. */
 export interface SessionUser {
   id: number
   name: string
@@ -37,6 +39,7 @@ interface ReportsResponse {
   reports: Report[]
 }
 
+/** Lee la persona guardada de la sesión anterior. Si está dañada, la borra. */
 function readSavedUser(): SessionUser | null {
   const raw = sessionStorage.getItem('rieti_user')
 
@@ -62,6 +65,7 @@ function emit() {
   listeners.forEach((listener) => listener())
 }
 
+/** Guarda la persona, el token y, si viene, el token para renovar la sesión. */
 function saveSession(
   nextUser: SessionUser,
   accessToken: string,
@@ -98,14 +102,17 @@ export function getReports() {
   return reports
 }
 
+/** La persona que tiene la sesión abierta. */
 export function useSessionUser() {
   return useSyncExternalStore(subscribeSession, getSessionUser)
 }
 
+/** Los reportes de la sesión actual. */
 export function useReports() {
   return useSyncExternalStore(subscribeSession, getReports)
 }
 
+/** Entra con correo y contraseña y guarda la sesión. */
 export async function login(email: string, password: string) {
   try {
     const response = await apiRequest<LoginResponse>('/auth/login', {
@@ -137,6 +144,7 @@ export async function login(email: string, password: string) {
   }
 }
 
+/** Pide una sesión nueva con el token de renovación. Si ya no sirve, cierra la sesión. */
 async function renewSessionWithRefreshToken() {
   const refreshToken =
     sessionStorage.getItem('rieti_refresh_token')
@@ -176,6 +184,13 @@ async function renewSessionWithRefreshToken() {
   }
 }
 
+registerAccessTokenRefresh(renewSessionWithRefreshToken)
+
+/**
+ * Pregunta al servidor quién tiene la sesión.
+ * Si responde 401, intenta renovarla. Si responde 403, cierra la sesión.
+ * Si falla la red, deja la sesión como está.
+ */
 async function refreshSessionInternal() {
   try {
     const response = await apiRequest<{
@@ -234,6 +249,7 @@ async function refreshSessionInternal() {
   }
 }
 
+/** Vuelve a comprobar que la sesión siga activa. */
 export function refreshSession() {
   if (!refreshSessionPromise) {
     refreshSessionPromise =
@@ -245,6 +261,7 @@ export function refreshSession() {
   return refreshSessionPromise
 }
 
+/** Vuelve a cargar los reportes de la sesión. */
 export async function refreshReports() {
   if (!user) {
     reports = []
@@ -259,6 +276,7 @@ export async function refreshReports() {
   emit()
 }
 
+/** Cierra la sesión. */
 export function logout() {
   user = null
   reports = []
@@ -271,6 +289,7 @@ export function logout() {
   emit()
 }
 
+/** Agrega un reporte a la lista de la sesión. */
 export function addReport(report: Report) {
   reports = [report, ...reports]
   emit()

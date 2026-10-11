@@ -24,6 +24,7 @@ interface EvidenceWithUrl extends ReportEvidence {
   url: string
 }
 
+/** Mapa pequeño del reporte. Si no hay coordenadas, avisa que no hay ubicación. */
 function ReportLocationMap({
   latitude,
   longitude,
@@ -34,6 +35,7 @@ function ReportLocationMap({
   const elementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
 
+  /** Dibuja el mapa en las coordenadas del reporte. */
   useEffect(() => {
     if (
       !elementRef.current ||
@@ -58,6 +60,21 @@ function ReportLocationMap({
     L.control.zoom({
       position: 'bottomright',
     }).addTo(map)
+    const Recenter = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd() {
+        const button = L.DomUtil.create('button', 'leaflet-bar report-recenter-button')
+        button.type = 'button'
+        button.textContent = '⌖'
+        button.title = 'Centrar en la ubicación del reporte'
+        button.setAttribute('aria-label', 'Centrar en la ubicación del reporte')
+        button.style.cssText = 'display:block;width:34px;height:34px;background:white;font-size:25px;cursor:pointer;border:1px solid #aaa;border-radius:4px;margin-top:7px'
+        L.DomEvent.disableClickPropagation(button)
+        L.DomEvent.on(button, 'click', () => map.setView([latitude, longitude], 16))
+        return button
+      },
+    })
+    new Recenter().addTo(map)
 
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -110,6 +127,7 @@ function ReportLocationMap({
   )
 }
 
+/** Ficha de un reporte: folio, mapa, datos y evidencias. */
 function ReportDetail({
   report,
   actions,
@@ -126,6 +144,7 @@ function ReportDetail({
   const [selectedImage, setSelectedImage] =
     useState<string | null>(null)
 
+  /** Al cambiar de folio, carga las evidencias y pide el enlace de cada una. */
   useEffect(() => {
     let cancelled = false
 
@@ -223,8 +242,8 @@ function ReportDetail({
         </div>
 
         <p className="case-holder">
-          <strong>Titular del caso:</strong>{' '}
-          {report.caseHolder ?? 'Sin asignar'}
+          <strong>Asignado a:</strong>{' '}
+          {report.caseHolder ?? report.assignedDependency ?? 'Sin asignar'}
         </p>
 
         <div className="report-description">

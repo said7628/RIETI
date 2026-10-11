@@ -8,6 +8,7 @@ interface ReportsTableProps {
   onSelect: (folio: string) => void
 }
 
+/** Tabla de reportes en Seguimiento. Al elegir una fila, marca ese folio. */
 function ReportsTable({ reports, selectedFolio, onSelect }: ReportsTableProps) {
   if (reports.length === 0) {
     return (
@@ -27,7 +28,7 @@ function ReportsTable({ reports, selectedFolio, onSelect }: ReportsTableProps) {
           <th>Colonia</th>
           <th>Fase actual</th>
           <th>Prioridad</th>
-          <th>Titular del caso</th>
+          <th>Asignado a</th>
         </tr>
       </thead>
 
@@ -52,7 +53,7 @@ function ReportsTable({ reports, selectedFolio, onSelect }: ReportsTableProps) {
             <td className={report.priority === 'URGENTE' ? 'priority-urgent' : ''}>
               {report.priority}
             </td>
-            <td>{report.caseHolder ?? '—'}</td>
+            <td>{report.caseHolder ?? report.assignedDependency ?? 'Sin asignar'}</td>
           </tr>
         ))}
       </tbody>

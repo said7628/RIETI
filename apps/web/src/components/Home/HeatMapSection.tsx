@@ -15,6 +15,7 @@ import {
   type MapPoint,
 } from '../../api/map'
 
+/** Da más peso en el mapa a los reportes de mayor riesgo. */
 function riskWeight(risk: string) {
   switch (risk) {
     case 'CRITICO':
@@ -34,6 +35,7 @@ function riskWeight(risk: string) {
   }
 }
 
+/** Pasa un texto como CRITICO a "Critico" para mostrarlo. */
 function prettyCode(value: string) {
   return value
     .replaceAll('_', ' ')
@@ -41,6 +43,7 @@ function prettyCode(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
+/** Mapa de calor con la ubicación de los reportes. */
 function HeatMapSection() {
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -56,6 +59,7 @@ function HeatMapSection() {
   const [priority, setPriority] = useState('')
   const [status, setStatus] = useState('')
 
+  /** Carga los puntos otra vez cuando cambian riesgo, prioridad o estatus. */
   useEffect(() => {
     let cancelled = false
 
@@ -97,6 +101,7 @@ function HeatMapSection() {
     }
   }, [risk, priority, status])
 
+  /** Crea el mapa una sola vez, centrado en la zona de los reportes. */
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) {
       return
@@ -113,6 +118,30 @@ function HeatMapSection() {
     L.control.zoom({
       position: 'bottomright',
     }).addTo(map)
+
+    const FitToReports = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd() {
+        const button = L.DomUtil.create('button', 'leaflet-bar heatmap-fit-button')
+        button.type = 'button'
+        button.textContent = '⌖'
+        button.title = 'Centrar mapa en los reportes'
+        button.setAttribute('aria-label', 'Centrar mapa en los reportes')
+        button.style.cssText = 'width:34px;height:34px;background:white;font-size:25px;cursor:pointer;border:1px solid #aaa;border-radius:4px;margin-top:7px'
+        L.DomEvent.disableClickPropagation(button)
+        L.DomEvent.on(button, 'click', () => {
+          const layer = markersLayerRef.current
+          const all = layer?.getLayers().filter((item): item is L.Marker => item instanceof L.Marker) ?? []
+          if (all.length) {
+            map.fitBounds(L.latLngBounds(all.map(item => item.getLatLng())), { padding: [45, 45], maxZoom: 16 })
+          } else {
+            map.setView([19.5576, -99.2655], 10)
+          }
+        })
+        return button
+      },
+    })
+    new FitToReports().addTo(map)
 
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -141,6 +170,7 @@ function HeatMapSection() {
     }
   }, [])
 
+  /** Dibuja el calor y los puntos cada vez que llega una lista nueva. */
   useEffect(() => {
     const map = mapRef.current
     const markers = markersLayerRef.current

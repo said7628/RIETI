@@ -3,16 +3,18 @@ import spinnaLogo from "../../assets/spinna-logo.png";
 import { useSessionUser } from "../../data/shared/session";
 import UserMenu from "../shared/UserMenu";
 
+/**
+ * Barra de las pantallas de reporte.
+ * Lleva a Seguimiento y, si el rol es administrador de la fundación, a Cuentas.
+ */
 function ReportHeader() {
     const user = useSessionUser();
     const location = useLocation();
+    /** Casos cerrados es Seguimiento con ?vista=cerrados. Ahí Seguimiento no se marca activo. */
     const isClosedCases =
         location.pathname === "/seguimiento" &&
         new URLSearchParams(location.search).get("vista") === "cerrados";
     const isTracking = location.pathname === "/seguimiento" && !isClosedCases;
-    const isCreate =
-        location.pathname === "/crear-reporte" ||
-        location.pathname === "/reporte-enviado";
 
     return (
         <header className="report-header">
@@ -27,13 +29,6 @@ function ReportHeader() {
             </Link>
 
             <nav className="report-navigation">
-                <Link
-                    to="/crear-reporte"
-                    className={`nav-option${isCreate ? " nav-option-active" : ""}`}
-                >
-                    Crear reporte
-                </Link>
-
                 <Link
                     to="/seguimiento"
                     className={`nav-option${isTracking ? " nav-option-active" : ""}`}

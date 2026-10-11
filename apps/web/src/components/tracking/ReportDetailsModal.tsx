@@ -8,6 +8,7 @@ interface ReportDetailsModalProps {
   onClose: () => void
 }
 
+/** Ventana con los datos del reporte: folio, ubicación, estatus y prioridad. */
 function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
   return (
     <Modal
@@ -64,9 +65,9 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
           </p>
 
           <p>
-            <strong>Titular del caso:</strong>
+            <strong>Asignado a:</strong>
             <br />
-            {report.caseHolder ?? 'Sin asignar'}
+            {report.caseHolder ?? report.assignedDependency ?? 'Sin asignar'}
           </p>
 
           <p>

@@ -40,9 +40,14 @@ import {
 
 import './TrackingPage.css'
 
+/**
+ * Pantalla de Seguimiento.
+ * Lista los reportes y permite filtrarlos, asignarlos y cambiar su estatus.
+ */
 function TrackingPage() {
   const [searchParams] = useSearchParams()
 
+  /** La vista llega en la URL, por ejemplo ?vista=cerrados. */
   const view = parseTrackingView(
     searchParams.get('vista'),
   )
@@ -105,6 +110,7 @@ function TrackingPage() {
     ),
   ].sort()
 
+  /** Deja solo los reportes de la vista, el folio, la prioridad y la colonia elegidos. */
   const filteredReports = reports.filter(
     (report) =>
       matchesView(
@@ -157,6 +163,7 @@ function TrackingPage() {
     pageReports[0] ??
     null
 
+  /** Asigna el reporte seleccionado a una persona. */
   async function assignCaseHolder(
     assignedUser: ApiUser,
   ) {
@@ -184,6 +191,7 @@ function TrackingPage() {
     }
   }
 
+  /** Cambia el estatus del reporte seleccionado. */
   async function updateStatus(
     status: ReportStatus,
     solution: string | null,
@@ -222,6 +230,7 @@ function TrackingPage() {
     }
   }
 
+  /** Asignar solo lo ven el administrador de la fundación y el gestor municipal. */
   function renderActions() {
     if (!selectedReport) {
       return null
@@ -229,7 +238,7 @@ function TrackingPage() {
 
     return (
       <>
-        {!selectedReport.caseHolder && (
+        {(user?.roleCode === 'ADMINISTRADOR_FUNDACION' || user?.roleCode === 'GESTOR_MUNICIPAL') && (
           <AssignSelect
             folio={
               selectedReport.folio

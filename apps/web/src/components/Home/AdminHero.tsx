@@ -1,5 +1,6 @@
 import { useSessionUser } from '../../data/shared/session'
 
+/** Título de bienvenida del inicio. Muestra el nombre de quien tiene la sesión. */
 function AdminHero() {
   const user = useSessionUser()
 

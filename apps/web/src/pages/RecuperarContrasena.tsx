@@ -1,4 +1,4 @@
-﻿import {
+import {
   useState,
   type FormEvent,
 } from 'react'
@@ -11,6 +11,10 @@ import {
 import AuthLayout from '../components/auth/AuthLayout'
 import { requestPasswordRecovery } from '../api/recovery'
 
+/**
+ * Pantalla para pedir el código de recuperar contraseña.
+ * Si el correo es válido, pasa a /recuperar/codigo.
+ */
 function RecuperarContrasena() {
   const navigate = useNavigate()
 
@@ -23,6 +27,7 @@ function RecuperarContrasena() {
   const [loading, setLoading] =
     useState(false)
 
+  /** Pide el código y, si sale bien, pasa a /recuperar/codigo con el correo. */
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -122,6 +127,7 @@ function RecuperarContrasena() {
         <Link
           to="/login"
           className="login-back-button"
+          aria-disabled={false}
         >
           Volver a iniciar sesión
         </Link>

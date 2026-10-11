@@ -1,4 +1,4 @@
-﻿import { apiRequest } from './api'
+import { apiRequest } from './api'
 
 export async function requestPasswordRecovery(
   email: string,
@@ -10,6 +10,7 @@ export async function requestPasswordRecovery(
     '/auth/recovery/request',
     {
       method: 'POST',
+      credentials: 'omit',
       body: JSON.stringify({
         email: email.trim().toLowerCase(),
       }),
@@ -30,6 +31,7 @@ export async function resetPasswordWithCode(
     '/auth/recovery/reset',
     {
       method: 'POST',
+      credentials: 'omit',
       body: JSON.stringify({
         email: input.email.trim().toLowerCase(),
         code: input.code.trim(),

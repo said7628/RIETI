@@ -13,6 +13,10 @@ import ReportHeader from "../components/report/ReportHeader";
 import spinnaLogo from "../assets/spinna-logo.png";
 import "./report.css";
 
+/**
+ * Formulario para crear un reporte.
+ * Si faltan datos, avisa. Si está completo, guarda el reporte y pasa a reporte enviado.
+ */
 function CrearReporte() {
     const navigate = useNavigate();
     const [draft, setDraft] = useState<ReportDraft>(emptyReportDraft);
@@ -24,6 +28,7 @@ function CrearReporte() {
         setError("");
     }
 
+    /** Revisa los campos obligatorios, arma el folio y pasa a reporte enviado. */
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 

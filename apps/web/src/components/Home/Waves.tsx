@@ -1,3 +1,4 @@
+/** Ondas decorativas del inicio. */
 function Waves() {
   return (
     <div className="waves-container">
