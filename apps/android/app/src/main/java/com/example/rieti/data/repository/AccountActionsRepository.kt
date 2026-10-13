@@ -25,8 +25,7 @@ import org.json.JSONObject
  * @param context Contexto de Android utilizado para
  * acceder a la información de sesión del usuario.
  *
- * @author Said Valseca Figueroa.
- * @author Equipo de desarrollo RIETI:
+ * @author Equipo 3:
  * Lorena Antonio Monraga,
  * Eduardo Márquez López,
  * Ángel Adrik Merino Cedeño,

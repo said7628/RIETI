@@ -32,8 +32,7 @@ import java.util.concurrent.TimeUnit
  * @param context Contexto de Android utilizado para
  * acceder a la sesión y a los archivos seleccionados.
  *
- * @author Said Valseca Figueroa.
- * @author Equipo de desarrollo RIETI:
+ * @author Equipo 3:
  * Lorena Antonio Monraga,
  * Eduardo Márquez López,
  * Ángel Adrik Merino Cedeño,

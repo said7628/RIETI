@@ -8,10 +8,25 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Acceso a los borradores almacenados localmente.
+ * Define las operaciones de acceso a los borradores
+ * de reportes almacenados localmente en RIETI.
  *
  * Room utiliza esta interfaz para generar automáticamente
  * las operaciones de base de datos.
+ *
+ * Permite guardar y actualizar borradores, recuperarlos
+ * mediante su identificador, observar los cambios en los
+ * registros almacenados y eliminar borradores específicos.
+ *
+ * Las consultas se realizan sobre la tabla "report_drafts",
+ * definida mediante la entidad ReportDraftEntity.
+ *
+ * @author Equipo 3:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
  */
 @Dao
 interface ReportDraftDao {
