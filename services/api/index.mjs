@@ -260,6 +260,49 @@ async function listUsers(req){
     r.codigo rol_codigo,r.nombre rol_nombre,r.es_administrador FROM usuarios u JOIN roles r ON r.id=u.rol_id ORDER BY u.nombre`);
   return response(200,{ok:true,users:rows.map(publicUser)});
 }
+/**
+ * Registra un ciudadano desde la aplicacion Android.
+ * El rol se obtiene del servidor y nunca del cliente.
+ */
+async function registerCitizen(req) {
+  const name = String(req.body?.name ?? "").trim();
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const password = String(req.body?.password ?? "");
+
+  if (!name || !email || !password) {
+    throw httpError(400, "INVALID_INPUT", "Nombre, correo y contraseña son obligatorios");
+  }
+  if (name.length > 150 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw httpError(400, "INVALID_INPUT", "Nombre o correo inválido");
+  }
+  if (password.length < 10 || password.length > 128) {
+    throw httpError(400, "WEAK_PASSWORD", "La contraseña debe tener entre 10 y 128 caracteres");
+  }
+
+  const [roles] = await pool.execute(
+    "SELECT id FROM roles WHERE codigo='CIUDADANO' AND activo=1 AND acceso_android=1 LIMIT 1"
+  );
+  if (!roles.length) {
+    throw httpError(503, "ROLE_UNAVAILABLE", "El registro ciudadano no está disponible");
+  }
+
+  try {
+    await pool.execute(
+      `INSERT INTO usuarios
+       (uuid,rol_id,municipio_id,dependencia_id,nombre,correo,telefono,password_hash,activo,created_at,updated_at)
+       VALUES (?, ?, NULL, NULL, ?, ?, NULL, ?, 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))`,
+      [crypto.randomUUID(), roles[0].id, name, email, await bcrypt.hash(password, 12)]
+    );
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      throw httpError(409, "EMAIL_EXISTS", "Ese correo ya está registrado");
+    }
+    throw error;
+  }
+
+  return response(201, {ok:true, message:"Cuenta creada correctamente"});
+}
+
 async function createUser(req){
   await requireUser(req,{web:true,admin:true});
   const {name,email,password,roleId,municipalityId=null,dependencyId=null,phone=null}=req.body;
@@ -2948,6 +2991,7 @@ async function router(req){
 
     return bootstrapAdmin(req)
   }
+  if(req.method==="POST"&&req.path==="/auth/register")return registerCitizen(req);
   if(req.method==="POST"&&req.path==="/auth/login")return login(req);
   if(req.method==="POST"&&req.path==="/auth/refresh")return refreshSession(req);
   if(req.method==="POST"&&req.path==="/auth/logout")return logout(req);
