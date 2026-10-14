@@ -2,6 +2,7 @@ package com.example.rieti.data.repository
 
 import android.content.Context
 import com.example.rieti.data.session.SessionManager
+import com.example.rieti.data.session.AuthenticatedRequests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -32,7 +33,7 @@ import org.json.JSONObject
  * Marco Polo Peña Rivera,
  * Said Valseca Figueroa.
  */
-class AccountActionsRepository(context: Context) {
+class AccountActionsRepository(private val context: Context) {
 
     /**
      * Administrador de sesiones utilizado para recuperar
@@ -81,7 +82,7 @@ class AccountActionsRepository(context: Context) {
             .header("Authorization", "Bearer $token")
             .post(data.toString().toRequestBody("application/json".toMediaType()))
             .build()
-        client.newCall(request).execute().use { response ->
+        AuthenticatedRequests(context).execute(client, request).use { response ->
             val dataResponse = runCatching { JSONObject(response.body?.string().orEmpty()) }.getOrNull()
             if (!response.isSuccessful || dataResponse?.optBoolean("ok") != true) {
                 error(dataResponse?.optJSONObject("error")?.optString("message")

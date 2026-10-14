@@ -2991,3 +2991,11 @@ a {
   .app-column > .topbar {grid-template-columns: minmax(0, 140px) minmax(0, 1fr) 155px;column-gap: 8px;}
   .app-column > .topbar .topbar-user-slot {width: 155px;}
 }
+
+/* RIETI: desglose de edades por rangos */
+.report-age-breakdown { display: inline-flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+.report-age-item { display: inline-flex; gap: 5px; align-items: center; background: #eaf9f5;
+  border: 1px solid #9bd8d0; border-radius: 10px; padding: 5px 9px;
+  font-size: 13px; color: #142b29; white-space: nowrap; }
+.report-age-item strong { font-size: inherit; }
+.report-details-modal .report-modal-map { width: 100%; height: 235px; margin-bottom: 25px; }

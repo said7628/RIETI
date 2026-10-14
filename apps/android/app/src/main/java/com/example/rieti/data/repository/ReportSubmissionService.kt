@@ -3,7 +3,10 @@ package com.example.rieti.data.repository
 import android.content.Context
 import android.net.Uri
 import com.example.rieti.data.session.SessionManager
+import com.example.rieti.data.session.AuthenticatedRequests
 import com.example.rieti.model.ReportUiState
+import com.example.rieti.model.AgeBreakdown
+import com.example.rieti.model.MunicipalityBoundaries
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -12,8 +15,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.text.Normalizer
-import java.util.Locale
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -78,12 +79,12 @@ class ReportSubmissionService(private val context: Context) {
      * @throws IllegalStateException Si la respuesta HTTP
      * no es exitosa o el backend devuelve "ok" falso.
      */
-    private fun jsonRequest(path: String, token: String, body: JSONObject): JSONObject {
+    private suspend fun jsonRequest(path: String, token: String, body: JSONObject): JSONObject {
         val req = Request.Builder().url(base + path)
             .header("Authorization", "Bearer $token")
             .post(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
-        http.newCall(req).execute().use { response ->
+        AuthenticatedRequests(context).execute(http, req).use { response ->
             val raw = response.body?.string().orEmpty()
             val data = runCatching { JSONObject(raw) }.getOrElse { JSONObject() }
             if (!response.isSuccessful || !data.optBoolean("ok")) {
@@ -108,7 +109,7 @@ class ReportSubmissionService(private val context: Context) {
      * 2. Valida los campos obligatorios del reporte.
      * 3. Convierte los valores seleccionados a identificadores
      *    reconocidos por el backend.
-     * 4. Normaliza el municipio y determina su identificador.
+     * 4. Verifica coordenadas dentro de un municipio INEGI y envia su nombre oficial.
      * 5. Registra el reporte mediante POST /mobile/reportes.
      * 6. Valida las imágenes y calcula su hash SHA-256.
      * 7. Solicita URL prefirmadas para cargar las evidencias.
@@ -135,42 +136,50 @@ class ReportSubmissionService(private val context: Context) {
             ?.takeIf { it.isNotBlank() } ?: error("Debes iniciar sesion nuevamente")
         require(state.municipality.isNotBlank()) { "Selecciona el municipio" }
         require(state.workType.isNotBlank()) { "Selecciona el tipo de trabajo" }
-        require(state.childrenAges.isNotBlank()) { "Selecciona la edad aproximada" }
+        require(AgeBreakdown.valid(state.childrenAges, state.numberOfChildren.toIntOrNull() ?: 0)) { "La suma por rango de edad debe coincidir con el total de menores" }
 
         val ageIds = mapOf("0-5" to 1, "6-11" to 2, "12-14" to 3, "15-17" to 4)
         val workIds = mapOf(
             "Venta en semáforos" to 1, "Repartiendo volantes" to 2,
-            "Venta en mercado" to 3, "Despachador en tortillería" to 4,
+            "Venta en mercado" to 3, "Trabajador de tortillería" to 4,
             "Trabajo en construcción" to 5, "Lavado de autos" to 6,
             "Despachador de gasolina" to 7, "Cerillo en supermercado" to 8,
             "Limpiaparabrisas" to 9, "Mendicidad forzada o inducida" to 10,
             "Explotación sexual comercial de NNA" to 11
         )
-        val ageId = ageIds[state.childrenAges] ?: error("Selecciona un rango de edad válido")
-        val workId = workIds[state.workType] ?: error("Selecciona una actividad válida")
+        val ageCounts = AgeBreakdown.read(state.childrenAges, state.numberOfChildren.toIntOrNull() ?: 0)
+        // El esquema almacena un rango principal; el detalle completo se conserva en descripcion.
+        val mainAge = ageCounts.maxByOrNull { it.value }?.key
+        val ageId = ageIds[mainAge] ?: error("Selecciona un rango de edad válido")
+        // La API acepta el nombre de catalogo como alternativa al ID numerico.
+        // Si aun no existe 'Otro' como categoria, la API respondera un error de catalogo.
+        val workValue: Any = if (state.workType.startsWith("Otro: ")) "Otro"
+            else workIds[state.workType] ?: error("Selecciona una actividad válida")
+        val ageDescription = "Edades aproximadas observadas: ${AgeBreakdown.display(state.childrenAges, state.numberOfChildren.toIntOrNull() ?: 0)}"
+        val otherDescription = state.workType.takeIf { it.startsWith("Otro: ") }
+            ?.removePrefix("Otro: ")?.trim()?.let { "Otra actividad observada: $it" }.orEmpty()
+        val reportDescription = listOf(ageDescription, otherDescription, state.details.trim())
+            .filter { it.isNotBlank() }.joinToString("\n")
 
-        // El geocodificador puede devolver nombres abreviados.
-        // La API recibe el ID oficial del municipio adherido.
-        val municipioNormalizado = Normalizer.normalize(
-            state.municipality.trim().lowercase(Locale.ROOT), Normalizer.Form.NFD
-        ).replace(Regex("\\p{Mn}+"), "")
-        val municipioId = when {
-            "cuautitlan izcalli" in municipioNormalizado -> 3
-            "atizapan de zaragoza" in municipioNormalizado ||
-                municipioNormalizado == "atizapan" -> 1
-            "tlalnepantla" in municipioNormalizado -> 4
-            else -> error("RIETI no recibe reportes en este municipio")
+        // Verificar el punto de NUEVO antes de enviarlo: no confiar en texto editable
+        // ni en identificadores fijos asociados erroneamente a otros municipios.
+        val coordinates = state.selectedLocation
+        val verifiedMunicipality = MunicipalityBoundaries(context).resolve(
+            coordinates.latitude, coordinates.longitude
+        ) ?: error("No se pudo comprobar el municipio. Conectate a Internet y vuelve a elegir el punto en el mapa.")
+        require(state.municipality == verifiedMunicipality.name) {
+            "La ubicacion cambio o el municipio no coincide con el punto del mapa. Regresa a Ubicacion y verifica el municipio."
         }
 
         val request = JSONObject()
             .put("mode", state.mode)
             .put("clientReportUuid", submissionId)
-            .put("municipalityId", municipioId)
+            .put("municipality", verifiedMunicipality.name)
             .put("neighborhood", state.neighborhood)
             .put("ageRangeId", ageId)
             .put("children", state.numberOfChildren)
-            .put("workTypeId", workId)
-            .put("details", state.details)
+            .put("workTypeId", workValue)
+            .put("details", reportDescription)
             .put("latitude", state.selectedLocation.latitude)
             .put("longitude", state.selectedLocation.longitude)
             .put("address", state.fullAddress)

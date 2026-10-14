@@ -6,6 +6,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.CircularProgressIndicator
 import com.example.rieti.view.RietiLoadingOverlay
 import com.example.rieti.data.repository.TrackingRepository
+import com.example.rieti.data.repository.CitizenReportSummary
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.BorderStroke
@@ -42,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +65,7 @@ import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.TopBar
+import androidx.compose.foundation.layout.Arrangement
 
 
 // =================================================================
@@ -136,6 +139,20 @@ fun TrackingScreen(
     var currentReport by remember { mutableStateOf<TrackingReportUi?>(null) }
     var searching by remember { mutableStateOf(false) }
     var searchError by remember { mutableStateOf<String?>(null) }
+    var myReports by remember { mutableStateOf<List<CitizenReportSummary>>(emptyList()) }
+    var loadingList by remember { mutableStateOf(true) }
+    var reloadKey by remember { mutableStateOf(0) }
+    LaunchedEffect(reloadKey) {
+        loadingList = true
+        searchError = null
+        try {
+            myReports = repository.listMine()
+        } catch (error: Exception) {
+            searchError = error.message ?: "No se pudo consultar la lista"
+        } finally {
+            loadingList = false
+        }
+    }
     Scaffold(
         containerColor = colors.surface,
 
@@ -161,46 +178,137 @@ fun TrackingScreen(
         ) {
 
             if (currentReport == null) {
-                Column {
-                    TrackingSearchContent(
-                        folio = reportFolio,
-                        onFolioChange = { reportFolio = it; searchError = null },
-                        onSearchClick = {
-                            if (!searching) {
-                                searching = true
-                                searchError = null
-                                scope.launch {
-                                    try {
-                                        val r = repository.lookup(reportFolio.trim())
-                                        val status = ReportStatus.valueOf(r.statusCode)
-                                        currentReport = TrackingReportUi(
-                                            folio = r.folio, status = status,
-                                            lastUpdate = formatTrackingDate(r.updatedAt),
-                                            registrationDate = formatTrackingDate(r.registeredAt),
-                                            municipality = r.municipality,
-                                            modality = "Con seguimiento",
-                                            closingDate = r.closedAt?.let(::formatTrackingDate),
-                                            resolution = r.resolution,
-                                            timeline = r.timeline.mapNotNull { (k,v) ->
-                                                runCatching { ReportStatus.valueOf(k) to formatTrackingDate(v) }.getOrNull()
-                                            }.toMap()
-                                        )
-                                    } catch (e: Exception) {
-                                        searchError = e.message ?: "No se pudo consultar el reporte"
-                                    } finally { searching = false }
-                                }
+                TrackingMineContent(
+                    reports = myReports,
+                    loading = loadingList,
+                    error = searchError,
+                    onRetry = { reloadKey++ },
+                    onSelect = { folio ->
+                        if (!searching) {
+                            searching = true
+                            searchError = null
+                            scope.launch {
+                                try {
+                                    val r = repository.lookup(folio)
+                                    currentReport = TrackingReportUi(
+                                        folio = r.folio,
+                                        status = ReportStatus.valueOf(r.statusCode),
+                                        lastUpdate = formatTrackingDate(r.updatedAt),
+                                        registrationDate = formatTrackingDate(r.registeredAt),
+                                        municipality = r.municipality,
+                                        modality = "Con seguimiento",
+                                        closingDate = r.closedAt?.let(::formatTrackingDate),
+                                        resolution = r.resolution,
+                                        timeline = r.timeline.mapNotNull { (key,value) ->
+                                            runCatching { ReportStatus.valueOf(key) to formatTrackingDate(value) }.getOrNull()
+                                        }.toMap()
+                                    )
+                                } catch (error: Exception) {
+                                    searchError = error.message ?: "No se pudo consultar el reporte"
+                                } finally { searching = false }
                             }
                         }
-                    )
-
-                    searchError?.let { Text(text=it, color=colors.pinkPrincipal,
-                        modifier=Modifier.padding(16.dp)) }
-                }
+                    }
+                )
             } else {
-                TrackingResultContent(report = currentReport!!,
-                    onEditFolioClick = { currentReport = null })
+                TrackingResultContent(report = currentReport!!)
             }
             if (searching) RietiLoadingOverlay("Consultando seguimiento...")
+        }
+    }
+}
+
+/** Vista de los reportes de esta cuenta. No pide folios ni muestra anonimos. */
+@Composable
+private fun TrackingMineContent(
+    reports: List<CitizenReportSummary>,
+    loading: Boolean,
+    error: String?,
+    onRetry: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    val colors = AppTheme.colors
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 18.dp)
+    ) {
+        Text("Mis reportes", color = colors.pinkPrincipal, fontSize = 30.sp,
+            fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("Consulta los reportes con seguimiento que has enviado desde tu cuenta.",
+            color = colors.text, fontSize = 14.sp)
+        Spacer(Modifier.height(18.dp))
+        if (loading) {
+            // La lista conserva su distribucion mientras llegan los datos.
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CircularProgressIndicator(color = colors.pinkPrincipal, strokeWidth = 3.dp,
+                    modifier = Modifier.size(45.dp))
+                Text("Buscando tus reportes...", color = colors.titles,
+                    fontSize = 19.sp, fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold)
+                Text("Estamos consultando el avance de los reportes que enviaste.",
+                    color = colors.text, fontSize = 13.sp, textAlign = TextAlign.Center)
+                repeat(3) {
+                    Surface(
+                        color = colors.text.copy(alpha = 0.055f),
+                        shape = RoundedCornerShape(15.dp),
+                        modifier = Modifier.fillMaxWidth().height(88.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Box(Modifier.fillMaxWidth(0.56f).height(13.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.text.copy(alpha = 0.12f)))
+                            Box(Modifier.fillMaxWidth(0.8f).height(10.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.text.copy(alpha = 0.08f)))
+                        }
+                    }
+                }
+            }
+        } else {
+            if (error != null) {
+                Text(error, color = colors.pinkPrincipal, fontSize = 14.sp)
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = onRetry) { Text("Volver a intentar") }
+                Spacer(Modifier.height(16.dp))
+            }
+            if (error == null && reports.isEmpty()) {
+                Text("Aún no tienes reportes con seguimiento.", color = colors.text)
+            }
+            reports.forEach { report ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                        .clickable { onSelect(report.folio) },
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, colors.pinkPrincipal.copy(alpha = 0.25f)),
+                    color = colors.surface
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(report.folio, fontSize = 15.sp, color = colors.pinkPrincipal,
+                            fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(6.dp))
+                        val statusLabel = when(report.statusCode) {
+                            "EN_REVISION" -> "En revisión"
+                            "EN_SEGUIMIENTO" -> "En seguimiento"
+                            "CANALIZADO" -> "Canalizado"
+                            "CONCLUIDO" -> "Concluido"
+                            "ARCHIVADO" -> "Archivado"
+                            "CANCELADO" -> "Cancelado"
+                            "REINCIDENTE" -> "Reincidente"
+                            else -> "Registrado"
+                        }
+                        Text("Estado: $statusLabel", fontSize = 14.sp, color = colors.text)
+                        Text("Municipio: ${report.municipality}", fontSize = 13.sp, color = colors.text)
+                        Text("Registrado: ${formatTrackingDate(report.registeredAt)}", fontSize = 12.sp,
+                            color = colors.text.copy(alpha = 0.7f))
+                        Text("Ver detalle →", fontSize = 13.sp, color = colors.pinkPrincipal)
+                    }
+                }
+            }
         }
     }
 }
@@ -352,8 +460,7 @@ private fun TrackingSearchContent(
 
 @Composable
 private fun TrackingResultContent(
-    report: TrackingReportUi,
-    onEditFolioClick: () -> Unit
+    report: TrackingReportUi
 ) {
 
     val colors = AppTheme.colors
@@ -388,17 +495,6 @@ private fun TrackingResultContent(
             modifier = Modifier.height(14.dp)
         )
 
-
-        TrackingCurrentFolio(
-            folio = report.folio,
-
-            onEditClick = onEditFolioClick
-        )
-
-
-        Spacer(
-            modifier = Modifier.height(16.dp)
-        )
 
 
         Text(

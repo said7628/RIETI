@@ -129,6 +129,8 @@ class SessionManager(
                 "role",
                 user.roleCode
             )
+            // Solo una renovacion validada por el servidor extiende la sesion.
+            .putLong("last_successful_auth_ms", System.currentTimeMillis())
             .apply()
     }
 
@@ -239,7 +241,23 @@ class SessionManager(
      * no vacío; false en caso contrario.
      */
     fun hasSession(): Boolean =
-        !refreshToken().isNullOrBlank()
+        !refreshToken().isNullOrBlank() && isWithinSevenDays()
+
+    /**
+     * La app exige iniciar sesion otra vez tras siete dias sin una
+     * autenticacion correcta. Las renovaciones autorizadas reinician
+     * esta ventana; abrir la app sin red no la reinicia.
+     * Autor: Said Valseca Figueroa.
+     */
+    fun lastSuccessfulAuthAt(): Long =
+        prefs.getLong("last_successful_auth_ms", 0L)
+
+    fun isWithinSevenDays(): Boolean {
+        val last = prefs.getLong("last_successful_auth_ms", 0L)
+        if (last == 0L) return true // Sesiones anteriores: validar con el servidor.
+        val diff = System.currentTimeMillis() - last
+        return diff >= 0 && diff < 7L * 24L * 60L * 60L * 1000L
+    }
 
     /**
      * Elimina toda la información almacenada

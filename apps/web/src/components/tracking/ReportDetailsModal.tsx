@@ -1,4 +1,7 @@
 import type { Report } from '../../data/shared/reportsData'
+import { ReportLocationMap } from '../shared/ReportDetail'
+import ReportAgeBreakdown, { descriptionWithoutAgeHeader } from '../shared/ReportAgeBreakdown'
+import ReportEvidenceGallery from '../shared/ReportEvidenceGallery'
 import { formatDate } from '../../data/shared/reportUtils'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
@@ -16,8 +19,8 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
       large
     >
       <div className="report-details-modal">
-        <div className="report-map-placeholder">
-          <span>Ubicación del reporte</span>
+        <div className="report-map-container report-modal-map">
+          <ReportLocationMap latitude={report.latitude} longitude={report.longitude} />
         </div>
 
         <div className="report-details-grid">
@@ -76,9 +79,9 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
           </p>
 
           <p>
-            <strong>Rango de edad:</strong>
+            <strong>Edades aproximadas:</strong>
             <br />
-            {report.ageRange} años
+            <ReportAgeBreakdown report={report} />
           </p>
         </div>
 
@@ -88,7 +91,7 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
 
         <div className="report-description">
           <strong>Detalles del reportante:</strong>
-          <p>{report.description}</p>
+          <p>{descriptionWithoutAgeHeader(report.description) || "Sin descripción adicional"}</p>
         </div>
 
         {report.solution && (
@@ -100,10 +103,7 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
 
         <h3>Evidencia fotográfica</h3>
 
-        <div className="evidence-container">
-          <div className="evidence-placeholder">Evidencia 1</div>
-          <div className="evidence-placeholder">Evidencia 2</div>
-        </div>
+        <ReportEvidenceGallery key={report.folio} folio={report.folio} />
       </div>
     </Modal>
   )

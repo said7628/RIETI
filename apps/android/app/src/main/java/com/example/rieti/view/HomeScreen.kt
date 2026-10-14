@@ -256,7 +256,7 @@ fun HomeScreen(
                 )
 
                 Spacer(
-                    modifier = Modifier.height(14.dp)
+                    modifier = Modifier.height(20.dp)
                 )
             }
 
@@ -288,7 +288,7 @@ fun HomeScreen(
             )
 
             Spacer(
-                modifier = Modifier.height(14.dp)
+                modifier = Modifier.height(20.dp)
             )
 
             // =====================================================
@@ -342,7 +342,7 @@ fun HomeScreen(
             )
 
             Spacer(
-                modifier = Modifier.height(28.dp)
+                modifier = Modifier.height(14.dp)
             )
         }
     }
@@ -436,7 +436,7 @@ private fun HomeHeroSection(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(205.dp)
+            .height(238.dp)
     ) {
 
         // =========================================================

@@ -2,6 +2,7 @@ package com.example.rieti.data.repository
 
 import android.content.Context
 import com.example.rieti.data.session.SessionManager
+import com.example.rieti.data.session.AuthenticatedRequests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -55,6 +56,14 @@ data class CitizenTracking(
  * para consultar la sesión del usuario.
  */
 
+data class CitizenReportSummary(
+    val folio: String,
+    val statusCode: String,
+    val municipality: String,
+    val registeredAt: String,
+    val updatedAt: String
+)
+
 class TrackingRepository(private val context: Context) {
     /**
      * Cliente HTTP utilizado para consultar el seguimiento
@@ -91,13 +100,40 @@ class TrackingRepository(private val context: Context) {
      * @throws Exception Si ocurre un error durante la solicitud
      * HTTP o el procesamiento de la respuesta JSON.
      */
+    /** Reportes de seguimiento registrados por la cuenta actual; no devuelve anonimos. */
+    suspend fun listMine(): List<CitizenReportSummary> = withContext(Dispatchers.IO) {
+        val token = SessionManager(context).accessToken()?.takeIf { it.isNotBlank() }
+            ?: error("Inicia sesión para consultar tus reportes")
+        val url = "https://tdjmvpcukz452yjfd4pkjuae7i0yajrv.lambda-url.us-east-1.on.aws/mobile/mis-reportes"
+        val request = Request.Builder().url(url).header("Authorization", "Bearer $token").get().build()
+        AuthenticatedRequests(context).execute(http, request).use { response ->
+            val raw = response.body?.string().orEmpty()
+            val data = runCatching { JSONObject(raw) }.getOrElse { JSONObject() }
+            if (!response.isSuccessful || !data.optBoolean("ok")) {
+                error(data.optJSONObject("error")?.optString("message")?.takeIf { it.isNotBlank() }
+                    ?: "No se pudo cargar tu lista de reportes (HTTP ${response.code})")
+            }
+            val array = data.optJSONArray("reports") ?: return@withContext emptyList()
+            (0 until array.length()).map { index ->
+                val item = array.getJSONObject(index)
+                CitizenReportSummary(
+                    folio = item.getString("folio"),
+                    statusCode = item.getString("statusCode"),
+                    municipality = item.optString("municipality"),
+                    registeredAt = item.optString("registeredAt"),
+                    updatedAt = item.optString("updatedAt")
+                )
+            }
+        }
+    }
+
     suspend fun lookup(folio: String): CitizenTracking = withContext(Dispatchers.IO) {
         val token = SessionManager(context).accessToken()?.takeIf { it.isNotBlank() }
             ?: error("Inicia sesion para consultar tus reportes")
         require(Regex("[A-Za-z0-9]{2,20}-[0-9]{4}-[0-9]{6}").matches(folio)) { "Folio invalido" }
         val url = "https://tdjmvpcukz452yjfd4pkjuae7i0yajrv.lambda-url.us-east-1.on.aws/mobile/seguimiento/$folio"
         val request = Request.Builder().url(url).header("Authorization","Bearer $token").get().build()
-        http.newCall(request).execute().use { response ->
+        AuthenticatedRequests(context).execute(http, request).use { response ->
             val body = JSONObject(response.body?.string().orEmpty())
             if (!response.isSuccessful || !body.optBoolean("ok")) {
                 error(body.optJSONObject("error")?.optString("message") ?: "No se pudo consultar el reporte")

@@ -8,6 +8,7 @@ import {
 import L from 'leaflet'
 
 import type { Report } from '../../data/shared/reportsData'
+import ReportAgeBreakdown, { descriptionWithoutAgeHeader } from './ReportAgeBreakdown'
 
 import {
   getEvidenceUrl,
@@ -24,7 +25,7 @@ interface EvidenceWithUrl extends ReportEvidence {
   url: string
 }
 
-function ReportLocationMap({
+export function ReportLocationMap({
   latitude,
   longitude,
 }: {
@@ -204,9 +205,9 @@ function ReportDetail({
           </p>
 
           <p>
-            <strong>Rango de edad:</strong>
+            <strong>Edades aproximadas:</strong>
             <br />
-            {report.ageRange} años
+            <ReportAgeBreakdown report={report} />
           </p>
 
           <p>
@@ -229,7 +230,7 @@ function ReportDetail({
 
         <div className="report-description">
           <strong>Detalles del reportante:</strong>
-          <p>{report.description}</p>
+          <p>{descriptionWithoutAgeHeader(report.description) || "Sin descripción adicional"}</p>
         </div>
 
         {report.solution && (

@@ -194,7 +194,7 @@ fun ReportSuccessScreen(
             // =====================================================
 
             Text(
-                text = if (isAnonymous) "Tu reporte anonimo fue recibido correctamente." else
+                text = if (isAnonymous) "Tu reporte anónimo fue recibido correctamente." else
                     "Conserva el siguiente folio para consultar posteriormente su estado.",
                 color = colors.text.copy(alpha = 0.78f),
                 fontFamily = FontFamily.Serif,

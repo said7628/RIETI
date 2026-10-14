@@ -7,6 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import com.example.rieti.data.session.AuthenticatedRequests
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +26,7 @@ import com.example.rieti.data.repository.AccountActionsRepository
 import com.example.rieti.data.repository.AuthRepository
 import com.example.rieti.data.repository.AuthResult
 import com.example.rieti.data.session.SessionManager
+import com.example.rieti.model.NetworkAvailability
 import kotlinx.coroutines.launch
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
@@ -103,6 +111,8 @@ fun AppNavigation(
     }
 
     var lastReportFolio by remember { mutableStateOf("") }
+    var offlineLogin by remember { mutableStateOf(false) }
+    var registerSuccess by remember { mutableStateOf(false) }
     var registerBusy by remember { mutableStateOf(false) }
     var loginBusy by remember { mutableStateOf(false) }
     var accountBusy by remember { mutableStateOf(false) }
@@ -118,7 +128,8 @@ fun AppNavigation(
     LaunchedEffect(Unit) {
         val refreshToken = sessionManager.refreshToken()
 
-        if (refreshToken.isNullOrBlank()) {
+        if (refreshToken.isNullOrBlank() || !sessionManager.isWithinSevenDays()) {
+            if (!refreshToken.isNullOrBlank()) sessionManager.clear()
             startDestination = Routes.START
         } else {
             when (val result = authRepository.refresh(refreshToken)) {
@@ -128,10 +139,38 @@ fun AppNavigation(
                 }
 
                 is AuthResult.Error -> {
-                    sessionManager.clear()
-                    startDestination = Routes.START
+                    if (result.code in setOf("INVALID_REFRESH_TOKEN", "UNAUTHORIZED")) {
+                        sessionManager.clear()
+                        startDestination = Routes.START
+                    } else {
+                        // Si no hay red, se conserva la sesion guardada y los borradores.
+                        // Las consultas protegidas renovaran el token al volver la conexion.
+                        startDestination = Routes.HOME
+                    }
                 }
             }
+        }
+    }
+
+    // Si Internet vuelve mientras la app esta abierta, renueva la sesion
+    // de forma segura. Una consulta normal tambien puede renovarla tras un 401.
+    DisposableEffect(startDestination, context) {
+        val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+                if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
+                    sessionManager.hasSession()) {
+                    scope.launch {
+                        runCatching { AuthenticatedRequests(context).onConnectionRestored() }
+                    }
+                }
+            }
+        }
+        if (startDestination == Routes.HOME) {
+            runCatching { manager?.registerDefaultNetworkCallback(callback) }
+        }
+        onDispose {
+            runCatching { manager?.unregisterNetworkCallback(callback) }
         }
     }
 
@@ -141,6 +180,34 @@ fun AppNavigation(
     }
 
     Box(Modifier.fillMaxSize()) {
+    if (offlineLogin) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { offlineLogin = false },
+            title = { androidx.compose.material3.Text("Sin conexión a Internet") },
+            text = { androidx.compose.material3.Text("No podemos iniciar sesión sin red. Espera a conectarte otra vez e inténtalo de nuevo.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { offlineLogin = false }) {
+                    androidx.compose.material3.Text("Entendido")
+                }
+            }
+        )
+    }
+    if (registerSuccess) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {},
+            title = { androidx.compose.material3.Text("¡Cuenta creada correctamente!") },
+            text = { androidx.compose.material3.Text("Tu cuenta está lista. Ahora puedes iniciar sesión.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    registerSuccess = false
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.START) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }) { androidx.compose.material3.Text("Ir a iniciar sesión") }
+            }
+        )
+    }
     if (pendingDeactivate) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { if (!accountBusy) pendingDeactivate = false },
@@ -229,7 +296,9 @@ fun AppNavigation(
 
             LoginScreen(
                 onLoginClick = { email, password ->
-                    if (!loginBusy) {
+                    if (!NetworkAvailability.isOnline(context)) {
+                        offlineLogin = true
+                    } else if (!loginBusy) {
                     loginBusy = true
                     scope.launch {
                         try {
@@ -321,20 +390,7 @@ fun AppNavigation(
                         ) {
 
                             is AuthResult.Success -> {
-
-                                RietiFeedback.show("Cuenta creada correctamente. Inicia sesion.")
-
-                                navController.navigate(
-                                    Routes.LOGIN
-                                ) {
-                                    popUpTo(
-                                        Routes.START
-                                    ) {
-                                        inclusive = false
-                                    }
-
-                                    launchSingleTop = true
-                                }
+                                registerSuccess = true
                             }
 
                             is AuthResult.Error -> {

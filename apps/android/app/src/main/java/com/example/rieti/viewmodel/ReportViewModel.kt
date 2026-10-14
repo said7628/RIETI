@@ -514,7 +514,8 @@ class ReportViewModel(
      * con LocationClient.
      */
     fun fetchCurrentLocation(
-        context: Context
+        context: Context,
+        onLocationFound: (LatLng) -> Unit = {}
     ) {
 
         if (!_isDraftLoaded.value) return
@@ -541,6 +542,7 @@ class ReportViewModel(
                     onMapLocationChanged(
                         location
                     )
+                    onLocationFound(location)
                 }
 
             } catch (e: CancellationException) {

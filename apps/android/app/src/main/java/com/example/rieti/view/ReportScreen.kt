@@ -12,6 +12,11 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
@@ -26,6 +31,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +65,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
@@ -104,10 +112,14 @@ import com.example.rieti.ui.theme.AppTheme
 import com.example.rieti.ui.theme.RIETITheme
 import com.example.rieti.view.components.BottomBar
 import com.example.rieti.view.components.ReportLocationMap
+import com.example.rieti.view.components.rietiScrollbar
 import com.example.rieti.viewmodel.ReportViewModel
+import com.example.rieti.model.MunicipalityBoundaries
+import com.example.rieti.model.AgeBreakdown
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.setValue
 
 // =================================================================
 // MODALIDAD DEL REPORTE
@@ -203,16 +215,18 @@ fun ReportFormScreen(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         if (results.values.any { it }) {
-            locationConfirmed.value = true
-            reportViewModel.fetchCurrentLocation(context)
+            reportViewModel.fetchCurrentLocation(context) {
+                locationConfirmed.value = true
+            }
         }
     }
     val useDeviceLocation: () -> Unit = {
         val granted = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             .any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
         if (granted) {
-            locationConfirmed.value = true
-            reportViewModel.fetchCurrentLocation(context)
+            reportViewModel.fetchCurrentLocation(context) {
+                locationConfirmed.value = true
+            }
         }
         else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
@@ -236,22 +250,52 @@ fun ReportFormScreen(
             locationConfirmed.value = false
         }) { Text("No, elegir en mapa") } }
     )
-    // Al mover el mapa actualizamos los campos sugeridos por geocodificación inversa.
-    LaunchedEffect(reportState.selectedLocation, reportState.currentStep, locationConsentGiven.value) {
+    // El municipio se obtiene de limites geoestadisticos oficiales de INEGI.
+    // Geocoder se usa solamente para direccion, colonia, codigo postal y entidad.
+    // No se permite copiar locality/subAdminArea al campo Municipio.
+    val municipalityResolver = remember(context) { MunicipalityBoundaries(context.applicationContext) }
+    val municipalityChecking = remember { mutableStateOf(false) }
+    val municipalityMessage = remember { mutableStateOf("") }
+    val municipalityOptions = remember { mutableStateOf<List<String>>(emptyList()) }
+    val verifiedMunicipality = remember { mutableStateOf("") }
+    val retryMunicipality = remember { mutableStateOf(0) }
+    LaunchedEffect(reportState.selectedLocation, reportState.currentStep, locationConsentGiven.value, retryMunicipality.value) {
         if (reportState.currentStep == 2 && locationConsentGiven.value) {
             val point = reportState.selectedLocation
-            val address = withContext(Dispatchers.IO) {
-                runCatching {
-                    @Suppress("DEPRECATION")
-                    Geocoder(context, java.util.Locale("es", "MX"))
-                        .getFromLocation(point.latitude, point.longitude, 1)?.firstOrNull()
-                }.getOrNull()
-            }
-            address?.let {
-                reportViewModel.onFullAddressChange(it.getAddressLine(0).orEmpty())
-                reportViewModel.onNeighborhoodChange(it.subLocality ?: it.locality.orEmpty())
-                reportViewModel.onPostalCodeChange(it.postalCode.orEmpty())
-                reportViewModel.onMunicipalityChange(it.subAdminArea ?: it.locality.orEmpty())
+            municipalityChecking.value = true
+            municipalityMessage.value = ""
+            verifiedMunicipality.value = ""
+            // Un municipio de una posicion anterior nunca debe seguir visible tras mover el mapa.
+            reportViewModel.onMunicipalityChange("")
+            reportViewModel.onFullAddressChange("")
+            reportViewModel.onNeighborhoodChange("")
+            reportViewModel.onPostalCodeChange("")
+            try {
+                val address = withContext(Dispatchers.IO) {
+                    runCatching {
+                        @Suppress("DEPRECATION")
+                        Geocoder(context, java.util.Locale("es", "MX"))
+                            .getFromLocation(point.latitude, point.longitude, 1)?.firstOrNull()
+                    }.getOrNull()
+                }
+                address?.let {
+                    reportViewModel.onFullAddressChange(it.getAddressLine(0).orEmpty())
+                    reportViewModel.onNeighborhoodChange(it.subLocality ?: it.locality.orEmpty())
+                    reportViewModel.onPostalCodeChange(it.postalCode.orEmpty())
+                }
+                val match = municipalityResolver.resolve(point.latitude, point.longitude, address?.adminArea)
+                municipalityOptions.value = municipalityResolver.municipalities(address?.adminArea, match?.geoCode).map { it.name }
+                if (match != null) {
+                    verifiedMunicipality.value = match.name
+                    reportViewModel.onMunicipalityChange(match.name)
+                    municipalityMessage.value = ""
+                } else {
+                    municipalityMessage.value = "No se pudo identificar el municipio. Ajusta el punto e intenta nuevamente."
+                }
+            } catch (_: Exception) {
+                municipalityMessage.value = "No se pudo comprobar el municipio. Revisa tu conexion e intenta otra vez."
+            } finally {
+                municipalityChecking.value = false
             }
         }
     }
@@ -658,12 +702,22 @@ fun ReportFormScreen(
 
                                         municipality = municipality,
 
-                                        onMunicipalityChange =
-                                            reportViewModel::onMunicipalityChange,
+                                        onMunicipalityChange = { selected ->
+                                            if (selected == verifiedMunicipality.value) {
+                                                reportViewModel.onMunicipalityChange(selected)
+                                            } else {
+                                                Toast.makeText(context,
+                                                    "Ese municipio no coincide con el punto. Ajusta la ubicacion en el mapa.",
+                                                    Toast.LENGTH_LONG).show()
+                                            }
+                                        },
+                                        municipalityChecking = municipalityChecking.value,
+                                        municipalityMessage = municipalityMessage.value,
+                                        municipalityOptions = municipalityOptions.value,
+                                        onRetryMunicipality = { retryMunicipality.value += 1 },
 
                                         onCurrentLocationClick = {
                                             locationConsentGiven.value = true
-                                            locationConfirmed.value = true
                                             useDeviceLocation()
                                         },
                                         onSearchAddressClick = {
@@ -704,6 +758,11 @@ fun ReportFormScreen(
                                 3 -> {
 
                                     ReportEvidenceStep(
+                                        onRemoveFile = { uri ->
+                                            reportViewModel.onEvidenceReferencesChange(
+                                                reportState.evidenceReferences.filterNot { it == uri }
+                                            )
+                                        },
                                         onSelectFilesClick = {
                                             if (!sending) picker.launch("image/*")
                                         },
@@ -978,6 +1037,7 @@ private fun ReportCatalogSelector(
     onSelect: (String) -> Unit
 ) {
     val expanded = remember { mutableStateOf(false) }
+    val optionsScroll = rememberScrollState()
     Column {
         Text(label, color = AppTheme.colors.text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(7.dp))
@@ -1011,7 +1071,7 @@ private fun ReportCatalogSelector(
                         Text(label, color = AppTheme.colors.pinkPrincipal,
                             fontFamily = FontFamily.Serif, fontSize = 21.sp, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(12.dp))
-                        Column(modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                        Column(modifier = Modifier.heightIn(max = 360.dp).verticalScroll(optionsScroll).rietiScrollbar(optionsScroll)) {
                             options.forEach { option ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth().clickable {
@@ -1070,12 +1130,13 @@ private fun ReportDetailsStep(
 
     onNextClick: () -> Unit
 ) {
+    val reportScroll = rememberScrollState()
     val context = LocalContext.current
     val validationError = remember { mutableStateOf<String?>(null) }
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(reportScroll).rietiScrollbar(reportScroll)
             .padding(
                 start = 22.dp,
                 end = 22.dp,
@@ -1112,7 +1173,7 @@ private fun ReportDetailsStep(
         Spacer(modifier = Modifier.height(24.dp))
 
         ReportFieldWithLabel(
-            label = "Número de niñas, niños",
+            label = "Número de niñas, niños y adolescentes",
             value = numberOfChildren,
             placeholder = "Ingresa una cantidad",
             onValueChange = { onNumberOfChildrenChange(it.filter(Char::isDigit).take(3)) },
@@ -1121,26 +1182,56 @@ private fun ReportDetailsStep(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        ReportCatalogSelector(
-            label = "Rango de edad aproximado",
-            value = childrenAges,
-            options = listOf("0-5", "6-11", "12-14", "15-17"),
-            onSelect = onChildrenAgesChange
-        )
+        // Un reporte puede involucrar menores en varios rangos de edad.
+        // Guardamos el desglose en el campo existente del borrador.
+        Text("¿Cuántos menores hay en cada rango?", color = AppTheme.colors.text,
+            fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(5.dp))
+        Text("Reparte el total que anotaste arriba entre estas edades. Puedes poner 0 donde no haya menores.",
+            color = AppTheme.colors.text.copy(alpha = 0.7f), fontSize = 12.sp)
+        val counts = AgeBreakdown.read(childrenAges, numberOfChildren.toIntOrNull() ?: 0)
+        AgeBreakdown.ranges.forEach { age ->
+            Spacer(Modifier.height(8.dp))
+            ReportFieldWithLabel(
+                label = "$age años",
+                value = counts[age]?.toString().orEmpty(),
+                placeholder = "0",
+                onValueChange = { raw ->
+                    val next = counts.toMutableMap()
+                    val n = raw.filter(Char::isDigit).take(3).toIntOrNull() ?: 0
+                    if (n == 0) next.remove(age) else next[age] = n
+                    onChildrenAgesChange(AgeBreakdown.encode(next))
+                },
+                keyboardType = KeyboardType.Number
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text("Total por edades: ${counts.values.sum()} de ${numberOfChildren.toIntOrNull() ?: 0}",
+            color = if (AgeBreakdown.valid(childrenAges, numberOfChildren.toIntOrNull() ?: 0))
+                AppTheme.colors.text else AppTheme.colors.pinkPrincipal, fontSize = 12.sp)
 
         Spacer(modifier = Modifier.height(18.dp))
 
         ReportCatalogSelector(
             label = "Tipo de actividad observada",
-            value = workType,
+            value = if (workType.startsWith("Otro: ")) "Otro" else workType,
             options = listOf(
                 "Venta en semáforos", "Repartiendo volantes", "Venta en mercado",
-                "Despachador en tortillería", "Trabajo en construcción", "Lavado de autos",
+                "Trabajador de tortillería", "Trabajo en construcción", "Lavado de autos",
                 "Despachador de gasolina", "Cerillo en supermercado", "Limpiaparabrisas",
-                "Mendicidad forzada o inducida", "Explotación sexual comercial de NNA"
+                "Mendicidad forzada o inducida", "Explotación sexual comercial de NNA", "Otro"
             ),
-            onSelect = onWorkTypeChange
+            onSelect = { option -> onWorkTypeChange(if (option == "Otro") "Otro: " else option) }
         )
+        if (workType.startsWith("Otro:")) {
+            Spacer(Modifier.height(10.dp))
+            ReportFieldWithLabel(
+                label = "Especifica la actividad observada",
+                value = workType.removePrefix("Otro:").trimStart(),
+                placeholder = "Describe qué trabajo realiza",
+                onValueChange = { onWorkTypeChange("Otro: " + it.take(120)) }
+            )
+        }
 
         Spacer(modifier = Modifier.height(18.dp))
 
@@ -1216,20 +1307,37 @@ private fun ReportDetailsStep(
             }
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                val entries = if (scheduleMode.value == "Rango") listOf("start", "end") else listOf("start")
-                entries.forEach { entry ->
-                    val time = if (entry == "start") startHour.value else endHour.value
+                Surface(
+                    modifier = Modifier.weight(1f).height(108.dp).clickable { editingTime.value = "start" },
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, AppTheme.colors.pinkPrincipal.copy(alpha = 0.55f)),
+                    color = AppTheme.colors.surface
+                ) {
+                    Column(Modifier.fillMaxSize().padding(13.dp)) {
+                        Text(if (scheduleMode.value == "Hora exacta") "Hora" else "Desde",
+                            fontSize = 12.sp, color = AppTheme.colors.pinkPrincipal)
+                        Spacer(Modifier.height(4.dp))
+                        Text(startHour.value.ifBlank { "Pulsa para elegir hora" }, fontSize = 14.sp,
+                            color = AppTheme.colors.text)
+                    }
+                }
+                AnimatedVisibility(
+                    visible = scheduleMode.value == "Rango",
+                    modifier = Modifier.weight(1f),
+                    enter = expandHorizontally(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                    exit = shrinkHorizontally(animationSpec = tween(250)) + fadeOut(animationSpec = tween(250))
+                ) {
                     Surface(
-                        modifier = Modifier.weight(1f).height(108.dp).clickable { editingTime.value = entry },
+                        modifier = Modifier.fillMaxWidth().height(108.dp)
+                            .clickable { editingTime.value = "end" },
                         shape = RoundedCornerShape(10.dp),
                         border = BorderStroke(1.dp, AppTheme.colors.pinkPrincipal.copy(alpha = 0.55f)),
                         color = AppTheme.colors.surface
                     ) {
                         Column(Modifier.fillMaxSize().padding(13.dp)) {
-                            Text(if (scheduleMode.value == "Hora exacta") "Hora" else if (entry == "start") "Desde" else "Hasta",
-                                fontSize = 12.sp, color = AppTheme.colors.pinkPrincipal)
+                            Text("Hasta", fontSize = 12.sp, color = AppTheme.colors.pinkPrincipal)
                             Spacer(Modifier.height(4.dp))
-                            Text(time.ifBlank { "Pulsa para elegir hora" }, fontSize = 14.sp,
+                            Text(endHour.value.ifBlank { "Pulsa para elegir hora" }, fontSize = 14.sp,
                                 color = AppTheme.colors.text)
                         }
                     }
@@ -1268,8 +1376,9 @@ private fun ReportDetailsStep(
             onClick = {
                 validationError.value = when {
                     numberOfChildren.toIntOrNull() == null || numberOfChildren.toInt() < 1 -> "Ingresa una cantidad válida de niñas o niños."
-                    childrenAges !in setOf("0-5", "6-11", "12-14", "15-17") -> "Selecciona un rango de edad válido."
+                    !AgeBreakdown.valid(childrenAges, numberOfChildren.toIntOrNull() ?: 0) -> "Las cantidades por edad todavía no coinciden. Arriba indicaste cuántas niñas, niños y adolescentes viste; reparte esa misma cantidad entre los rangos de edad. Si no conoces una edad exacta, puedes calcularla aproximadamente."
                     workType.isBlank() -> "Selecciona el tipo de actividad."
+                    workType.startsWith("Otro:") && workType.removePrefix("Otro:").trim().length < 3 -> "Especifica la otra actividad (mínimo 3 caracteres)."
                     workSchedule.isBlank() -> "Selecciona el horario."
                     mode == ReportMode.ANONYMOUS && (email.isBlank() || !email.equals(confirmEmail, true)) -> "Confirma correctamente tu correo."
                     else -> null
@@ -1367,6 +1476,106 @@ private fun AnonymousModeCard(
 // PASO 2: UBICACIÓN
 // =================================================================
 
+/**
+ * Busca direcciones en el servicio de geocodificacion del dispositivo.
+ * Solo se acepta una sugerencia con calle o un punto elegido en el mapa.
+ * Autor: Said Valseca Figueroa.
+ */
+@Composable
+private fun ReportAddressSearch(onLocationSelected: (LatLng) -> Unit) {
+    val context = LocalContext.current
+    var query by remember { mutableStateOf("") }
+    var checkedQuery by remember { mutableStateOf("") }
+    var results by remember { mutableStateOf<List<android.location.Address>>(emptyList()) }
+    var searching by remember { mutableStateOf(false) }
+    var searchHint by remember { mutableStateOf("") }
+
+    LaunchedEffect(query) {
+        if (query == checkedQuery || query.trim().length < 3) {
+            results = emptyList()
+            return@LaunchedEffect
+        }
+        kotlinx.coroutines.delay(500)
+        searching = true
+        searchHint = ""
+        try {
+            val candidates = withContext(Dispatchers.IO) {
+                runCatching {
+                    @Suppress("DEPRECATION")
+                    Geocoder(context, java.util.Locale("es", "MX"))
+                        .getFromLocationName(query.trim() + ", México", 5).orEmpty()
+                }.getOrDefault(emptyList())
+            }
+            results = candidates.filter {
+                it.latitude in 14.0..33.0 && it.longitude in -119.0..-86.0 &&
+                    !it.getAddressLine(0).isNullOrBlank()
+            }.distinctBy { it.getAddressLine(0) }
+            if (results.isEmpty()) searchHint = "No encontramos sugerencias. Prueba con calle, municipio y número, o toca el mapa."
+        } finally {
+            searching = false
+        }
+    }
+
+    ReportFieldWithLabel(
+        label = "Busca una dirección o lugar",
+        value = query,
+        placeholder = "Ej. Calle Hidalgo 25, Cuauhtémoc o C.P. 06000",
+        onValueChange = { query = it.take(180); checkedQuery = "" }
+    )
+    if (searching) {
+        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp,
+                color = AppTheme.colors.pinkPrincipal)
+            Text("Buscando direcciones...", fontSize = 12.sp, color = AppTheme.colors.text)
+        }
+    }
+    if (results.isNotEmpty()) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(top = 7.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, AppTheme.colors.text.copy(alpha = 0.12f)),
+            color = AppTheme.colors.surface
+        ) {
+            Column {
+                Text("Elige una de estas opciones", fontSize = 12.sp,
+                    color = AppTheme.colors.text.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(12.dp))
+                results.forEach { place ->
+                    val name = place.getAddressLine(0).orEmpty()
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            checkedQuery = name
+                            query = name
+                            results = emptyList()
+                            if (!place.thoroughfare.isNullOrBlank() ||
+                                (!place.featureName.isNullOrBlank() && !place.subThoroughfare.isNullOrBlank())) {
+                                searchHint = "Dirección elegida. Comprueba el punto en el mapa."
+                                onLocationSelected(LatLng(place.latitude, place.longitude))
+                            } else {
+                                searchHint = "Encontramos esta zona. Para marcar el lugar exacto, agrega una calle y número a la búsqueda o toca el mapa."
+                            }
+                        }.padding(horizontal = 12.dp, vertical = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Default.LocationOn, contentDescription = null,
+                            tint = AppTheme.colors.pinkPrincipal,
+                            modifier = Modifier.size(20.dp))
+                        Text(name, fontSize = 13.sp, color = AppTheme.colors.text,
+                            modifier = Modifier.weight(1f))
+                        Text("›", color = AppTheme.colors.pinkPrincipal, fontSize = 22.sp)
+                    }
+                }
+            }
+        }
+    }
+    if (searchHint.isNotBlank()) {
+        Text(searchHint, color = AppTheme.colors.text.copy(alpha = 0.75f),
+            fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
+    }
+}
+
 @Composable
 private fun ReportLocationStep(
     selectedLocation: LatLng,
@@ -1384,103 +1593,122 @@ private fun ReportLocationStep(
 
     municipality: String,
     onMunicipalityChange: (String) -> Unit,
+    municipalityChecking: Boolean,
+    municipalityMessage: String,
+    municipalityOptions: List<String>,
+    onRetryMunicipality: () -> Unit,
 
     onCurrentLocationClick: () -> Unit,
     onSearchAddressClick: () -> Unit,
     onNextClick: () -> Unit
 ) {
+    val reportScroll = rememberScrollState()
+    var locationError by remember { mutableStateOf<String?>(null) }
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(
-                start = 22.dp,
-                end = 22.dp,
-                top = 16.dp,
-                bottom = 24.dp
-            )
+        modifier = Modifier.fillMaxSize().verticalScroll(reportScroll).rietiScrollbar(reportScroll)
+            .padding(start = 22.dp, end = 22.dp, top = 16.dp, bottom = 24.dp)
     ) {
-        val locationError = remember { mutableStateOf<String?>(null) }
         StepTitle(
-            title = "Ubicación del reporte",
-            description =
-                "Indica el lugar donde ocurrió la situación. Puedes seleccionar un punto en el mapa o proporcionar la dirección de forma manual."
+            title = "¿Dónde ocurrió?",
+            description = "Busca una dirección y elige una sugerencia, o simplemente toca el lugar en el mapa."
         )
-
-        Spacer(modifier = Modifier.height(22.dp))
-
-        // =========================================================
-        // MAPA INTERACTIVO
-        // =========================================================
-
+        Spacer(Modifier.height(19.dp))
+        ReportAddressSearch(onLocationSelected)
+        Spacer(Modifier.height(15.dp))
         ReportLocationMap(
             selectedLocation = selectedLocation,
             onLocationSelected = onLocationSelected
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-        TextButton(onClick = onCurrentLocationClick) { Text("Usar mi ubicación actual") }
-        Text("Pulsa Modificar ubicación, mueve el mapa y confirma el punto.", fontSize = 12.sp)
-        if (!hasConfirmedLocation) Text("Selecciona un punto real en el mapa o usa tu ubicación actual.", color = Color(0xFFD32F2F), fontSize = 12.sp)
-        Spacer(modifier = Modifier.height(12.dp))
-
-        ReportFieldWithLabel(
-            label = "Dirección completa",
-            value = fullAddress,
-            placeholder = "Ingresa la dirección o referencia",
-            onValueChange = onFullAddressChange,
-            minHeight = 72.dp,
-            singleLine = false
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Spacer(Modifier.height(11.dp))
+        Button(
+            onClick = onCurrentLocationClick,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.pinkPrincipal)
         ) {
+            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White)
+            Spacer(Modifier.width(8.dp))
+            Text("Usar mi ubicación actual", color = Color.White, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(13.dp))
+        if (!hasConfirmedLocation) {
+            Text("Elige el lugar tocando el mapa o selecciona una dirección de la lista.",
+                fontSize = 13.sp, color = AppTheme.colors.text)
+        } else {
+            Text("Lugar seleccionado. Estos son los datos que encontramos:",
+                fontSize = 13.sp, color = AppTheme.colors.text, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(13.dp))
+        // Los datos se completan a partir del punto, no de una direccion inventada.
+        ReportFieldWithLabel(
+            label = "Dirección encontrada",
+            value = fullAddress,
+            placeholder = if (municipalityChecking) "Cargando dirección..." else "Elige una dirección o toca el mapa",
+            onValueChange = {},
+            minHeight = 70.dp,
+            singleLine = false,
+            readOnly = true
+        )
+        Spacer(Modifier.height(13.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ReportFieldWithLabel(
                 label = "Colonia",
                 value = neighborhood,
-                placeholder = "Ingresar",
-                onValueChange = onNeighborhoodChange,
+                placeholder = "Se llena automáticamente",
+                onValueChange = {},
+                readOnly = true,
                 modifier = Modifier.weight(1.2f)
             )
-
             ReportFieldWithLabel(
                 label = "Código postal",
                 value = postalCode,
-                placeholder = "Ingresar",
-                onValueChange = { onPostalCodeChange(it.filter(Char::isDigit).take(5)) },
-            keyboardType = KeyboardType.Number,
+                placeholder = "Se llena automáticamente",
+                onValueChange = {},
+                keyboardType = KeyboardType.Number,
+                readOnly = true,
                 modifier = Modifier.weight(0.8f)
             )
         }
-
-        Spacer(modifier = Modifier.height(18.dp))
-
+        Spacer(Modifier.height(13.dp))
         ReportFieldWithLabel(
-            label = "Municipio",
+            label = "Municipio o alcaldía",
             value = municipality,
-            placeholder = "Ingresa el municipio",
-            onValueChange = onMunicipalityChange
+            placeholder = "Se identifica al elegir el punto",
+            onValueChange = {},
+            readOnly = true
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-        TextButton(onClick = onSearchAddressClick) { Text("Buscar esta dirección en el mapa") }
-        Spacer(modifier = Modifier.height(16.dp))
+        if (municipalityChecking) {
+            Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp,
+                    color = AppTheme.colors.pinkPrincipal)
+                Text("Cargando...", fontSize = 12.sp, color = AppTheme.colors.text)
+            }
+        } else if (municipality.isBlank() && municipalityMessage.isNotBlank()) {
+            Text("No encontramos el municipio para este punto. Prueba con otra ubicación.",
+                fontSize = 12.sp, color = Color(0xFFD32F2F))
+            Button(onClick = onRetryMunicipality,
+                modifier = Modifier.padding(top = 8.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.pinkPrincipal)
+            ) { Text("Volver a intentar") }
+        }
+        Spacer(Modifier.height(20.dp))
         NextButton(text = "Siguiente", onClick = {
-            locationError.value = when {
-                !hasConfirmedLocation -> "Debes confirmar la ubicación del reporte."
-                fullAddress.isBlank() -> "Ingresa la dirección del reporte."
-                neighborhood.isBlank() -> "Ingresa la colonia."
-                !Regex("[0-9]{5}").matches(postalCode) -> "Ingresa un código postal de 5 dígitos."
-                municipality.isBlank() -> "Ingresa el municipio."
+            locationError = when {
+                !hasConfirmedLocation -> "Primero elige el lugar en el mapa o selecciona una dirección sugerida."
+                municipalityChecking -> "Un momento, estamos comprobando el lugar elegido."
+                municipality.isBlank() -> "No pudimos comprobar la ubicación. Toca el mapa para elegir otro punto."
+                fullAddress.isBlank() || neighborhood.isBlank() || !Regex("[0-9]{5}").matches(postalCode) ->
+                    "No encontramos todos los datos de esta dirección. Prueba buscando una calle con número o elige otro punto en el mapa."
                 else -> null
             }
-            if (locationError.value == null) onNextClick()
+            if (locationError == null) onNextClick()
         })
-        locationError.value?.let { Text(it, color = Color(0xFFD32F2F), fontSize = 13.sp) }
+        locationError?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(it, color = Color(0xFFD32F2F), fontSize = 13.sp)
+        }
     }
 }
 
@@ -1490,15 +1718,17 @@ private fun ReportLocationStep(
 
 @Composable
 private fun ReportEvidenceStep(
+    onRemoveFile: (String) -> Unit,
     onSelectFilesClick: () -> Unit,
     selectedCount: Int,
     evidenceReferences: List<String>,
     onNextClick: () -> Unit
 ) {
+    val reportScroll = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(reportScroll).rietiScrollbar(reportScroll)
             .padding(
                 start = 22.dp,
                 end = 22.dp,
@@ -1517,7 +1747,7 @@ private fun ReportEvidenceStep(
         EvidenceSelector(
             onClick = onSelectFilesClick
         )
-        ReportPhotoStrip(evidenceReferences, modifier = Modifier.padding(top = 14.dp))
+        ReportPhotoStrip(evidenceReferences, modifier = Modifier.padding(top = 14.dp), onRemove = onRemoveFile)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -1533,7 +1763,8 @@ private fun ReportEvidenceStep(
 @Composable
 private fun ReportPhotoStrip(
     photos: List<String>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRemove: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     if (photos.isEmpty()) return
@@ -1551,12 +1782,26 @@ private fun ReportPhotoStrip(
                 }.getOrNull()
             }
             if (bitmap != null) {
-                Image(
-                    bitmap = bitmap,
-                    contentDescription = "Evidencia ${index + 1}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(83.dp).clip(RoundedCornerShape(9.dp))
-                )
+                Box(Modifier.size(94.dp)) {
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = "Evidencia ${index + 1}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(85.dp).clip(RoundedCornerShape(10.dp))
+                            .align(Alignment.BottomStart)
+                    )
+                    if (onRemove != null) {
+                        androidx.compose.material3.IconButton(
+                            onClick = { onRemove(uriString) },
+                            modifier = Modifier.align(Alignment.TopEnd).size(32.dp)
+                                .background(Color(0xFFE60059), CircleShape)
+                        ) {
+                            Icon(Icons.Default.Close,
+                                contentDescription = "Quitar esta foto", tint = Color.White,
+                                modifier = Modifier.size(21.dp))
+                        }
+                    }
+                }
             }
         }
     }
@@ -1589,10 +1834,11 @@ private fun ReportReviewStep(
 
     onSendReportClick: () -> Unit
 ) {
+    val reportScroll = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(reportScroll).rietiScrollbar(reportScroll)
             .padding(
                 start = 18.dp,
                 end = 18.dp,
@@ -1644,13 +1890,13 @@ private fun ReportReviewStep(
             onEditClick = onEditDetailsClick
         ) {
             ReviewRow(
-                label = "Número de niñas, niños",
+                label = "Número de niñas, niños y adolescentes",
                 value = valueOrEmpty(numberOfChildren)
             )
 
             ReviewRow(
-                label = "Rango de edad aproximado",
-                value = valueOrEmpty(childrenAges)
+                label = "Edades aproximadas",
+                value = valueOrEmpty(AgeBreakdown.display(childrenAges, numberOfChildren.toIntOrNull() ?: 0))
             )
 
             ReviewRow(
