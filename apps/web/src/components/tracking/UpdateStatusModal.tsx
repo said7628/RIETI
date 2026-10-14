@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  reportStatuses,
+  statusTransitions,
   semaforoByStatus,
   type ReportStatus,
 } from '../../data/shared/catalogs'
@@ -10,16 +10,19 @@ import Modal from '../shared/Modal'
 interface UpdateStatusModalProps {
   report: Report
   saving?: boolean
+  isAdmin?: boolean
   onCancel: () => void
   onConfirm: (
     status: ReportStatus,
     solution: string | null,
+    recurrenceReason?: string,
   ) => void | Promise<void>
 }
 
 function UpdateStatusModal({
   report,
   saving = false,
+  isAdmin = false,
   onCancel,
   onConfirm,
 }: UpdateStatusModalProps) {
@@ -30,6 +33,12 @@ function UpdateStatusModal({
     useState(report.solution ?? '')
 
   const [error, setError] = useState('')
+  const [recurrenceReason, setRecurrenceReason] = useState('')
+
+  const terminal = ['Concluido', 'Archivado', 'Cancelado'].includes(report.status)
+  const validStatuses = [report.status, ...statusTransitions[report.status].filter(
+    (next) => next !== 'Reincidente' || !terminal || isAdmin
+  )]
 
   const requiresSolution =
     semaforoByStatus[status] === 'ATENDIDO'
@@ -51,10 +60,13 @@ function UpdateStatusModal({
       return
     }
 
-    void onConfirm(
-      status,
-      solution.trim() || null,
-    )
+    if (terminal && status === 'Reincidente' && recurrenceReason.trim().length < 10) {
+      setError('Explica el motivo de la reincidencia (mínimo 10 caracteres).')
+      return
+    }
+    void onConfirm(status, solution.trim() || null,
+      terminal && status === 'Reincidente' ? recurrenceReason.trim() : undefined)
+
   }
 
   return (
@@ -73,7 +85,7 @@ function UpdateStatusModal({
             )
           }
         >
-          {reportStatuses.map(
+          {validStatuses.map(
             (option) => (
               <option
                 key={option}
@@ -89,6 +101,10 @@ function UpdateStatusModal({
         </select>
       </label>
 
+      <p className="modal-help">
+        Solo aparecen cambios permitidos desde el estado actual.
+        {validStatuses.length === 1 && ' Este reporte está en un estado final.'}
+      </p>
       <label className="modal-field">
         Descripción de la solución / seguimiento
 
@@ -105,6 +121,14 @@ function UpdateStatusModal({
         />
       </label>
 
+      {terminal && status === 'Reincidente' && (
+        <label className="modal-field">
+          Motivo de la reincidencia
+          <textarea value={recurrenceReason} disabled={saving}
+            onChange={(event) => { setRecurrenceReason(event.target.value); setError('') }}
+            rows={3} minLength={10} placeholder="Describe por qué se reabre el caso..." />
+        </label>
+      )}
       {requiresSolution && (
         <p className="modal-help">
           Para un estado atendido debes registrar una solución.

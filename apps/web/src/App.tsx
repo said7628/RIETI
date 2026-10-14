@@ -12,6 +12,7 @@ import TopBar from './components/shared/TopBar'
 import Sidebar from './components/tracking/Sidebar'
 import {
   refreshSession,
+  hasRestorableSession,
   useSessionUser,
 } from './data/shared/session'
 
@@ -28,7 +29,7 @@ function App() {
   const user = useSessionUser()
 
   const [checkingSession, setCheckingSession] = useState(
-    Boolean(getAccessToken()),
+    Boolean(getAccessToken() || hasRestorableSession()),
   )
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -46,7 +47,7 @@ function App() {
       return
     }
 
-    if (!getAccessToken()) {
+    if (!getAccessToken() && !hasRestorableSession()) {
       setCheckingSession(false)
       return
     }
@@ -65,6 +66,24 @@ function App() {
       active = false
     }
   }, [isAuthPage])
+
+  /** De vez en cuando vuelve a comprobar que la sesión siga activa. */
+  useEffect(() => {
+    if (isAuthPage || !user) return
+    const update = () => {
+      if (document.visibilityState === 'visible') {
+        void refreshSession()
+      }
+    }
+    const interval = window.setInterval(update, 4 * 60 * 1000)
+    document.addEventListener('visibilitychange', update)
+    window.addEventListener('focus', update)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', update)
+      window.removeEventListener('focus', update)
+    }
+  }, [isAuthPage, user?.id])
 
   if (isAuthPage) {
     return (

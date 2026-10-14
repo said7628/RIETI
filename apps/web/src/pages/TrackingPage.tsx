@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ApiError } from '../api/api'
 import { useSearchParams } from 'react-router-dom'
 
 import ReportDetail from '../components/shared/ReportDetail'
@@ -157,6 +158,17 @@ function TrackingPage() {
     pageReports[0] ??
     null
 
+  const isAdmin = user?.roleCode === 'ADMINISTRADOR_FUNDACION'
+  const canEditSelected = Boolean(selectedReport && user && (
+    isAdmin || (
+      !['Concluido', 'Archivado', 'Cancelado'].includes(selectedReport.status) && (
+        selectedReport.assignedUserId === user.id ||
+        (!selectedReport.assignedUserId && selectedReport.caseHolder === user.name)
+      )
+    )
+  ))
+
+  /** Asigna el reporte seleccionado a una persona. */
   async function assignCaseHolder(
     assignedUser: ApiUser,
   ) {
@@ -187,8 +199,9 @@ function TrackingPage() {
   async function updateStatus(
     status: ReportStatus,
     solution: string | null,
+    recurrenceReason?: string,
   ) {
-    if (!selectedReport || isSavingStatus) return
+    if (!selectedReport || isSavingStatus || !canEditSelected) return
 
     setActionError('')
     setIsSavingStatus(true)
@@ -199,6 +212,7 @@ function TrackingPage() {
         {
           status,
           solution,
+          ...(recurrenceReason ? { recurrenceReason } : {}),
         },
       )
 
@@ -212,11 +226,15 @@ function TrackingPage() {
         )
       })
     } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible actualizar el estatus.',
-      )
+      if (error instanceof ApiError && error.status === 409) {
+        // Otra persona pudo actualizar el caso. Recargar la verdad del servidor.
+        await refreshReports().catch(() => undefined)
+        setIsStatusModalOpen(false)
+        setActionError(`${error.message}. Se actualizó la lista para mostrar el estado real.`)
+      } else {
+        setActionError(error instanceof Error
+          ? error.message : 'No fue posible actualizar el estatus.')
+      }
     } finally {
       setIsSavingStatus(false)
     }
@@ -229,7 +247,7 @@ function TrackingPage() {
 
     return (
       <>
-        {!selectedReport.caseHolder && (
+        {isAdmin && (
           <AssignSelect
             folio={
               selectedReport.folio
@@ -240,15 +258,15 @@ function TrackingPage() {
           />
         )}
 
-        <button
-          type="button"
-          className="button-primary"
-          onClick={() =>
-            setIsStatusModalOpen(true)
-          }
-        >
-          Actualizar estatus
-        </button>
+        {canEditSelected && (
+          <button
+            type="button"
+            className="button-primary"
+            onClick={() => setIsStatusModalOpen(true)}
+          >
+            Actualizar estatus
+          </button>
+        )}
 
         <button
           type="button"
@@ -427,6 +445,7 @@ function TrackingPage() {
         selectedReport && (
           <UpdateStatusModal
             report={selectedReport}
+            isAdmin={isAdmin}
             saving={isSavingStatus}
             onCancel={() =>
               setIsStatusModalOpen(

@@ -297,8 +297,12 @@ function ManageAccounts({
 
   if (loading) {
     return (
-      <section className="accounts-panel">
+      <section className="accounts-panel accounts-loading" role="status" aria-live="polite">
+        <h1>Cuentas</h1>
         <p>Cargando cuentas...</p>
+        <div className="accounts-skeleton" aria-hidden="true" />
+        <div className="accounts-skeleton accounts-skeleton-short" aria-hidden="true" />
+        <div className="accounts-skeleton" aria-hidden="true" />
       </section>
     )
   }
@@ -612,10 +616,3 @@ function ManageAccounts({
 }
 
 export default AccountsPage
-
-
-
-
-
-
-

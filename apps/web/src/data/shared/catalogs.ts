@@ -1,4 +1,5 @@
-﻿export type ReportStatus =
+/** Nombres que usa la app: estatus del reporte, prioridad, rol y semáforo. */
+export type ReportStatus =
   | 'Registrado'
   | 'En revisión'
   | 'En seguimiento'
@@ -68,3 +69,15 @@ export const semaforoLabels: Record<Semaforo, string> = {
 
 
 
+
+/** Transiciones admitidas por la API. Cambiar aquí requiere el mismo cambio en backend. */
+export const statusTransitions: Record<ReportStatus, ReportStatus[]> = {
+  Registrado: ['En revisión', 'Reincidente', 'Cancelado'],
+  Reincidente: ['En revisión', 'Cancelado'],
+  'En revisión': ['En seguimiento', 'Canalizado', 'Cancelado'],
+  'En seguimiento': ['Canalizado', 'Concluido', 'Cancelado'],
+  Canalizado: ['En seguimiento', 'Concluido', 'Cancelado'],
+  Concluido: ['Archivado', 'Reincidente'],
+  Archivado: ['Reincidente'],
+  Cancelado: ['Reincidente'],
+}

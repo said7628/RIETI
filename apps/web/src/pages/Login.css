@@ -719,3 +719,24 @@
   cursor: default;
 }
 
+
+/* En recuperación, volver siempre es navegable, incluso durante una petición. */
+.recovery-form .login-back-button { pointer-events: auto; opacity: 1; cursor: pointer; position: relative; z-index: 2; }
+
+.recovery-form .login-back-button {
+  display: inline-flex;
+  position: relative;
+  z-index: 30;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+@media (max-height: 740px) {
+  .login-page .login-footer { position: relative; }
+  .login-page .login-content { min-height: 0; }
+}
+
+/* El footer no debe tapar el enlace de regresar al inicio de sesión. */
+.login-page .login-content { z-index: 30; }
+.login-page .login-footer { z-index: 20; }

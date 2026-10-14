@@ -23,6 +23,7 @@ export async function updateReport(
     status?: string
     priority?: string
     solution?: string | null
+    recurrenceReason?: string
   },
 ) {
   return apiRequest<{ ok: boolean }>(

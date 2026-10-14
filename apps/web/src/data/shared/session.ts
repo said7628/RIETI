@@ -3,6 +3,8 @@ import {
   ApiError,
   apiRequest,
   setAccessToken,
+  getAccessToken,
+  registerAccessTokenRefresh,
 } from '../../api/api'
 import type { UserRole } from './catalogs'
 import type { Report } from './reportsData'
@@ -57,6 +59,13 @@ let reports: Report[] = []
 
 const listeners = new Set<() => void>()
 let refreshSessionPromise: Promise<boolean> | null = null
+let renewTokenPromise: Promise<boolean> | null = null
+
+/** Hay un refresh token guardado para restaurar una sesión tras cerrar la pestaña. */
+export function hasRestorableSession() {
+  return Boolean(localStorage.getItem('rieti_refresh_token') || sessionStorage.getItem('rieti_refresh_token'))
+}
+
 
 function emit() {
   listeners.forEach((listener) => listener())
@@ -76,10 +85,8 @@ function saveSession(
   )
 
   if (refreshToken) {
-    sessionStorage.setItem(
-      'rieti_refresh_token',
-      refreshToken,
-    )
+    localStorage.setItem('rieti_refresh_token', refreshToken)
+    sessionStorage.removeItem('rieti_refresh_token')
   }
 
   emit()
@@ -138,45 +145,39 @@ export async function login(email: string, password: string) {
 }
 
 async function renewSessionWithRefreshToken() {
-  const refreshToken =
+  // La renovación rota el token en servidor: nunca disparar dos renovaciones a la vez.
+  if (renewTokenPromise) return renewTokenPromise
+  const refreshToken = localStorage.getItem('rieti_refresh_token') ||
     sessionStorage.getItem('rieti_refresh_token')
+  if (!refreshToken) return false
 
-  if (!refreshToken) {
-    return false
-  }
-
-  try {
-    const response = await apiRequest<RefreshResponse>(
-      '/auth/refresh',
-      {
+  renewTokenPromise = (async () => {
+    try {
+      const response = await apiRequest<RefreshResponse>('/auth/refresh', {
         method: 'POST',
-        body: JSON.stringify({
-          refreshToken,
-        }),
-      },
-    )
-
-    saveSession(
-      response.user,
-      response.accessToken,
-      response.refreshToken,
-    )
-
-    return true
-  } catch (error) {
-    if (
-      error instanceof ApiError &&
-      (error.status === 401 ||
-        error.status === 403)
-    ) {
-      logout()
+        body: JSON.stringify({ refreshToken }),
+      })
+      saveSession(response.user, response.accessToken, response.refreshToken)
+      return true
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        logout()
+      }
+      return false
     }
-
-    return false
-  }
+  })().finally(() => { renewTokenPromise = null })
+  return renewTokenPromise
 }
 
+// Renovar y reintentar una solicitud si el token de acceso vence.
+registerAccessTokenRefresh(renewSessionWithRefreshToken)
+
 async function refreshSessionInternal() {
+  // En una pestaña nueva no existe access token: restaurar primero desde el refresh token.
+  if (!getAccessToken()) {
+    const restored = await renewSessionWithRefreshToken()
+    if (!restored) return false
+  }
   try {
     const response = await apiRequest<{
       ok: boolean
@@ -267,6 +268,7 @@ export function logout() {
 
   sessionStorage.removeItem('rieti_user')
   sessionStorage.removeItem('rieti_refresh_token')
+  localStorage.removeItem('rieti_refresh_token')
 
   emit()
 }

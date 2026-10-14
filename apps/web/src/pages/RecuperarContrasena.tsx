@@ -22,6 +22,8 @@ function RecuperarContrasena() {
 
   const [loading, setLoading] =
     useState(false)
+  const [requested, setRequested] = useState(false)
+  const [code, setCode] = useState('')
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -46,14 +48,10 @@ function RecuperarContrasena() {
         normalized,
       )
 
-      navigate(
-        '/recuperar/codigo',
-        {
-          state: {
-            email: normalized,
-          },
-        },
-      )
+      // La API responde lo mismo si el correo no existe o está inactivo.
+      // No avanzamos automáticamente a una pantalla de contraseña.
+      setRequested(true)
+      setMessage('Si existe una cuenta activa con ese correo, recibirás un código. Introdúcelo para continuar.')
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -97,9 +95,12 @@ function RecuperarContrasena() {
             placeholder="correo@ejemplo.com"
             value={email}
             disabled={loading}
-            onChange={(event) =>
+            onChange={(event) => {
               setEmail(event.target.value)
-            }
+              setRequested(false)
+              setCode('')
+              setMessage('')
+            }}
           />
         </div>
 
@@ -107,6 +108,20 @@ function RecuperarContrasena() {
           <p className="login-message">
             {message}
           </p>
+        )}
+
+        {requested && (
+          <div className="form-group">
+            <label htmlFor="recovery-code-before-reset">Código recibido por correo</label>
+            <input id="recovery-code-before-reset" className="recovery-code-input"
+              inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+              placeholder="000000" value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))} />
+            <button type="button" className="login-button" disabled={code.length !== 6}
+              onClick={() => navigate('/recuperar/codigo', { state: { email: email.trim().toLowerCase(), code } })}>
+              Continuar con el código
+            </button>
+          </div>
         )}
 
         <button

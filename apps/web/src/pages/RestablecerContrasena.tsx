@@ -1,4 +1,4 @@
-﻿import {
+import {
   useState,
   type FormEvent,
 } from 'react'
@@ -19,6 +19,7 @@ import {
 
 interface RecoveryState {
   email?: string
+  code?: string
 }
 
 function RestablecerContrasena() {
@@ -32,7 +33,7 @@ function RestablecerContrasena() {
   const email = recovery.email ?? ''
 
   const [code, setCode] =
-    useState('')
+    useState(recovery.code ?? '')
 
   const [password, setPassword] =
     useState('')
@@ -292,6 +293,10 @@ function RestablecerContrasena() {
         <Link
           to="/login"
           className="login-back-button"
+          onClick={(event) => {
+            event.preventDefault()
+            navigate('/login', { replace: true })
+          }}
         >
           Volver a iniciar sesión
         </Link>

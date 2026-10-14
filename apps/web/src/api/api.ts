@@ -36,6 +36,12 @@ export function getAccessToken() {
   return accessToken
 }
 
+let refreshAccessToken: (() => Promise<boolean>) | null = null
+
+export function registerAccessTokenRefresh(handler: () => Promise<boolean>) {
+  refreshAccessToken = handler
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
@@ -63,6 +69,25 @@ export async function apiRequest<T>(
       0,
       'NETWORK_ERROR',
     )
+  }
+
+  // Al expirar el access token, renovar una sola vez y reintentar la solicitud.
+  // Nunca reintentar las rutas de inicio, recuperacion ni renovacion.
+  const publicAuth = path === '/auth/login' || path === '/auth/refresh' ||
+    path.startsWith('/auth/recovery/')
+  if (response.status === 401 && !publicAuth && refreshAccessToken) {
+    const renewed = await refreshAccessToken()
+    if (renewed) {
+      const retryHeaders = new Headers(headers)
+      const newToken = getAccessToken()
+      if (newToken) retryHeaders.set('authorization', `Bearer ${newToken}`)
+      else retryHeaders.delete('authorization')
+      try {
+        response = await fetch(`${API_URL}${path}`, { ...options, headers: retryHeaders })
+      } catch {
+        throw new ApiError('No fue posible conectar con el servidor.', 0, 'NETWORK_ERROR')
+      }
+    }
   }
 
   const raw = await response.text()
