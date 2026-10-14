@@ -59,10 +59,11 @@ const ALLOWED_STATUS_TRANSITIONS = new Map([
 
   ["CONCLUIDO", new Set([
     "ARCHIVADO",
+    "REINCIDENTE",
   ])],
 
-  ["ARCHIVADO", new Set([])],
-  ["CANCELADO", new Set([])],
+  ["ARCHIVADO", new Set(["REINCIDENTE"])],
+  ["CANCELADO", new Set(["REINCIDENTE"])],
 ]);
 
 function httpError(status, code, message, details) {
@@ -304,6 +305,7 @@ function mapReport(r){return{
   id:Number(r.id),uuid:r.uuid,folio:r.folio,createdAt:r.created_at,updatedAt:r.updated_at,workType:r.work_type,
   colonia:r.colonia||r.municipio,municipality:r.municipio,address:[r.direccion_referencia,r.colonia,r.municipio,r.codigo_postal].filter(Boolean).join(", "),
   postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,
+  assignedUserId:r.asignado_usuario_id==null?null:Number(r.asignado_usuario_id),
   nnaEstimate:r.estimacion_nna==="5_MAS"?"5+":r.estimacion_nna,ageRange:r.age_range,schedule:r.horario_observado||"—",description:r.descripcion,solution:r.descripcion_solucion||null,
   latitude:Number(r.latitud),longitude:Number(r.longitud),risk:r.nivel_riesgo,modality:r.modalidad,origin:r.origen
 };}
@@ -358,7 +360,6 @@ const ROLE_PERMISSIONS = {
     "REPORT_CREATE",
     "REPORT_UPDATE_STATUS",
     "REPORT_UPDATE_PRIORITY",
-    "REPORT_ASSIGN",
     "REPORT_NOTE",
     "EVIDENCE_VIEW",
     "EVIDENCE_UPLOAD",
@@ -615,6 +616,11 @@ async function updateReport(req,key){
       )
     }
 
+    // Un gestor solo puede actualizar los reportes a su cargo.
+    if(!u.es_administrador && Number(r.asignado_usuario_id)!==Number(u.id)){
+      throw httpError(403,"REPORT_OWNER_REQUIRED","Solo el responsable asignado puede modificar este reporte")
+    }
+
     const sets=[]
     const params=[]
 
@@ -685,6 +691,12 @@ async function updateReport(req,key){
       const nextStatus=newStatus.codigo
 
       if(nextStatus!==currentStatus){
+        if(["CONCLUIDO","ARCHIVADO","CANCELADO"].includes(currentStatus) &&
+           nextStatus==="REINCIDENTE"){
+          if(!u.es_administrador) throw httpError(403,"ADMIN_REOPEN_REQUIRED","Solo el administrador puede reabrir un caso cerrado")
+          const reason=String(req.body.recurrenceReason||"").trim()
+          if(reason.length<10 || reason.length>2000) throw httpError(400,"REINCIDENCE_REASON_REQUIRED","Describe el motivo de la reincidencia (10 a 2000 caracteres)")
+        }
         const allowed=
           ALLOWED_STATUS_TRANSITIONS.get(currentStatus)
 
@@ -724,6 +736,12 @@ async function updateReport(req,key){
 
       if(nextStatus==="CONCLUIDO"){
         sets.push("cerrado_at=UTC_TIMESTAMP(6)")
+      }else if(nextStatus==="REINCIDENTE" &&
+        ["CONCLUIDO","ARCHIVADO","CANCELADO"].includes(currentStatus)){
+        sets.push("cerrado_at=NULL")
+        // Preservar el historial anterior y documentar el motivo de reapertura.
+        await c.execute("INSERT INTO reporte_notas(reporte_id,autor_usuario_id,nota,created_at) VALUES(?,?,?,UTC_TIMESTAMP(6))",
+          [r.id,u.id,"Reincidencia / reapertura: "+String(req.body.recurrenceReason).trim()])
       }
     }else if(Object.hasOwn(req.body,"solution")){
       sets.push("descripcion_solucion=?")
@@ -825,7 +843,19 @@ async function updateReport(req,key){
     c.release()
   }
 }
-async function addNote(req,key){const u=await requireUser(req,{web:true});requirePermission(u,"REPORT_NOTE");const a=reportAccess(u);const[rows]=await pool.execute(`SELECT r.id FROM reportes r WHERE (r.id=? OR r.folio=?) ${a.sql} LIMIT 1`,[key,key,...a.params]);if(!rows[0])throw httpError(404,"REPORT_NOT_FOUND","Reporte no encontrado");const note=String(req.body.note||"").trim();if(!note)throw httpError(400,"NOTE_REQUIRED","La nota es obligatoria");await pool.execute(`INSERT INTO reporte_notas(reporte_id,autor_usuario_id,nota,created_at) VALUES(?,?,?,UTC_TIMESTAMP(6))`,[rows[0].id,u.id,note]);return response(201,{ok:true});}
+async function addNote(req,key){
+  const u=await requireUser(req,{web:true});
+  requirePermission(u,"REPORT_NOTE");
+  const a=reportAccess(u);
+  const[rows]=await pool.execute(`SELECT r.id,r.asignado_usuario_id FROM reportes r WHERE (r.id=? OR r.folio=?) ${a.sql} LIMIT 1`,[key,key,...a.params]);
+  if(!rows[0])throw httpError(404,"REPORT_NOT_FOUND","Reporte no encontrado");
+  if(!u.es_administrador && Number(rows[0].asignado_usuario_id)!==Number(u.id))
+    throw httpError(403,"REPORT_OWNER_REQUIRED","Solo el responsable asignado puede modificar este reporte");
+  const note=String(req.body.note||"").trim();
+  if(!note)throw httpError(400,"NOTE_REQUIRED","La nota es obligatoria");
+  await pool.execute(`INSERT INTO reporte_notas(reporte_id,autor_usuario_id,nota,created_at) VALUES(?,?,?,UTC_TIMESTAMP(6))`,[rows[0].id,u.id,note]);
+  return response(201,{ok:true});
+}
 async function assignReport(req,key){
   const u=await requireUser(req,{web:true})
   requirePermission(u,"REPORT_ASSIGN")
