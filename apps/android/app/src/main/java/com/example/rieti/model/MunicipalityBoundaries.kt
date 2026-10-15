@@ -18,7 +18,12 @@ import java.util.concurrent.TimeUnit
  * La geometria es GeoJSON (WGS84: [longitud, latitud]); incluye islas y huecos.
  * Fuente: https://gaia.inegi.org.mx/wscatgeo/v2/geo/mgem/{cve_ent}
  *
- * @author Equipo 3
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
  */
 class MunicipalityBoundaries(private val context: Context) {
     data class Municipality(val name: String, val geoCode: String)

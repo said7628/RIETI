@@ -1,4 +1,3 @@
-
 package com.example.rieti.viewmodel
 
 import android.app.Application

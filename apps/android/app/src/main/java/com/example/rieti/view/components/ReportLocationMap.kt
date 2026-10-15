@@ -1,3 +1,4 @@
+
 package com.example.rieti.view.components
 
 import androidx.compose.foundation.background
@@ -40,9 +41,38 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 /**
- * Muestra una vista previa del lugar. Al tocarla abre un mapa a pantalla completa.
- * Solo actualiza el reporte cuando la persona confirma el punto elegido.
- * Autor: Said Valseca Figueroa.
+ * Muestra una vista previa de la ubicación seleccionada
+ * para un reporte de RIETI.
+ *
+ * Al tocar la vista previa, abre un mapa interactivo
+ * a pantalla completa mediante un Dialog.
+ *
+ * Permite seleccionar una ubicación tocando el mapa
+ * o arrastrando el marcador.
+ *
+ * La ubicación del reporte únicamente se actualiza
+ * cuando el usuario confirma el punto seleccionado.
+ * Si cancela la edición, no se comunica ningún cambio
+ * mediante onLocationSelected.
+ *
+ * La vista previa mantiene deshabilitados los gestos
+ * de desplazamiento, acercamiento, rotación e inclinación.
+ *
+ * Autor original: Said Valseca Figueroa.
+ *
+ * @param selectedLocation Coordenadas geográficas
+ * seleccionadas actualmente para el reporte.
+ * @param onLocationSelected Función que recibe las
+ * coordenadas cuando el usuario confirma su selección.
+ * @param modifier Modificador opcional aplicado
+ * al contenedor de la vista previa del mapa.
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
  */
 @Composable
 fun ReportLocationMap(

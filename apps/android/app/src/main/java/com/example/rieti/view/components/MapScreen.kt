@@ -1,3 +1,4 @@
+
 package com.example.rieti.view.components
 
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,48 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 
+/**
+ * Componente de mapa interactivo utilizado en RIETI
+ * para visualizar y seleccionar una ubicación geográfica.
+ *
+ * Integra Google Maps mediante Jetpack Compose
+ * y permite al usuario desplazar el mapa para
+ * seleccionar una posición.
+ *
+ * La cámara se inicializa utilizando las coordenadas
+ * recibidas en currentLatLng y un nivel de zoom de 15.
+ *
+ * Cuando cambia la ubicación proporcionada,
+ * la cámara se desplaza mediante una animación
+ * con duración de 800 milisegundos.
+ *
+ * Si el usuario mueve el mapa mediante un gesto,
+ * al finalizar el movimiento se comunica
+ * la posición central mediante onPositionSelected.
+ *
+ * Presenta un ícono de ubicación rojo y fijo
+ * en el centro del mapa como referencia visual
+ * para la selección de coordenadas.
+ *
+ * Los controles de zoom integrados de Google Maps
+ * permanecen deshabilitados.
+ *
+ * @param currentLatLng Coordenadas geográficas
+ * utilizadas para establecer y actualizar
+ * la posición central de la cámara.
+ * @param onPositionSelected Función que recibe
+ * las coordenadas seleccionadas cuando finaliza
+ * un movimiento de cámara iniciado por un gesto.
+ * @param modifier Modificador opcional utilizado
+ * para personalizar el contenedor del mapa.
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
+ */
 @Composable
 fun MapScreen(
     currentLatLng: LatLng,
