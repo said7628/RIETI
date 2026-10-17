@@ -4,6 +4,7 @@ package com.example.rieti.view
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
@@ -113,6 +114,10 @@ fun AppNavigation(
     var lastReportFolio by remember { mutableStateOf("") }
     var offlineLogin by remember { mutableStateOf(false) }
     var registerSuccess by remember { mutableStateOf(false) }
+    var registerEmail by remember { mutableStateOf<String?>(null) }
+    var registerCode by remember { mutableStateOf("") }
+    var registerVerifyBusy by remember { mutableStateOf(false) }
+    var registerVerifyError by remember { mutableStateOf<String?>(null) }
     var registerBusy by remember { mutableStateOf(false) }
     var loginBusy by remember { mutableStateOf(false) }
     var accountBusy by remember { mutableStateOf(false) }
@@ -189,6 +194,60 @@ fun AppNavigation(
                 androidx.compose.material3.TextButton(onClick = { offlineLogin = false }) {
                     androidx.compose.material3.Text("Entendido")
                 }
+            }
+        )
+    }
+    // La cuenta aun NO existe al solicitar el codigo: se activa al validarlo.
+    if (registerEmail != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { if (!registerVerifyBusy) registerEmail = null },
+            title = { androidx.compose.material3.Text("Confirma tu correo") },
+            text = {
+                androidx.compose.foundation.layout.Column {
+                    androidx.compose.material3.Text("Escribe el codigo de 6 digitos enviado a ${registerEmail.orEmpty()}.")
+                    androidx.compose.material3.OutlinedTextField(
+                        value = registerCode,
+                        onValueChange = { registerCode = it.filter { digit -> digit.isDigit() }.take(6) },
+                        label = { androidx.compose.material3.Text("Codigo de verificacion") },
+                        singleLine = true,
+                        enabled = !registerVerifyBusy,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    registerVerifyError?.let { error ->
+                        androidx.compose.material3.Text(error, color = androidx.compose.ui.graphics.Color(0xFFB00020))
+                    }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    enabled = !registerVerifyBusy && registerCode.length == 6,
+                    onClick = {
+                        val emailToVerify = registerEmail ?: return@TextButton
+                        registerVerifyBusy = true
+                        registerVerifyError = null
+                        scope.launch {
+                            try {
+                                when (val result = authRepository.verifyRegistration(emailToVerify, registerCode)) {
+                                    is AuthResult.Success -> {
+                                        registerEmail = null
+                                        registerCode = ""
+                                        registerSuccess = true
+                                    }
+                                    is AuthResult.Error -> registerVerifyError = result.message
+                                }
+                            } finally { registerVerifyBusy = false }
+                        }
+                    }
+                ) { androidx.compose.material3.Text(if (registerVerifyBusy) "Validando..." else "Verificar y crear cuenta") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    enabled = !registerVerifyBusy,
+                    onClick = { registerEmail = null }
+                ) { androidx.compose.material3.Text("Cancelar") }
             }
         )
     }
@@ -390,7 +449,9 @@ fun AppNavigation(
                         ) {
 
                             is AuthResult.Success -> {
-                                registerSuccess = true
+                                registerEmail = email.trim().lowercase()
+                                registerCode = ""
+                                registerVerifyError = null
                             }
 
                             is AuthResult.Error -> {
@@ -1100,6 +1161,7 @@ fun AppNavigation(
                  */
 
                 email = sessionManager.userEmail().orEmpty(),
+                canDeleteAccount = sessionManager.roleCode() == "CIUDADANO",
 
                 // -------------------------------------------------
                 // CAMBIAR CONTRASEÑA

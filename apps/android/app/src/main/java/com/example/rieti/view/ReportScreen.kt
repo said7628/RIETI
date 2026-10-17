@@ -230,13 +230,15 @@ fun ReportFormScreen(
         }
         else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
     }
+    // Mostrar el aviso desde el primer frame del paso 2 y exigir una respuesta explicita.
+    // No se puede descartar tocando fuera ni con el boton de regresar.
     LaunchedEffect(reportState.currentStep, isDraftLoaded) {
         if (reportState.currentStep == 2 && isDraftLoaded && !locationConsentGiven.value) {
             showLocationQuestion.value = true
         }
     }
-    if (showLocationQuestion.value) AlertDialog(
-        onDismissRequest = { showLocationQuestion.value = false },
+    if (showLocationQuestion.value && reportState.currentStep == 2) AlertDialog(
+        onDismissRequest = {},
         title = { Text("¿Estás en el lugar donde ocurrió?") },
         text = { Text("Si estás ahí, tomaremos tu ubicación. Si no, podrás elegir el punto en el mapa.") },
         confirmButton = { TextButton(onClick = {
@@ -666,7 +668,9 @@ fun ReportFormScreen(
                                             reportViewModel::onDetailsChange,
 
                                         onNextClick = {
-
+                                            // El aviso se abre antes del cambio de pantalla,
+                                            // incluso si la persona pulsa "Siguiente" muy rapido.
+                                            if (!locationConsentGiven.value) showLocationQuestion.value = true
                                             reportViewModel.onStepChange(2)
                                         }
                                     )
@@ -1214,11 +1218,15 @@ private fun ReportDetailsStep(
 
         ReportCatalogSelector(
             label = "Tipo de actividad observada",
-            value = if (workType.startsWith("Otro: ")) "Otro" else workType,
+            value = when {
+                workType.startsWith("Otro: ") -> "Otro"
+                workType == "Cerillo en supermercado" -> "Empacador en supermercado"
+                else -> workType
+            },
             options = listOf(
                 "Venta en semáforos", "Repartiendo volantes", "Venta en mercado",
                 "Despachador/trabajador de tortillería", "Trabajo en construcción", "Lavado de autos",
-                "Despachador de gasolina", "Cerillo en supermercado", "Limpiaparabrisas",
+                "Despachador de gasolina", "Empacador en supermercado", "Limpiaparabrisas",
                 "Mendicidad forzada o inducida", "Explotación sexual comercial de NNA", "Otro"
             ),
             onSelect = { option -> onWorkTypeChange(if (option == "Otro") "Otro: " else option) }

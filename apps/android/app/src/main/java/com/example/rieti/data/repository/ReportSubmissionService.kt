@@ -144,7 +144,8 @@ class ReportSubmissionService(private val context: Context) {
             "Venta en mercado" to 3, "Despachador/trabajador de tortillería" to 4,
             "Trabajador de tortillería" to 4,
             "Trabajo en construcción" to 5, "Lavado de autos" to 6,
-            "Despachador de gasolina" to 7, "Cerillo en supermercado" to 8,
+            "Despachador de gasolina" to 7,
+            "Empacador en supermercado" to 8, "Cerillo en supermercado" to 8,
             "Limpiaparabrisas" to 9, "Mendicidad forzada o inducida" to 10,
             "Explotación sexual comercial de NNA" to 11
         )

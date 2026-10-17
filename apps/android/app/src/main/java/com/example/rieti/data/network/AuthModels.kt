@@ -33,6 +33,12 @@ data class RegisterResponse(
     val message: String? = null
 )
 
+/** El registro no se completa hasta demostrar la posesion del correo. */
+data class RegisterVerifyRequest(
+    val email: String,
+    val code: String
+)
+
 /**
  * Contiene las credenciales enviadas al backend
  * para autenticar a un usuario de RIETI.

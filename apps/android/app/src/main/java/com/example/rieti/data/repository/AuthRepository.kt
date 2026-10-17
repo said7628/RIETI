@@ -7,6 +7,7 @@ import com.example.rieti.data.network.LoginResponse
 import com.example.rieti.data.network.LogoutRequest
 import com.example.rieti.data.network.RecoveryRequest
 import com.example.rieti.data.network.RecoveryResetRequest
+import com.example.rieti.data.network.RegisterVerifyRequest
 import com.example.rieti.data.network.RegisterRequest
 import com.example.rieti.data.network.RefreshRequest
 import com.example.rieti.data.network.RefreshResponse
@@ -127,6 +128,22 @@ class AuthRepository {
             AuthResult.Error(
                 "No fue posible conectar con RIETI. Revisa tu conexión."
             )
+        }
+    }
+
+    /** Confirma el codigo del correo para terminar el alta de la cuenta. */
+    suspend fun verifyRegistration(email: String, code: String): AuthResult<Unit> {
+        return try {
+            val response = api.verifyRegistration(
+                RegisterVerifyRequest(email.trim().lowercase(), code.trim())
+            )
+            if (response.isSuccessful && response.body()?.ok == true) {
+                AuthResult.Success(Unit)
+            } else {
+                parseError(response.errorBody()?.string())
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("No pudimos validar el codigo. Revisa tu conexion.")
         }
     }
 

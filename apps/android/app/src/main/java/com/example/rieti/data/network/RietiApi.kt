@@ -36,9 +36,15 @@ interface RietiApi {
      * @return Respuesta HTTP que contiene un
      * [RegisterResponse] con el resultado del registro.
      */
-    @POST("auth/register")
+    @POST("auth/register/request")
     suspend fun register(
         @Body request: RegisterRequest
+    ): Response<RegisterResponse>
+
+    /** Verifica el codigo recibido por correo y activa la cuenta. */
+    @POST("auth/register/verify")
+    suspend fun verifyRegistration(
+        @Body request: RegisterVerifyRequest
     ): Response<RegisterResponse>
 
     /**

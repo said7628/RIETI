@@ -72,6 +72,7 @@ import com.example.rieti.view.components.TopBar
 @Composable
 fun SettingsScreen(
     email: String,
+    canDeleteAccount: Boolean = true,
     onChangePasswordClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
@@ -343,7 +344,7 @@ fun SettingsScreen(
                         // BORRAR CUENTA
                         // =================================================
 
-                        SettingsActionRow(
+                        if (canDeleteAccount) SettingsActionRow(
                             icon = Icons.Default.DeleteOutline,
                             title = "Borrar cuenta",
                             navy = navy,
@@ -518,7 +519,7 @@ fun SettingsScreen(
     // CONFIRMAR QUE EL USUARIO DESEA BORRAR SU CUENTA
     // =================================================================
 
-    if (showDeleteConfirmationDialog) {
+    if (canDeleteAccount && showDeleteConfirmationDialog) {
 
         DeleteAccountConfirmationDialog(
             navy = navy,
@@ -550,7 +551,7 @@ fun SettingsScreen(
     // CONFIRMAR IDENTIDAD CON CONTRASEÑA
     // =================================================================
 
-    if (showDeletePasswordDialog) {
+    if (canDeleteAccount && showDeletePasswordDialog) {
 
         DeleteAccountDialog(
             navy = navy,
@@ -1030,13 +1031,12 @@ private fun DeleteAccountConfirmationDialog(
                 Text(
                     text = "Cancelar",
 
-                    color =
-                        colors.pinkPrincipal,
+                    // Contraste reforzado en modo claro y oscuro.
+                    color = colors.text,
 
-                    fontSize = 14.sp,
+                    fontSize = 16.sp,
 
-                    fontWeight =
-                        FontWeight.Medium
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -1452,13 +1452,12 @@ private fun DeleteAccountDialog(
                 Text(
                     text = "Cancelar",
 
-                    color =
-                        colors.pinkPrincipal,
+                    // Contraste reforzado en modo claro y oscuro.
+                    color = colors.text,
 
-                    fontSize = 14.sp,
+                    fontSize = 16.sp,
 
-                    fontWeight =
-                        FontWeight.Medium
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

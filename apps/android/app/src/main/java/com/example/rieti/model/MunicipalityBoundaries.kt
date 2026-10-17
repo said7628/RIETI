@@ -47,16 +47,24 @@ class MunicipalityBoundaries(private val context: Context) {
             val preferred = stateCode(stateHint)
             val available = context.filesDir.listFiles().orEmpty()
                 .mapNotNull { Regex("rieti-inegi-mgem-([0-9]{2})\\.geojson").matchEntire(it.name)?.groupValues?.get(1) }
-            // Si Geocoder no indico entidad, buscar primero donde normalmente opera RIETI.
-            // El resultado SIEMPRE se valida contra la geometria, nunca contra esta preferencia.
+            // Zona metropolitana: comprobar AMBAS entidades antes de aceptar un municipio.
+            // Un poligono descargado previamente no tiene prioridad sobre CDMX.
+            val nearBorder = latitude in 19.0..19.8 && longitude in -99.6..-98.8
             val likely = if (latitude in 18.0..21.0 && longitude in -101.0..-98.0)
-                listOf("15", "09") else emptyList()
-            val candidates = (listOfNotNull(preferred) + available + likely).distinct()
+                listOf("09", "15") else emptyList()
+            val candidates = if (nearBorder) listOf("09", "15")
+                else (listOfNotNull(preferred) + likely + available).distinct()
+            val matches = mutableListOf<Municipality>()
             for (code in candidates) {
-                val geo = load(code) ?: continue
-                findForPoint(geo, latitude, longitude)?.let { return@withContext it }
+                val geo = load(code)
+                // Si falta el poligono de cualquiera de las dos entidades limítrofes,
+                // no adivinar el municipio usando solo la otra.
+                if (nearBorder && geo == null) return@withContext null
+                if (geo == null) continue
+                findForPoint(geo, latitude, longitude)?.let { matches.add(it) }
             }
-            null
+            // En un solapamiento geometrico, abstenerse y pedir ajustar el punto.
+            if (matches.distinctBy { it.geoCode to it.name }.size > 1) null else matches.firstOrNull()
         }
 
     /** Devuelve nombres exclusivamente de poligonos oficiales descargados, no de ciudades. */

@@ -158,9 +158,10 @@ async function login(req){
   const [rows]=await pool.execute(`SELECT u.*,r.codigo rol_codigo,r.nombre rol_nombre,r.acceso_web,r.acceso_android,r.es_administrador
     FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE LOWER(u.correo)=? LIMIT 1`,[email]);
   const user=rows[0];
-  if(user && String(req.body.platform||'web').toLowerCase()==='android' && user.rol_codigo!=='CIUDADANO')
-    throw httpError(403,'CITIZEN_ROLE_REQUIRED','La aplicación ciudadana no admite perfiles administrativos');
-  if(!user||!user.activo||!(String(req.body.platform||"web").toLowerCase()==="android"?user.acceso_android:user.acceso_web)) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseña incorrectos");
+  const androidPlatform = String(req.body.platform||'web').toLowerCase()==='android';
+  if(user && androidPlatform && user.rol_codigo!=='CIUDADANO' && !user.es_administrador)
+    throw httpError(403,'MOBILE_ROLE_DENIED','Solo ciudadanos y administradores pueden usar la app');
+  if(!user||!user.activo||!(androidPlatform?(user.acceso_android||user.es_administrador):user.acceso_web)) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseña incorrectos");
   if(!(await bcrypt.compare(password,user.password_hash))) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseña incorrectos");
   await pool.execute(`UPDATE usuarios SET ultimo_acceso_at=UTC_TIMESTAMP(6),updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[user.id]);
   return response(200,{ok:true,user:publicUser(user),...(await createSession(user,req))});
@@ -191,7 +192,7 @@ async function logout(req){
 }
 async function mobileChangePassword(req){
   const u=await requireUser(req);
-  if(!u.acceso_android) throw httpError(403,"ANDROID_ACCESS_DENIED","Acceso no permitido");
+  if(!u.acceso_android && !u.es_administrador) throw httpError(403,"ANDROID_ACCESS_DENIED","Acceso no permitido");
   const current=String(req.body.currentPassword||"");
   const next=String(req.body.newPassword||"");
   if(!current||next.length<10||next.length>128) throw httpError(400,"INVALID_PASSWORD","La nueva contrasena debe tener entre 10 y 128 caracteres");
@@ -211,7 +212,8 @@ async function mobileChangePassword(req){
 }
 async function mobileDeactivateAccount(req){
   const u=await requireUser(req);
-  if(!u.acceso_android) throw httpError(403,"ANDROID_ACCESS_DENIED","Acceso no permitido");
+  if(u.rol_codigo!=='CIUDADANO') throw httpError(403,"STAFF_SELF_DEACTIVATE_FORBIDDEN",
+    "Las cuentas del personal se gestionan desde la administracion web");
   const password=String(req.body.password||"");
   if(!password) throw httpError(400,"PASSWORD_REQUIRED","Debes confirmar tu contrasena");
   const [rows]=await pool.execute("SELECT password_hash FROM usuarios WHERE id=? AND activo=1",[u.id]);
@@ -287,43 +289,102 @@ async function listAssignableUsers(req){
  * Registra un ciudadano desde la aplicacion Android.
  * El rol se obtiene del servidor y nunca del cliente.
  */
-async function registerCitizen(req) {
-  const name = String(req.body?.name ?? "").trim();
-  const email = String(req.body?.email ?? "").trim().toLowerCase();
-  const password = String(req.body?.password ?? "");
 
-  if (!name || !email || !password) {
-    throw httpError(400, "INVALID_INPUT", "Nombre, correo y contraseña son obligatorios");
-  }
-  if (name.length > 150 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw httpError(400, "INVALID_INPUT", "Nombre o correo inválido");
-  }
-  if (password.length < 10 || password.length > 128) {
-    throw httpError(400, "WEAK_PASSWORD", "La contraseña debe tener entre 10 y 128 caracteres");
-  }
+// Registro con verificacion de correo: nunca se crea una cuenta por el solo hecho de
+// escribir una direccion de email. La tabla SQL se instala ANTES de desplegar Lambda.
+function registerCodeHash(email, code) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw httpError(503,"REGISTER_UNAVAILABLE","Servicio de registro no disponible");
+  return crypto.createHmac("sha256",secret).update(`registro:${email}:${code}`).digest("hex");
+}
 
-  const [roles] = await pool.execute(
-    "SELECT id FROM roles WHERE codigo='CIUDADANO' AND activo=1 AND acceso_android=1 LIMIT 1"
-  );
-  if (!roles.length) {
-    throw httpError(503, "ROLE_UNAVAILABLE", "El registro ciudadano no está disponible");
-  }
+async function requestCitizenRegistration(req) {
+  const name=String(req.body?.name??"").trim();
+  const email=String(req.body?.email??"").trim().toLowerCase();
+  const password=String(req.body?.password??"");
+  if(!name||!email||!password||name.length>150||email.length>254||
+     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    throw httpError(400,"INVALID_INPUT","Nombre, correo o contrasena invalidos");
+  if(password.length<10||password.length>128)
+    throw httpError(400,"WEAK_PASSWORD","La contrasena debe tener entre 10 y 128 caracteres");
 
+  const [existing]=await pool.execute("SELECT id FROM usuarios WHERE LOWER(correo)=? LIMIT 1",[email]);
+  if(existing.length) throw httpError(409,"EMAIL_EXISTS","Este correo ya esta registrado");
+  const [recent]=await pool.execute(
+    "SELECT TIMESTAMPDIFF(SECOND, ultimo_envio_at, UTC_TIMESTAMP(6)) AS elapsed FROM registros_correo_pendientes WHERE correo=? LIMIT 1",
+    [email]);
+  if(recent[0] && Number(recent[0].elapsed)<60)
+    throw httpError(429,"REGISTER_COOLDOWN","Espera un minuto antes de solicitar otro codigo");
+
+  const resendKey=process.env.RESEND_API_KEY;
+  const sender=process.env.EMAIL_FROM;
+  if(!resendKey||!sender) throw httpError(503,"EMAIL_NOT_CONFIGURED","No es posible verificar el correo ahora");
+  const code=String(crypto.randomInt(100000,1000000));
+  const hash=await bcrypt.hash(password,12);
+  await pool.execute(
+    `INSERT INTO registros_correo_pendientes
+       (correo,nombre,password_hash,codigo_hash,intentos,expira_at,ultimo_envio_at,created_at,updated_at)
+     VALUES(?,?,?,?,0,DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 15 MINUTE),UTC_TIMESTAMP(6),UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))
+     ON DUPLICATE KEY UPDATE nombre=VALUES(nombre),password_hash=VALUES(password_hash),
+       codigo_hash=VALUES(codigo_hash),intentos=0,expira_at=VALUES(expira_at),
+       ultimo_envio_at=UTC_TIMESTAMP(6),updated_at=UTC_TIMESTAMP(6)`,
+    [email,name,hash,registerCodeHash(email,code)]);
+
+  const html=`<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px">
+    <h1>RIETI</h1><h2>Verifica tu correo</h2><p>Usa este codigo para crear tu cuenta:</p>
+    <p style="font-size:34px;letter-spacing:6px;font-weight:bold">${code}</p>
+    <p>El codigo expira en 15 minutos. Si no solicitaste una cuenta, ignora el mensaje.</p></div>`;
+  let result;
   try {
-    await pool.execute(
-      `INSERT INTO usuarios
-       (uuid,rol_id,municipio_id,dependencia_id,nombre,correo,telefono,password_hash,activo,created_at,updated_at)
-       VALUES (?, ?, NULL, NULL, ?, ?, NULL, ?, 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))`,
-      [crypto.randomUUID(), roles[0].id, name, email, await bcrypt.hash(password, 12)]
-    );
-  } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
-      throw httpError(409, "EMAIL_EXISTS", "Ese correo ya está registrado");
-    }
-    throw error;
+    result=await fetch("https://api.resend.com/emails",{
+      method:"POST",headers:{Authorization:`Bearer ${resendKey}`,"Content-Type":"application/json"},
+      body:JSON.stringify({from:sender,to:[email],subject:"Codigo de verificacion de RIETI",html})
+    });
+  } catch (_err) { throw httpError(502,"EMAIL_SEND_FAILED","No pudimos enviar el codigo. Intenta mas tarde"); }
+  if(!result.ok) {
+    // No registrar destinatarios, tokens ni respuestas crudas del proveedor.
+    throw httpError(502,"EMAIL_SEND_FAILED","No pudimos enviar el codigo. Intenta mas tarde");
   }
+  return response(202,{ok:true,message:"Enviamos un codigo de 6 digitos a tu correo"});
+}
 
-  return response(201, {ok:true, message:"Cuenta creada correctamente"});
+async function verifyCitizenRegistration(req) {
+  const email=String(req.body?.email??"").trim().toLowerCase();
+  const code=String(req.body?.code??"").trim();
+  if(!/^[0-9]{6}$/.test(code)||email.length>254||!email)
+    throw httpError(400,"INVALID_VERIFICATION","Correo o codigo invalidos");
+  const c=await pool.getConnection();
+  try {
+    await c.beginTransaction();
+    const [pending]=await c.execute(
+      `SELECT correo,nombre,password_hash,codigo_hash,intentos,
+       (expira_at>UTC_TIMESTAMP(6)) AS vigente
+       FROM registros_correo_pendientes WHERE correo=? LIMIT 1 FOR UPDATE`,[email]);
+    const row=pending[0];
+    if(!row||!row.vigente||row.intentos>=5)
+      throw httpError(400,"VERIFICATION_EXPIRED","Codigo vencido o bloqueado; solicita otro");
+    const expected=Buffer.from(row.codigo_hash,"hex");
+    const actual=Buffer.from(registerCodeHash(email,code),"hex");
+    if(expected.length!==actual.length||!crypto.timingSafeEqual(expected,actual)) {
+      await c.execute("UPDATE registros_correo_pendientes SET intentos=intentos+1 WHERE correo=?",[email]);
+      await c.commit();
+      return response(400,{ok:false,error:{code:"INVALID_CODE",message:"Codigo incorrecto"}});
+    }
+    const [roles]=await c.execute(
+      "SELECT id FROM roles WHERE codigo='CIUDADANO' AND activo=1 AND acceso_android=1 LIMIT 1");
+    if(!roles.length) throw httpError(503,"ROLE_UNAVAILABLE","Registro ciudadano no disponible");
+    await c.execute(
+      `INSERT INTO usuarios(uuid,rol_id,municipio_id,dependencia_id,nombre,correo,telefono,password_hash,activo,created_at,updated_at)
+       VALUES(?,?,NULL,NULL,?,?,NULL,?,1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))`,
+      [crypto.randomUUID(),roles[0].id,row.nombre,email,row.password_hash]);
+    await c.execute("DELETE FROM registros_correo_pendientes WHERE correo=?",[email]);
+    await c.commit();
+    return response(201,{ok:true,message:"Cuenta verificada y creada correctamente"});
+  } catch(e) {
+    await c.rollback();
+    if(e.code==="ER_DUP_ENTRY") throw httpError(409,"EMAIL_EXISTS","Este correo ya esta registrado");
+    throw e;
+  } finally { c.release(); }
 }
 
 async function createUser(req){
@@ -813,9 +874,9 @@ async function resolveMobileCatalog(table,value){
 }
 async function createMobileReport(req){
   const u=await requireUser(req),b=req.body;
-  if(u.rol_codigo!=='CIUDADANO')
-    throw httpError(403,'CITIZEN_ROLE_REQUIRED',
-      'Este perfil de personal no puede enviar reportes desde la aplicación ciudadana');
+  if(u.rol_codigo!=='CIUDADANO' && !u.es_administrador)
+    throw httpError(403,'MOBILE_ROLE_DENIED',
+      'Solo ciudadanos y administradores pueden enviar reportes desde la app');
   if(!u.acceso_android && !u.acceso_web) throw httpError(403,"ANDROID_ACCESS_DENIED","Sin acceso a reportes");
   const modality=b.mode==="ANONYMOUS"?"ANONIMO":b.mode==="TRACKING"?"SEGUIMIENTO":null;
   if(!modality) throw httpError(400,"INVALID_MODALITY","Modalidad invalida");
@@ -3331,7 +3392,10 @@ async function router(req){
 
     return bootstrapAdmin(req)
   }
-  if(req.method==="POST"&&req.path==="/auth/register")return registerCitizen(req);
+  if(req.method==="POST"&&req.path==="/auth/register")
+    throw httpError(426,"UPDATE_REQUIRED","Actualiza RIETI para verificar tu correo antes del registro");
+  if(req.method==="POST"&&req.path==="/auth/register/request")return requestCitizenRegistration(req);
+  if(req.method==="POST"&&req.path==="/auth/register/verify")return verifyCitizenRegistration(req);
   if(req.method==="POST"&&req.path==="/auth/login")return login(req);
   if(req.method==="POST"&&req.path==="/auth/refresh")return refreshSession(req);
   if(req.method==="POST"&&req.path==="/auth/logout")return logout(req);

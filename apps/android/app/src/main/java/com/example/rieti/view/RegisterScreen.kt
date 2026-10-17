@@ -136,34 +136,8 @@ fun RegisterScreen(
 
     val colors = AppTheme.colors
     if (privacyVisible) {
-        // Vista completa independiente, sin perder el formulario que se estaba llenando.
-        Scaffold(containerColor = colors.surface) { innerPadding ->
-            Column(Modifier.fillMaxSize().padding(innerPadding)
-                .verticalScroll(rememberScrollState()).padding(24.dp)) {
-                TextButton(onClick = { privacyVisible = false }) { Text("← Volver al registro") }
-                Spacer(Modifier.height(14.dp))
-                Text("Aviso de privacidad", fontSize = 29.sp, color = colors.text,
-                    fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                Text("DOCUMENTO PROVISIONAL — NO PUBLICAR", color = Color(0xFFFF0060),
-                    fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(18.dp))
-                Text("Este texto debe ser sustituido por el aviso de privacidad oficial de RIETI antes de su publicación.\n\n" +
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vitae magna at sem cursus ullamcorper. " +
-                    "Suspendisse potenti. Nulla facilisi. Maecenas aliquet tincidunt tellus.\n\n" +
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sed tristique nunc. " +
-                    "Donec id lacus vel arcu pretium volutpat.\n\n" +
-                    "Responsable, finalidades, derechos ARCO y datos de contacto: PENDIENTES DE DEFINIR.",
-                    color = colors.text, fontSize = 15.sp)
-                Spacer(Modifier.height(26.dp))
-                Button(onClick = {
-                    privacyAccepted = true
-                    privacyVisible = false
-                }, modifier = Modifier.fillMaxWidth()) {
-                    Text("He leído y acepto el aviso")
-                }
-            }
-        }
+        // Aviso integro del PDF. Volver NO concede el consentimiento.
+        RietiPrivacyNoticeScreen(onBackClick = { privacyVisible = false })
         return
     }
 
@@ -742,11 +716,26 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(checked = privacyAccepted, onCheckedChange = { privacyAccepted = it })
+                    Checkbox(
+                        checked = privacyAccepted,
+                        onCheckedChange = { privacyAccepted = it }
+                    )
                     Column {
-                        Text("Acepto el aviso de privacidad", color = colors.text, fontSize = 14.sp)
-                        Text("Leer aviso de privacidad", color = Color(0xFFFF0060), fontSize = 13.sp,
-                            modifier = Modifier.clickable { privacyVisible = true })
+                        Text(
+                            "He leído el aviso de privacidad",
+                            color = colors.text,
+                            fontSize = 14.sp,
+                            modifier = Modifier.clickable { privacyAccepted = !privacyAccepted }
+                        )
+                        // Un enlace legible que abre la pantalla completa del aviso.
+                        TextButton(onClick = { privacyVisible = true }) {
+                            Text("Aviso de privacidad", color = colors.pinkPrincipal)
+                        }
+                        Text(
+                            "Debes marcar la casilla para crear tu cuenta.",
+                            color = colors.text,
+                            fontSize = 12.sp
+                        )
                     }
                 }
 
@@ -755,7 +744,7 @@ fun RegisterScreen(
                 // =====================================================
 
                 Button(
-                    enabled = !cargando,
+                    enabled = !cargando && privacyAccepted,
                     onClick = {
 
                         // =============================================
@@ -857,8 +846,8 @@ fun RegisterScreen(
                         // =============================================
 
                         if (!privacyAccepted) {
+                            // Defensa adicional por si la interfaz cambia en el futuro.
                             formularioValido = false
-                            privacyVisible = true
                         }
                         if (formularioValido) {
                             onCreateAccountClick(
