@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -39,6 +40,25 @@ import com.example.rieti.view.components.TopBar
 // ABOUT US
 // =================================================================
 
+/**
+ * Presenta la pantalla informativa "Quiénes somos" de RIETI.
+ *
+ * Muestra la identidad visual, el propósito y la información sobre
+ * las modalidades de reporte de la aplicación mediante tarjetas.
+ * Aplica colores según el tema activo y permite recorrer el contenido
+ * verticalmente. Integra [TopBar] y [BottomBar] para mantener
+ * la estructura de navegación de la aplicación.
+ *
+ * @param onHomeClick Acción ejecutada al seleccionar Inicio.
+ * @param onSettingsClick Acción ejecutada al seleccionar Configuración.
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
+ */
 @Composable
 fun AboutUsScreen(
     onHomeClick: () -> Unit,
@@ -341,6 +361,20 @@ fun AboutUsScreen(
 // TARJETA INFORMATIVA
 // =================================================================
 
+/**
+ * Muestra una tarjeta informativa con un acento de color lateral.
+ *
+ * Presenta un título y un texto descriptivo sobre una superficie
+ * con esquinas redondeadas y un borde configurable.
+ *
+ * @param title Título de la tarjeta.
+ * @param text Descripción mostrada debajo del título.
+ * @param accentColor Color de la línea decorativa lateral.
+ * @param backgroundColor Color del fondo de la tarjeta.
+ * @param borderColor Color del borde de la tarjeta.
+ * @param titleColor Color del título.
+ * @param textColor Color del texto descriptivo.
+ */
 @Composable
 private fun AboutUsCard(
     title: String,
@@ -433,6 +467,12 @@ private fun AboutUsCard(
 // PREVIEW LIGHT
 // =================================================================
 
+/**
+ * Vista previa de [AboutUsScreen] en modo claro.
+ *
+ * Permite inspeccionar la apariencia de la pantalla desde
+ * Android Studio con [RIETITheme] configurado en modo claro.
+ */
 @Preview(
     name = "About Us - Light",
     showBackground = true,
@@ -457,6 +497,12 @@ private fun AboutUsScreenLightPreview() {
 // PREVIEW DARK
 // =================================================================
 
+/**
+ * Vista previa de [AboutUsScreen] en modo oscuro.
+ *
+ * Permite inspeccionar la apariencia de la pantalla desde
+ * Android Studio con [RIETITheme] configurado en modo oscuro.
+ */
 @Preview(
     name = "About Us - Dark",
     showBackground = true,

@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -41,6 +42,37 @@ import com.example.rieti.view.components.TopBar
 // CUENTA BORRADA
 // =====================================================================
 
+/**
+ * Presenta la pantalla de confirmación de eliminación de cuenta
+ * de la aplicación RIETI.
+ *
+ * Muestra un indicador visual de confirmación, un mensaje
+ * informativo sobre la eliminación de la cuenta y un botón
+ * que permite regresar a la pantalla de inicio.
+ *
+ * Utiliza AppTheme para adaptar los colores de la interfaz
+ * al modo claro u oscuro seleccionado por el usuario.
+ *
+ * Integra el componente TopBar para mantener la identidad
+ * visual de la aplicación.
+ *
+ * La pantalla no ejecuta directamente la eliminación
+ * de la cuenta, sino que presenta la confirmación
+ * correspondiente a dicho proceso.
+ *
+ * La navegación de regreso al inicio se delega
+ * a la función recibida como parámetro.
+ *
+ * @param onBackToStartClick Función que se ejecuta
+ * cuando el usuario selecciona "Volver al inicio".
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
+ */
 @Composable
 fun AccountDeletedScreen(
     onBackToStartClick: () -> Unit
@@ -301,6 +333,17 @@ fun AccountDeletedScreen(
 // PREVIEW LIGHT
 // =====================================================================
 
+/**
+ * Genera una vista previa de AccountDeletedScreen
+ * utilizando el tema claro de RIETI.
+ *
+ * Permite visualizar la distribución de los elementos,
+ * los colores y la presentación del mensaje de
+ * confirmación desde Android Studio.
+ *
+ * Utiliza una acción de navegación vacía para
+ * representar la pantalla sin ejecutar navegación.
+ */
 @Preview(
     name = "Account Deleted - Light",
     showBackground = true,
@@ -324,6 +367,18 @@ private fun AccountDeletedLightPreview() {
 // PREVIEW DARK
 // =====================================================================
 
+/**
+ * Genera una vista previa de AccountDeletedScreen
+ * utilizando el tema oscuro de RIETI.
+ *
+ * Permite verificar la apariencia de la pantalla
+ * cuando se encuentran activos los colores
+ * correspondientes al modo oscuro.
+ *
+ * Configura RIETITheme con darkTheme en true
+ * y utiliza una acción de navegación vacía
+ * únicamente para fines de previsualización.
+ */
 @Preview(
     name = "Account Deleted - Dark",
     showBackground = true,

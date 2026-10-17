@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -51,6 +52,43 @@ import com.example.rieti.ui.theme.RIETITheme
 import kotlinx.coroutines.launch
 
 
+/**
+ * Presenta la pantalla de recuperación de contraseña de RIETI.
+ *
+ * Permite ingresar el correo electrónico asociado a una cuenta
+ * para solicitar el envío de un código de recuperación.
+ *
+ * Implementa una validación local que comprueba que el correo
+ * no esté vacío y tenga un formato válido.
+ *
+ * Utiliza AuthRepository para realizar la solicitud de recuperación
+ * y SessionManager para conservar el correo cuando la solicitud
+ * se completa correctamente.
+ *
+ * Gestiona un estado de carga durante la solicitud y comunica
+ * los resultados mediante RietiFeedback.
+ *
+ * También proporciona opciones para iniciar sesión,
+ * crear una cuenta y cambiar el tema visual de la aplicación.
+ *
+ * @param onLoginClick Función ejecutada cuando el usuario
+ * selecciona la opción de iniciar sesión.
+ * @param onRegisterClick Función ejecutada cuando el usuario
+ * selecciona la opción de crear una cuenta.
+ * @param onSendCodeClick Función ejecutada después de recibir
+ * un resultado exitoso de la solicitud de recuperación.
+ * @param darkTheme Indica si se encuentra habilitado
+ * el modo oscuro de la aplicación.
+ * @param onThemeChange Función ejecutada cuando el usuario
+ * selecciona el control para cambiar el tema visual.
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
+ */
 @Composable
 fun ForgotPasswordScreen(
     onLoginClick: () -> Unit,
@@ -136,6 +174,21 @@ fun ForgotPasswordScreen(
     // VALIDACIÓN LOCAL
     // ---------------------------------------------------------
 
+    /**
+     * Valida el correo electrónico ingresado en el formulario.
+     *
+     * Elimina los espacios iniciales y finales del valor
+     * únicamente para comprobar su contenido y formato.
+     *
+     * Verifica que el correo no esté vacío y utiliza
+     * Patterns.EMAIL_ADDRESS para comprobar su estructura.
+     *
+     * Cuando la validación falla, actualiza errorCorreo
+     * con el mensaje correspondiente.
+     *
+     * @return true cuando el correo contiene un valor
+     * y cumple con el formato esperado; false en caso contrario.
+     */
     fun validarCorreo(): Boolean {
 
         errorCorreo = null
@@ -562,6 +615,19 @@ fun ForgotPasswordScreen(
 // CABECERA RIETI
 // =============================================================
 
+/**
+ * Muestra la cabecera visual de la pantalla de
+ * recuperación de contraseña.
+ *
+ * Presenta el nombre RIETI en tipografía Serif,
+ * acompañado de una línea decorativa.
+ *
+ * El fondo utiliza un degradado vertical cuyos
+ * colores dependen del tema visual seleccionado.
+ *
+ * @param darkTheme Indica si debe utilizarse
+ * la variante de colores correspondiente al modo oscuro.
+ */
 @Composable
 private fun ForgotPasswordHeader(
     darkTheme: Boolean
@@ -631,6 +697,17 @@ private fun ForgotPasswordHeader(
 // PREVIEW LIGHT
 // =============================================================
 
+/**
+ * Genera una vista previa de ForgotPasswordScreen
+ * utilizando el tema claro de RIETI.
+ *
+ * Permite visualizar la cabecera, el formulario
+ * de recuperación y los controles de navegación
+ * desde Android Studio.
+ *
+ * Emplea callbacks vacíos para representar
+ * las acciones de la pantalla durante la previsualización.
+ */
 @Preview(
     name = "Forgot Password - Light",
     showBackground = true,
@@ -658,6 +735,17 @@ private fun ForgotPasswordScreenLightPreview() {
 // PREVIEW DARK
 // =============================================================
 
+/**
+ * Genera una vista previa de ForgotPasswordScreen
+ * utilizando el tema oscuro de RIETI.
+ *
+ * Configura RIETITheme con darkTheme en true
+ * y aplica Configuration.UI_MODE_NIGHT_YES
+ * para representar la interfaz en modo nocturno.
+ *
+ * Las acciones de navegación, recuperación
+ * y cambio de tema utilizan callbacks vacíos.
+ */
 @Preview(
     name = "Forgot Password - Dark",
     showBackground = true,

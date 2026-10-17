@@ -1,3 +1,4 @@
+
 package com.example.rieti.view
 
 import android.content.res.Configuration
@@ -60,6 +61,47 @@ import com.example.rieti.view.components.TopBar
 // CAMBIAR CONTRASEÑA
 // =====================================================================
 
+/**
+ * Presenta la pantalla de cambio de contraseña de RIETI.
+ *
+ * Permite ingresar la contraseña actual, una nueva contraseña
+ * y la confirmación de esta última.
+ *
+ * Muestra el correo electrónico asociado a la cuenta
+ * mediante un campo de solo lectura y proporciona
+ * controles para mostrar u ocultar las contraseñas.
+ *
+ * Conserva los valores ingresados y los estados de visibilidad
+ * mediante rememberSaveable.
+ *
+ * Utiliza AppTheme para adaptar los colores al modo claro
+ * u oscuro e incorpora TopBar y BottomBar.
+ *
+ * La solicitud de cambio de contraseña se delega a
+ * onChangePasswordClick, enviando los tres valores capturados.
+ * Esta función no realiza directamente la operación
+ * de actualización de contraseña en el backend.
+ *
+ * @param email Correo electrónico de la cuenta que se muestra
+ * en el formulario sin permitir su edición.
+ * @param onChangePasswordClick Función que recibe la contraseña
+ * actual, la nueva contraseña y su confirmación cuando
+ * el usuario selecciona "Cambiar contraseña".
+ * @param onForgotPasswordClick Función ejecutada al seleccionar
+ * la opción de recuperación de contraseña.
+ * @param onHomeClick Función ejecutada al seleccionar Inicio.
+ * @param onAboutUsClick Función ejecutada al seleccionar
+ * la sección "Quiénes somos".
+ * @param onSettingsClick Función ejecutada al seleccionar
+ * la sección Configuración.
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
+ */
 @Composable
 fun ChangePasswordScreen(
     email: String,
@@ -313,8 +355,8 @@ fun ChangePasswordScreen(
 
 
             // =========================================================
-// CONTRASEÑA ACTUAL
-// =========================================================
+            // CONTRASEÑA ACTUAL
+            // =========================================================
 
             PasswordFieldLabel(
                 text = "Contraseña actual",
@@ -350,9 +392,9 @@ fun ChangePasswordScreen(
                 modifier = Modifier.height(7.dp)
             )
 
-// =========================================================
-// OLVIDÉ MI CONTRASEÑA
-// =========================================================
+            // =========================================================
+            // OLVIDÉ MI CONTRASEÑA
+            // =========================================================
 
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -386,6 +428,7 @@ fun ChangePasswordScreen(
             Spacer(
                 modifier = Modifier.height(12.dp)
             )
+
 
             // =========================================================
             // NUEVA CONTRASEÑA
@@ -568,6 +611,16 @@ fun ChangePasswordScreen(
 // ETIQUETA DE CAMPO
 // =====================================================================
 
+/**
+ * Muestra la etiqueta de un campo del formulario
+ * de cambio de contraseña.
+ *
+ * Utiliza tipografía Serif en negrita para identificar
+ * el dato solicitado al usuario.
+ *
+ * @param text Texto mostrado como etiqueta del campo.
+ * @param navy Color aplicado a la etiqueta.
+ */
 @Composable
 private fun PasswordFieldLabel(
     text: String,
@@ -589,6 +642,19 @@ private fun PasswordFieldLabel(
 // CORREO ELECTRÓNICO
 // =====================================================================
 
+/**
+ * Presenta el correo electrónico de la cuenta
+ * dentro de un contenedor visual de solo lectura.
+ *
+ * Muestra un ícono de correo y la dirección recibida
+ * como parámetro sin proporcionar controles de edición.
+ *
+ * @param email Correo electrónico mostrado en el contenedor.
+ * @param navy Color utilizado para el ícono de correo.
+ * @param secondaryText Color aplicado al texto del correo.
+ * @param background Color de fondo del contenedor.
+ * @param borderColor Color del borde del contenedor.
+ */
 @Composable
 private fun ReadOnlyEmailField(
     email: String,
@@ -647,6 +713,31 @@ private fun ReadOnlyEmailField(
 // CAMPO DE CONTRASEÑA
 // =====================================================================
 
+/**
+ * Muestra un campo editable para capturar una contraseña.
+ *
+ * Utiliza un TextField de una sola línea con teclado
+ * configurado para contraseñas y un ícono de candado.
+ *
+ * Permite mostrar u ocultar el contenido mediante
+ * un botón de visibilidad. El estado de visibilidad
+ * y el valor del campo son proporcionados
+ * por el componente que utiliza esta función.
+ *
+ * @param value Contraseña ingresada actualmente.
+ * @param onValueChange Función ejecutada cuando cambia
+ * el contenido del campo.
+ * @param placeholder Texto orientativo mostrado
+ * cuando el campo está vacío.
+ * @param passwordVisible Indica si la contraseña
+ * debe mostrarse sin ocultar sus caracteres.
+ * @param onVisibilityClick Función ejecutada al seleccionar
+ * el botón de mostrar u ocultar contraseña.
+ * @param navy Color aplicado al texto, íconos y cursor.
+ * @param placeholderColor Color del texto orientativo.
+ * @param background Color de fondo del campo.
+ * @param borderColor Color del borde del campo.
+ */
 @Composable
 private fun PasswordInputField(
     value: String,
@@ -764,6 +855,22 @@ private fun PasswordInputField(
 // INFORMACIÓN DE CONTRASEÑA
 // =====================================================================
 
+/**
+ * Presenta una tarjeta informativa con los requisitos
+ * de contraseña mostrados por la interfaz de RIETI.
+ *
+ * Incluye un ícono de información y un mensaje que indica
+ * una longitud mínima de ocho caracteres y el uso
+ * de letras, números y un símbolo.
+ *
+ * Esta función únicamente muestra las indicaciones
+ * y no realiza validaciones sobre la contraseña.
+ *
+ * @param navy Color utilizado para el ícono
+ * y el separador visual.
+ * @param secondaryText Color aplicado al mensaje informativo.
+ * @param background Color de fondo de la tarjeta.
+ */
 @Composable
 private fun PasswordInformationCard(
     navy: Color,
@@ -837,6 +944,16 @@ private fun PasswordInformationCard(
 // PREVIEW LIGHT
 // =====================================================================
 
+/**
+ * Genera una vista previa de ChangePasswordScreen
+ * utilizando el tema claro de RIETI.
+ *
+ * Permite inspeccionar la distribución de los campos,
+ * los colores y los componentes visuales desde Android Studio.
+ *
+ * Emplea un correo de ejemplo y funciones vacías
+ * para representar las acciones de la pantalla.
+ */
 @Preview(
     name = "Change Password - Light",
     showBackground = true,
@@ -873,6 +990,17 @@ private fun ChangePasswordLightPreview() {
 // PREVIEW DARK
 // =====================================================================
 
+/**
+ * Genera una vista previa de ChangePasswordScreen
+ * utilizando el tema oscuro de RIETI.
+ *
+ * Configura RIETITheme en modo oscuro y utiliza
+ * Configuration.UI_MODE_NIGHT_YES para representar
+ * la apariencia nocturna de la interfaz.
+ *
+ * Emplea un correo de ejemplo y funciones vacías
+ * para los eventos de navegación y cambio de contraseña.
+ */
 @Preview(
     name = "Change Password - Dark",
     showBackground = true,

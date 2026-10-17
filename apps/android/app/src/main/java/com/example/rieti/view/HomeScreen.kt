@@ -66,6 +66,16 @@ import kotlinx.coroutines.flow.flowOf
 // TIPO DE REPORTE SELECCIONADO
 // =================================================================
 
+/**
+ * Representa las modalidades de reporte disponibles
+ * para su selección desde la pantalla principal.
+ *
+ * ANONYMOUS identifica el reporte anónimo.
+ * TRACKING identifica el reporte con seguimiento.
+ *
+ * Se utiliza como estado interno del modal
+ * de selección de modalidad.
+ */
 private enum class HomeReportType {
     ANONYMOUS,
     TRACKING
@@ -75,6 +85,53 @@ private enum class HomeReportType {
 // HOME
 // =================================================================
 
+/**
+ * Presenta la pantalla principal de la aplicación RIETI.
+ *
+ * Proporciona accesos para realizar reportes,
+ * consultar su seguimiento, obtener orientación
+ * y navegar hacia otras secciones de la aplicación.
+ *
+ * Consulta el borrador más reciente almacenado
+ * mediante Room y, cuando existe, muestra una opción
+ * para continuar su elaboración.
+ *
+ * Utiliza LocalInspectionMode para evitar consultar
+ * la base de datos durante las vistas previas
+ * de Android Studio.
+ *
+ * Integra un ModalBottomSheet que permite seleccionar
+ * entre reporte anónimo y reporte con seguimiento.
+ *
+ * Adapta los colores de la interfaz al tema visual
+ * activo mediante AppTheme.
+ *
+ * La navegación se delega a las funciones recibidas
+ * como parámetros.
+ *
+ * @param onAnonymousReportClick Función ejecutada
+ * cuando se elige la modalidad de reporte anónimo.
+ * @param onReportClick Función ejecutada cuando
+ * se elige la modalidad de reporte con seguimiento.
+ * @param onAboutUsClick Función que permite navegar
+ * hacia la sección "Quiénes somos".
+ * @param onTrackingClick Función que permite navegar
+ * hacia la consulta de seguimiento de reportes.
+ * @param onOrientationClick Función que permite navegar
+ * hacia la sección de orientación.
+ * @param onSettingsClick Función que permite navegar
+ * hacia la sección de configuración.
+ * @param onContinueDraftClick Función que recibe
+ * el identificador y la modalidad del borrador
+ * seleccionado para continuar su elaboración.
+ *
+ * @author Equipo de desarrollo RIETI:
+ * Lorena Antonio Monraga,
+ * Eduardo Márquez López,
+ * Ángel Adrik Merino Cedeño,
+ * Marco Polo Peña Rivera,
+ * Said Valseca Figueroa.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -417,6 +474,21 @@ fun HomeScreen(
 // PRESENTACIÓN SUPERIOR
 // =================================================================
 
+/**
+ * Construye la sección de presentación superior
+ * de la pantalla principal de RIETI.
+ *
+ * Muestra el mensaje institucional "Por entornos seguros"
+ * acompañado de un texto informativo sobre el propósito
+ * de la aplicación.
+ *
+ * Incorpora elementos decorativos con transparencias
+ * que se adaptan al tema visual seleccionado.
+ *
+ * @param isDarkTheme Indica si está activo el modo oscuro.
+ * @param primaryText Color utilizado para el texto principal.
+ * @param secondaryText Color utilizado para el texto descriptivo.
+ */
 @Composable
 private fun HomeHeroSection(
     isDarkTheme: Boolean,
@@ -587,6 +659,29 @@ private fun HomeHeroSection(
 // TARJETAS DEL HOME
 // =================================================================
 
+/**
+ * Presenta una tarjeta de acción de la pantalla principal.
+ *
+ * Muestra un ícono, un título, una descripción y un indicador
+ * visual de navegación.
+ *
+ * Permite personalizar los colores del fondo, borde,
+ * textos e íconos según la acción representada.
+ *
+ * Ejecuta la función onClick cuando el usuario
+ * selecciona la tarjeta.
+ *
+ * @param icon Ícono representativo de la acción.
+ * @param title Título principal de la tarjeta.
+ * @param subtitle Texto descriptivo de la acción.
+ * @param backgroundColor Color de fondo de la tarjeta.
+ * @param borderColor Color del borde de la tarjeta.
+ * @param iconColor Color aplicado al ícono.
+ * @param titleColor Color del título.
+ * @param subtitleColor Color del texto descriptivo.
+ * @param arrowColor Color del indicador de navegación.
+ * @param onClick Función ejecutada al seleccionar la tarjeta.
+ */
 @Composable
 private fun HomeActionCard(
     icon: ImageVector,
@@ -692,6 +787,27 @@ private fun HomeActionCard(
 // CONTENIDO DEL MODAL
 // =================================================================
 
+/**
+ * Presenta el contenido del modal de selección
+ * de modalidad de reporte de RIETI.
+ *
+ * Muestra las opciones de reporte anónimo
+ * y reporte con seguimiento.
+ *
+ * Mantiene temporalmente la modalidad seleccionada
+ * mediante un estado local de Jetpack Compose.
+ *
+ * El botón Continuar permanece deshabilitado
+ * mientras no exista una modalidad seleccionada.
+ *
+ * Permite cancelar la selección o comunicar
+ * la modalidad elegida al componente principal.
+ *
+ * @param isDarkTheme Indica si está activo el modo oscuro.
+ * @param onClose Función ejecutada al cancelar la selección.
+ * @param onContinue Función que recibe la modalidad
+ * seleccionada cuando se pulsa Continuar.
+ */
 @Composable
 private fun ReportTypeContent(
     isDarkTheme: Boolean,
@@ -915,11 +1031,32 @@ private fun ReportTypeContent(
     }
 }
 
-
 // =================================================================
 // OPCIÓN DEL MODAL
 // =================================================================
 
+/**
+ * Presenta una opción seleccionable dentro del modal
+ * de modalidades de reporte.
+ *
+ * Muestra el título y la descripción de la modalidad,
+ * acompañados de un círculo que indica su selección.
+ *
+ * Modifica únicamente su representación visual
+ * en función del valor de selected.
+ *
+ * La acción de selección se delega al callback onClick.
+ *
+ * @param title Nombre de la modalidad mostrada.
+ * @param subtitle Descripción de la modalidad.
+ * @param selected Indica si la opción está seleccionada.
+ * @param backgroundColor Color de fondo sin selección.
+ * @param borderColor Color del borde sin selección.
+ * @param selectedColor Color utilizado para destacar la selección.
+ * @param titleColor Color del título.
+ * @param subtitleColor Color de la descripción.
+ * @param onClick Función ejecutada al seleccionar la opción.
+ */
 @Composable
 private fun ReportTypeOption(
     title: String,
@@ -1061,6 +1198,21 @@ private fun ReportTypeOption(
 // BOTÓN CONTINUAR DEL MODAL
 // =================================================================
 
+/**
+ * Presenta el botón Continuar del modal de selección
+ * de modalidad de reporte.
+ *
+ * Adapta el color del botón y del texto en función
+ * del estado enabled.
+ *
+ * La interacción se deshabilita cuando todavía
+ * no se ha seleccionado una modalidad.
+ *
+ * @param enabled Indica si el botón permite interacción.
+ * @param pink Color principal utilizado para el botón.
+ * @param onClick Función ejecutada cuando el botón
+ * está habilitado y el usuario lo selecciona.
+ */
 @Composable
 private fun ContinueReportButton(
     enabled: Boolean,
@@ -1119,6 +1271,16 @@ private fun ContinueReportButton(
 // PREVIEW DARK
 // =================================================================
 
+/**
+ * Genera una vista previa de HomeScreen
+ * utilizando el tema oscuro de RIETI.
+ *
+ * Permite revisar la apariencia de la pantalla
+ * principal desde Android Studio.
+ *
+ * Configura RIETITheme en modo oscuro y utiliza
+ * callbacks vacíos para las acciones de navegación.
+ */
 @Preview(
     name = "Home - Dark",
     showBackground = true,
@@ -1148,6 +1310,16 @@ private fun HomeScreenDarkPreview() {
 // PREVIEW LIGHT
 // =================================================================
 
+/**
+ * Genera una vista previa de HomeScreen
+ * utilizando el tema claro de RIETI.
+ *
+ * Permite revisar la presentación de las tarjetas,
+ * los elementos decorativos y las opciones de navegación.
+ *
+ * Configura RIETITheme en modo claro y utiliza
+ * callbacks vacíos para las acciones disponibles.
+ */
 @Preview(
     name = "Home - Light",
     showBackground = true,
