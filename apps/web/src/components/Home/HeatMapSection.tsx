@@ -15,22 +15,12 @@ import {
   type MapPoint,
 } from '../../api/map'
 
-function riskWeight(risk: string) {
-  switch (risk) {
-    case 'CRITICO':
-      return 1
-
-    case 'ALTO':
-      return 0.85
-
-    case 'MEDIO':
-      return 0.6
-
-    case 'BAJO':
-      return 0.35
-
-    default:
-      return 0.45
+function priorityWeight(priority: string) {
+  switch (priority) {
+    case 'URGENTE': return 1
+    case 'ALTA': return 0.75
+    case 'MEDIA': return 0.45
+    default: return 0.45
   }
 }
 
@@ -44,6 +34,7 @@ function prettyCode(value: string) {
 function HeatMapSection() {
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<L.Map | null>(null)
+  const currentBoundsRef = useRef<L.LatLngBounds | null>(null)
 
   const heatLayerRef = useRef<L.Layer | null>(null)
   const markersLayerRef = useRef<L.LayerGroup | null>(null)
@@ -52,9 +43,9 @@ function HeatMapSection() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [risk, setRisk] = useState('')
   const [priority, setPriority] = useState('')
   const [status, setStatus] = useState('')
+  const [retryIndex, setRetryIndex] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -65,7 +56,6 @@ function HeatMapSection() {
         setError(null)
 
         const result = await getMapPoints({
-          risk: risk || undefined,
           priority: priority || undefined,
           status: status || undefined,
         })
@@ -75,8 +65,6 @@ function HeatMapSection() {
         }
       } catch (loadError) {
         if (!cancelled) {
-          setPoints([])
-
           setError(
             loadError instanceof Error
               ? loadError.message
@@ -95,7 +83,7 @@ function HeatMapSection() {
     return () => {
       cancelled = true
     }
-  }, [risk, priority, status])
+  }, [priority, status, retryIndex])
 
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) {
@@ -157,6 +145,7 @@ function HeatMapSection() {
     markers.clearLayers()
 
     if (points.length === 0) {
+      currentBoundsRef.current = null
       return
     }
 
@@ -165,7 +154,7 @@ function HeatMapSection() {
         [
           point.lat,
           point.lng,
-          riskWeight(point.risk),
+          priorityWeight(point.priority),
         ] as [number, number, number],
     )
 
@@ -206,11 +195,6 @@ function HeatMapSection() {
           <strong>Reporte ${point.reportId}</strong>
 
           <div>
-            Riesgo:
-            <b>${prettyCode(point.risk)}</b>
-          </div>
-
-          <div>
             Prioridad:
             <b>${prettyCode(point.priority)}</b>
           </div>
@@ -247,6 +231,7 @@ function HeatMapSection() {
       ),
     )
 
+    currentBoundsRef.current = bounds.isValid() ? bounds : null
     if (bounds.isValid()) {
       map.fitBounds(bounds, {
         padding: [45, 45],
@@ -259,40 +244,26 @@ function HeatMapSection() {
     }, 50)
   }, [points])
 
-  const counts = useMemo(() => {
-    const result = {
-      total: points.length,
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
+  const counts = useMemo(() => ({
+    total: points.length,
+    urgent: points.filter(p => p.priority === 'URGENTE').length,
+    high: points.filter(p => p.priority === 'ALTA').length,
+    medium: points.filter(p => p.priority === 'MEDIA').length,
+  }), [points])
+
+  function recenterMap() {
+    const map = mapRef.current
+    if (!map) return
+    const bounds = currentBoundsRef.current
+    if (bounds?.isValid()) {
+      map.fitBounds(bounds, { padding: [45, 45], maxZoom: 16, animate: true })
+    } else {
+      map.flyTo([19.5576, -99.2655], 14)
     }
-
-    for (const point of points) {
-      switch (point.risk) {
-        case 'CRITICO':
-          result.critical += 1
-          break
-
-        case 'ALTO':
-          result.high += 1
-          break
-
-        case 'MEDIO':
-          result.medium += 1
-          break
-
-        case 'BAJO':
-          result.low += 1
-          break
-      }
-    }
-
-    return result
-  }, [points])
+    map.invalidateSize()
+  }
 
   function clearFilters() {
-    setRisk('')
     setPriority('')
     setStatus('')
   }
@@ -305,26 +276,6 @@ function HeatMapSection() {
       </div>
 
       <div className="heatmap-toolbar">
-        <div className="heatmap-filter">
-          <label htmlFor="heatmap-risk">
-            Riesgo
-          </label>
-
-          <select
-            id="heatmap-risk"
-            value={risk}
-            onChange={(event) =>
-              setRisk(event.target.value)
-            }
-          >
-            <option value="">Todos</option>
-            <option value="BAJO">Bajo</option>
-            <option value="MEDIO">Medio</option>
-            <option value="ALTO">Alto</option>
-            <option value="CRITICO">Crítico</option>
-          </select>
-        </div>
-
         <div className="heatmap-filter">
           <label htmlFor="heatmap-priority">
             Prioridad
@@ -384,20 +335,17 @@ function HeatMapSection() {
         </span>
 
         <span>
-          Crítico: <strong>{counts.critical}</strong>
+          Urgente: <strong>{counts.urgent}</strong>
         </span>
 
         <span>
-          Alto: <strong>{counts.high}</strong>
+          Alta: <strong>{counts.high}</strong>
         </span>
 
         <span>
-          Medio: <strong>{counts.medium}</strong>
+          Media: <strong>{counts.medium}</strong>
         </span>
 
-        <span>
-          Bajo: <strong>{counts.low}</strong>
-        </span>
       </div>
 
       <div className="heatmap-map-wrapper">
@@ -405,6 +353,13 @@ function HeatMapSection() {
           ref={mapElementRef}
           className="heatmap-map"
         />
+        {!loading && !error && points.length > 0 && (
+          <button type="button" className="rieti-map-recenter" onClick={recenterMap}
+            aria-label="Centrar mapa en los reportes" title="Centrar mapa en los reportes">
+            <span aria-hidden="true">⌖</span>
+            <span>Centrar</span>
+          </button>
+        )}
 
         {loading && (
           <div className="heatmap-overlay">
@@ -413,8 +368,11 @@ function HeatMapSection() {
         )}
 
         {!loading && error && (
-          <div className="heatmap-overlay heatmap-error">
-            {error}
+          <div className="heatmap-overlay heatmap-error" role="alert">
+            <p>{error}</p>
+            <button type="button" onClick={() => setRetryIndex(index => index + 1)}>
+              Reintentar mapa
+            </button>
           </div>
         )}
 

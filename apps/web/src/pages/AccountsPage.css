@@ -404,3 +404,26 @@
 .accounts-skeleton-short { width: 72%; }
 @keyframes account-skeleton-pulse { to { background-position-x: -200%; } }
 @media (prefers-reduced-motion: reduce) { .accounts-skeleton { animation: none; } }
+
+.accounts-assignment-warning { margin: 14px 0; padding: 12px 14px; border: 1px solid #f6cb80; border-radius: 10px; color: #ffe1a9; background: #292012; line-height: 1.5; }
+.accounts-create-intro { max-width: 660px; margin: 0 0 28px; color:#ddd; line-height:1.6; }
+.accounts-municipality-field { margin: 22px 0; }
+.accounts-municipality-field select { margin-top: 8px; }
+.accounts-municipality-field .accounts-hint {font-size: 13px; }
+.accounts-dialog {max-height: min(90vh, 820px); overflow-y: auto;}
+.accounts-dialog .accounts-error {color: #9e004d; margin: 14px 0;}
+@media (max-width: 600px) { .accounts-dialog { padding: 28px 20px; } .accounts-dialog-actions { flex-wrap:wrap; } }
+
+/* El modal es claro: las ayudas no deben heredar el color pastel de la pantalla oscura. */
+.accounts-dialog .accounts-hint,
+.accounts-dialog .accounts-municipality-field .accounts-hint {
+  color: #264b49;
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.accounts-toolbar { flex-wrap: wrap; gap: 12px 24px; }
+.accounts-toolbar label { display: inline-flex; align-items: center; gap: 6px; }
+
+.accounts-section-name { color: #152f3a; margin: 0; font-size: 1.35rem; }

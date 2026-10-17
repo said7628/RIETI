@@ -163,7 +163,7 @@ function App() {
 
           <Route
             path="/seguimiento"
-            element={<TrackingPage />}
+            element={<TrackingPage key={location.search} />}
           />
 
           <Route

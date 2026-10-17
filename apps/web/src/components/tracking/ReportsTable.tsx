@@ -1,5 +1,5 @@
 import type { Report } from '../../data/shared/reportsData'
-import { formatDate } from '../../data/shared/reportUtils'
+import { formatDate, workTypeLabel } from '../../data/shared/reportUtils'
 import StatusBadge from '../shared/StatusBadge'
 
 interface ReportsTableProps {
@@ -24,6 +24,7 @@ function ReportsTable({ reports, selectedFolio, onSelect }: ReportsTableProps) {
           <th>Folio</th>
           <th>Fecha</th>
           <th>Tipo de trabajo</th>
+          <th>Municipio</th>
           <th>Colonia</th>
           <th>Fase actual</th>
           <th>Prioridad</th>
@@ -44,15 +45,16 @@ function ReportsTable({ reports, selectedFolio, onSelect }: ReportsTableProps) {
           >
             <td>{report.folio}</td>
             <td>{formatDate(report.createdAt)}</td>
-            <td>{report.workType}</td>
-            <td>{report.colonia}</td>
+            <td>{workTypeLabel(report.workType)}</td>
+            <td>{report.municipality || '—'}</td>
+            <td>{report.colonia || 'No especificada'}</td>
             <td>
               <StatusBadge status={report.status} />
             </td>
             <td className={report.priority === 'URGENTE' ? 'priority-urgent' : ''}>
               {report.priority}
             </td>
-            <td>{report.caseHolder ?? '—'}</td>
+            <td>{report.assignedUserInactive ? 'Cuenta desactivada — reasignar' : report.caseHolder ?? '—'}</td>
           </tr>
         ))}
       </tbody>

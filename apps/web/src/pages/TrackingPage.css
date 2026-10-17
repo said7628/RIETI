@@ -586,3 +586,8 @@
 .report-details-modal .report-solution p {
   white-space: pre-wrap;
 }
+
+/* RIETI 11: acciones del reporte uniformes y filtros claros */
+.tracking-clear-filters { border: 1px solid #167a72; border-radius: 8px; background: white; color: #135e59; padding: 9px 14px; cursor: pointer; font-weight: 600; }
+.tracking-clear-filters:disabled { opacity: .45; cursor: default; }
+.tracking-content .button-primary { min-width: 158px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; text-align:center; }

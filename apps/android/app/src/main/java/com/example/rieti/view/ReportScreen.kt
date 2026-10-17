@@ -1217,7 +1217,7 @@ private fun ReportDetailsStep(
             value = if (workType.startsWith("Otro: ")) "Otro" else workType,
             options = listOf(
                 "Venta en semáforos", "Repartiendo volantes", "Venta en mercado",
-                "Trabajador de tortillería", "Trabajo en construcción", "Lavado de autos",
+                "Despachador/trabajador de tortillería", "Trabajo en construcción", "Lavado de autos",
                 "Despachador de gasolina", "Cerillo en supermercado", "Limpiaparabrisas",
                 "Mendicidad forzada o inducida", "Explotación sexual comercial de NNA", "Otro"
             ),

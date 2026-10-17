@@ -72,7 +72,7 @@ export const semaforoLabels: Record<Semaforo, string> = {
 
 /** Transiciones admitidas por la API. Cambiar aquí requiere el mismo cambio en backend. */
 export const statusTransitions: Record<ReportStatus, ReportStatus[]> = {
-  Registrado: ['En revisión', 'Reincidente', 'Cancelado'],
+  Registrado: ['En revisión', 'Cancelado'],
   Reincidente: ['En revisión', 'Cancelado'],
   'En revisión': ['En seguimiento', 'Canalizado', 'Cancelado'],
   'En seguimiento': ['Canalizado', 'Concluido', 'Cancelado'],

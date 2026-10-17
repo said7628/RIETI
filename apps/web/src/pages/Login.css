@@ -740,3 +740,26 @@
 /* El footer no debe tapar el enlace de regresar al inicio de sesión. */
 .login-page .login-content { z-index: 30; }
 .login-page .login-footer { z-index: 20; }
+
+/* Recuperacion: mismo lenguaje visual del login, con espacio para la segunda etapa. */
+.login-page:has(.recovery-form) { min-height: 100dvh; overflow-x: hidden; overflow-y: auto; }
+.login-page:has(.recovery-form) .login-content {
+  min-height: max(650px, calc(100dvh - 100px)); height: auto;
+  padding-top: clamp(35px, 6vh, 70px); padding-bottom: 40px;
+  align-items: center;
+}
+.recovery-form { width:100%; max-width: 440px; padding: 0; }
+.recovery-form .login-title { margin-bottom: 22px; }
+.recovery-form .login-title h1 { font-size: clamp(28px, 3vw, 38px); overflow-wrap: break-word; }
+.recovery-form .form-group { margin-bottom: 20px; }
+.recovery-form .login-message { width:100%; }
+.recovery-form .recovery-description { color: #ffeaf4; text-align: left; font-size: 15px; }
+.recovery-form .form-group label { color: #ffe6f2; }
+.recovery-form .form-group input { max-width:100%; }
+.recovery-form .form-group .login-button { min-height: 50px; margin-top: 14px; font-size: 16px; }
+.recovery-form .login-back-button { margin-top: 16px; }
+@media (max-width: 740px) {
+  .login-page:has(.recovery-form) .login-background { opacity: .45; width:100%; }
+  .login-page:has(.recovery-form) .login-content { width: 100%; min-height: auto; padding: 42px 22px 48px; }
+  .login-page:has(.recovery-form) .login-footer { position: relative; min-height: 80px; }
+}

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   deactivateUser,
+  createUser,
   getUsers,
   updateUser,
   type ApiUser,
@@ -10,6 +11,8 @@ import {
 
 import {
   getRoles,
+  getMunicipalities,
+  type MunicipalityCatalog,
   type RoleCatalog,
 } from '../api/catalogs'
 
@@ -23,7 +26,16 @@ import { semaforoByStatus } from '../data/shared/catalogs'
 
 import './AccountsPage.css'
 
-type AccountsView = 'crear' | 'administrar'
+type AccountsView = 'crear' | 'administrar' | 'ciudadanos'
+
+type AccountRoleFilter = 'todos' | 'administrador' | 'gestor' | 'procurador' | 'ciudadano'
+
+function accountCategory(code: string): Exclude<AccountRoleFilter, 'todos'> {
+  if (code === 'ADMINISTRADOR_FUNDACION') return 'administrador'
+  if (code === 'GESTOR_MUNICIPAL') return 'gestor'
+  if (code === 'PROCURADOR' || code === 'PROCURADOR_PROTECCION') return 'procurador'
+  return 'ciudadano'
+}
 
 type AccountSort =
   | 'nombre-az'
@@ -33,10 +45,8 @@ type AccountSort =
 function AccountsPage() {
   const user = useSessionUser()
 
-  const [, setSearchParams] =
-    useSearchParams()
-
-  const view: AccountsView = 'administrar'
+  const [searchParams, setSearchParams] = useSearchParams()
+  const view: AccountsView = searchParams.get('vista') === 'crear' ? 'crear' : searchParams.get('vista') === 'ciudadanos' ? 'ciudadanos' : 'administrar'
 
   const isAdmin =
     user?.roleCode === 'ADMINISTRADOR_FUNDACION'
@@ -62,9 +72,7 @@ function AccountsPage() {
 
   function openView(nextView: AccountsView) {
     setSearchParams(
-      nextView === 'administrar'
-        ? { vista: 'administrar' }
-        : {},
+      { vista: nextView },
     )
   }
 
@@ -75,7 +83,13 @@ function AccountsPage() {
           className="accounts-side"
           aria-label="Secciones de cuentas"
         >
-
+          <button
+            type="button"
+            className={view === 'crear' ? 'accounts-side-active' : ''}
+            onClick={() => openView('crear')}
+          >
+            Crear cuenta
+          </button>
           <button
             type="button"
             className={
@@ -87,13 +101,19 @@ function AccountsPage() {
               openView('administrar')
             }
           >
-            Administrar
+            Personal autorizado
           </button>
+          <button
+            type="button"
+            className={view === 'ciudadanos' ? 'accounts-side-active' : ''}
+            onClick={() => openView('ciudadanos')}
+          >Ciudadanos</button>
         </nav>
 
-        <ManageAccounts
-            currentUserId={user.id}
-          />
+        {view === 'crear'
+          ? <CreateAccount onCreated={() => openView('administrar')} />
+          : <ManageAccounts key={view} currentUserId={user.id} section={view === 'ciudadanos' ? 'ciudadanos' : 'personal'} />}
+
 
       </div>
     </main>
@@ -101,16 +121,124 @@ function AccountsPage() {
 }
 
 
+
+function CreateAccount({ onCreated }: { onCreated: () => void }) {
+  const [roles, setRoles] = useState<RoleCatalog[]>([])
+  const [municipalities, setMunicipalities] = useState<MunicipalityCatalog[]>([])
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [roleId, setRoleId] = useState('')
+  const [municipalityId, setMunicipalityId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    Promise.all([getRoles(), getMunicipalities()])
+      .then(([rolesResult, municipalityResult]) => {
+        if (!active) return
+        setRoles(rolesResult)
+        setMunicipalities(municipalityResult)
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : 'No se pudieron cargar los catálogos.')
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const selectedRole = roles.find((r) => String(r.id) === roleId)
+  const needsMunicipality = Boolean(selectedRole && !selectedRole.es_administrador && selectedRole.codigo !== 'CIUDADANO')
+
+  async function submit(event: import('react').FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    if (!name.trim() || !email.trim() || !roleId) {
+      setError('Completa el nombre, el correo y el tipo de cuenta.'); return
+    }
+    if (password.length < 10) {
+      setError('La contraseña debe tener al menos 10 caracteres.'); return
+    }
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.'); return
+    }
+    if (needsMunicipality && !municipalityId) {
+      setError('Selecciona el municipio del personal antes de crear la cuenta.'); return
+    }
+    setSaving(true)
+    try {
+      await createUser({
+        name: name.trim(), email: email.trim().toLowerCase(), password,
+        roleId: Number(roleId),
+        municipalityId: needsMunicipality ? Number(municipalityId) : null,
+        phone: phone.trim() || null,
+      })
+      onCreated()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta.')
+    } finally { setSaving(false) }
+  }
+
+  return <section className="accounts-panel">
+    <div className="accounts-title"><h1>Crear cuenta</h1><div className="accounts-title-line" /></div>
+    <p className="accounts-create-intro">Crea cuentas para el personal autorizado. Los ciudadanos se registran desde Android.</p>
+    {loading ? <p role="status">Cargando tipos de cuenta y municipios...</p> :
+      <form className="accounts-form" onSubmit={(e) => void submit(e)}>
+        <label className="accounts-field accounts-field-wide">Nombre completo
+          <input value={name} maxLength={150} required autoComplete="name" onChange={e => setName(e.target.value)} disabled={saving} />
+        </label>
+        <label className="accounts-field accounts-field-wide">Correo electrónico
+          <input type="email" value={email} maxLength={254} required autoComplete="email" onChange={e => setEmail(e.target.value)} disabled={saving} />
+        </label>
+        <label className="accounts-field accounts-field-wide">Teléfono (opcional)
+          <input type="tel" value={phone} maxLength={30} autoComplete="tel" onChange={e => setPhone(e.target.value)} disabled={saving} />
+        </label>
+        <label className="accounts-field accounts-field-wide">Tipo de cuenta
+          <select value={roleId} required onChange={e => {setRoleId(e.target.value); setMunicipalityId('')}} disabled={saving}>
+            <option value="">Selecciona un rol</option>
+            {roles.filter(role => role.codigo !== 'CIUDADANO').map(role => <option key={role.id} value={role.id}>{role.nombre}</option>)}
+          </select>
+        </label>
+        {needsMunicipality && <label className="accounts-field accounts-field-wide">Municipio asignado
+          <select value={municipalityId} required onChange={e => setMunicipalityId(e.target.value)} disabled={saving}>
+            <option value="">Selecciona un municipio</option>
+            {municipalities.map(m => <option key={m.id} value={m.id}>{m.nombre} ({m.clave})</option>)}
+          </select>
+        </label>}
+        <div className="accounts-password-row">
+          <label className="accounts-field">Contraseña temporal (mínimo 10 caracteres)
+            <input type="password" value={password} required minLength={10} maxLength={128} autoComplete="new-password" onChange={e => setPassword(e.target.value)} disabled={saving} />
+          </label>
+          <label className="accounts-field">Confirmar contraseña
+            <input type="password" value={confirmPassword} required minLength={10} maxLength={128} autoComplete="new-password" onChange={e => setConfirmPassword(e.target.value)} disabled={saving} />
+          </label>
+        </div>
+        <p className="accounts-hint">Comparte las credenciales mediante un canal privado y pide al usuario cambiar su contraseña al entrar.</p>
+        {error && <p role="alert" className="accounts-error">{error}</p>}
+        <button type="submit" className="accounts-submit" disabled={saving || roles.length === 0}>
+          {saving ? 'Creando cuenta...' : 'Crear cuenta'}
+        </button>
+      </form>}
+      {!loading && error && roles.length === 0 && <p role="alert" className="accounts-error">{error}</p>}
+  </section>
+}
+
 function countActiveReports(
   reports: Report[],
-  name: string,
+  account: Pick<ApiUser, 'id' | 'name'>,
 ) {
   return reports.filter((report) => {
     const semaforo =
       semaforoByStatus[report.status]
 
     return (
-      report.caseHolder === name &&
+      (report.assignedUserId != null
+        ? report.assignedUserId === account.id
+        : report.caseHolder === account.name) &&
       (semaforo === 'SIN_ATENDER' ||
         semaforo === 'ATENDIENDO')
     )
@@ -119,8 +247,10 @@ function countActiveReports(
 
 function ManageAccounts({
   currentUserId,
+  section,
 }: {
   currentUserId: number
+  section: 'ciudadanos' | 'personal'
 }) {
   const reports = useReports()
 
@@ -129,6 +259,7 @@ function ManageAccounts({
 
   const [roles, setRoles] =
     useState<RoleCatalog[]>([])
+  const [municipalities, setMunicipalities] = useState<MunicipalityCatalog[]>([])
 
   const [loading, setLoading] =
     useState(true)
@@ -138,6 +269,8 @@ function ManageAccounts({
 
   const [sort, setSort] =
     useState<AccountSort>('nombre-az')
+
+  const [roleFilter, setRoleFilter] = useState<AccountRoleFilter>('todos')
 
   const [
     selectedUserId,
@@ -157,14 +290,16 @@ function ManageAccounts({
     setError('')
 
     try {
-      const [usersResult, rolesResult] =
+      const [usersResult, rolesResult, municipalityResult] =
         await Promise.all([
           getUsers(),
           getRoles(),
+          getMunicipalities(),
         ])
 
       setAccounts(usersResult)
       setRoles(rolesResult)
+      setMunicipalities(municipalityResult)
     } catch (err) {
       setError(
         err instanceof Error
@@ -186,14 +321,20 @@ function ManageAccounts({
         account.id === selectedUserId,
     ) ?? null
 
+  const assignedCount = selected
+    ? reports.filter((report) => report.assignedUserId === selected.id).length
+    : 0
+
   const rows = useMemo(() => {
     return accounts
+      .filter((account) => section === 'ciudadanos' ? account.roleCode === 'CIUDADANO' : account.roleCode !== 'CIUDADANO')
+      .filter((account) => roleFilter === 'todos' || accountCategory(account.roleCode) === roleFilter)
       .map((account) => ({
         account,
         activeReports:
           countActiveReports(
             reports,
-            account.name,
+            account,
           ),
       }))
       .sort((a, b) => {
@@ -218,12 +359,23 @@ function ManageAccounts({
           ? -byName
           : byName
       })
-  }, [accounts, reports, sort])
+  }, [accounts, reports, sort, roleFilter, section])
 
   async function changeRole(
     account: ApiUser,
     roleId: number,
   ) {
+    if (account.roleCode === 'CIUDADANO') {
+      setError('Una cuenta ciudadana no puede convertirse en personal. Crea una cuenta independiente de personal.'); return
+    }
+    const targetRole = roles.find((r) => r.id === roleId)
+    if (targetRole?.codigo === 'CIUDADANO' || (targetRole?.codigo === 'ADMINISTRADOR_FUNDACION' && account.roleCode !== 'ADMINISTRADOR_FUNDACION')) {
+      setError('Este cambio de rol no está permitido. Crea una cuenta independiente con permisos autorizados.'); return
+    }
+    if (targetRole && !targetRole.es_administrador && !account.municipalityId) {
+      setError('Primero asigna un municipio a esta cuenta y después cambia su tipo.')
+      return
+    }
     setSaving(true)
     setError('')
 
@@ -244,6 +396,18 @@ function ManageAccounts({
     } finally {
       setSaving(false)
     }
+  }
+
+  async function changeMunicipality(account: ApiUser, municipalityId: number | null) {
+    if (account.roleCode === 'CIUDADANO' || (account.id === currentUserId && account.isAdmin)) return
+    setSaving(true)
+    setError('')
+    try {
+      await updateUser(account.id, { municipalityId })
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible actualizar el municipio.')
+    } finally { setSaving(false) }
   }
 
   async function removeAccount(
@@ -310,6 +474,20 @@ function ManageAccounts({
   return (
     <section className="accounts-panel">
       <div className="accounts-toolbar">
+        <h1 className="accounts-section-name">{section === 'ciudadanos' ? 'Cuentas ciudadanas' : 'Cuentas del personal'}</h1>
+        <label>
+          Filtrar tipo de cuenta:
+          <select aria-label="Filtrar por tipo de cuenta" value={roleFilter}
+            onChange={(event) => setRoleFilter(event.target.value as AccountRoleFilter)}>
+            <option value="todos">Todos los tipos</option>
+            {section === 'personal' && <>
+              <option value="administrador">Administrador</option>
+              <option value="gestor">Gestor</option>
+              <option value="procurador">Procurador</option>
+            </>}
+            {section === 'ciudadanos' && <option value="ciudadano">Ciudadano</option>}
+          </select>
+        </label>
         <label>
           Ordenar por:
 
@@ -472,11 +650,33 @@ function ManageAccounts({
               </strong>{' '}
               {countActiveReports(
                 reports,
-                selected.name,
+                selected,
               )}
             </p>
 
-            <label className="accounts-field">
+            {selected.roleCode !== 'CIUDADANO' && (
+              <label className="accounts-field accounts-municipality-field">
+                Municipio asignado
+                <select
+                  aria-label="Municipio asignado"
+                  value={selected.municipalityId ?? ''}
+                  disabled={saving}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    void changeMunicipality(selected, value ? Number(value) : null)
+                  }}
+                >
+                  <option value="">Sin municipio asignado</option>
+                  {municipalities.map((municipality) => (
+                    <option key={municipality.id} value={municipality.id}>
+                      {municipality.nombre} ({municipality.clave})
+                    </option>
+                  ))}
+                </select>
+                <span className="accounts-hint">Antes de asignarle casos debe tener un municipio. Cambiarlo requiere revisar sus asignaciones existentes.</span>
+              </label>
+            )}
+            {selected.roleCode !== 'CIUDADANO' && <label className="accounts-field">
               Cambiar tipo de cuenta
 
               <select
@@ -497,7 +697,7 @@ function ManageAccounts({
                   )
                 }
               >
-                {roles.map((role) => (
+                {roles.filter(role => role.codigo !== 'CIUDADANO' && (role.codigo !== 'ADMINISTRADOR_FUNDACION' || selected.roleCode === 'ADMINISTRADOR_FUNDACION')).map((role) => (
                   <option
                     key={role.id}
                     value={role.id}
@@ -506,8 +706,14 @@ function ManageAccounts({
                   </option>
                 ))}
               </select>
-            </label>
+            </label>}
 
+            {assignedCount > 0 && selected.active && (
+              <p className="accounts-assignment-warning" role="status">
+                Tiene {assignedCount} reporte(s) asignado(s). Reasigna esos casos antes de desactivar la cuenta.
+              </p>
+            )}
+            {error && <p role="alert" className="accounts-error">{error}</p>}
             <div className="accounts-dialog-actions">
               {selected.active ? (
                 <button
@@ -515,6 +721,7 @@ function ManageAccounts({
                   className="accounts-dialog-secondary"
                   disabled={
                     saving ||
+                    assignedCount > 0 ||
                     selected.id ===
                       currentUserId
                   }
@@ -579,8 +786,8 @@ function ManageAccounts({
             </h2>
 
             <p>
-              El historial y las acciones realizadas
-              por esta cuenta se conservarán.
+              El historial y las acciones realizadas por esta cuenta se conservarán.
+              Solo es posible desactivarla cuando no tenga reportes asignados.
             </p>
 
             <div className="accounts-confirm-actions">

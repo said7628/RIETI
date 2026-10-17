@@ -2,7 +2,7 @@ import type { Report } from '../../data/shared/reportsData'
 import { ReportLocationMap } from '../shared/ReportDetail'
 import ReportAgeBreakdown, { descriptionWithoutAgeHeader } from '../shared/ReportAgeBreakdown'
 import ReportEvidenceGallery from '../shared/ReportEvidenceGallery'
-import { formatDate } from '../../data/shared/reportUtils'
+import { formatDate, workTypeLabel } from '../../data/shared/reportUtils'
 import Modal from '../shared/Modal'
 import StatusBadge from '../shared/StatusBadge'
 
@@ -51,7 +51,7 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
           <p>
             <strong>Tipo de trabajo:</strong>
             <br />
-            {report.workType}
+            {workTypeLabel(report.workType)}
           </p>
 
           <p>
@@ -61,21 +61,27 @@ function ReportDetailsModal({ report, onClose }: ReportDetailsModalProps) {
           </p>
 
           <p>
+            <strong>Municipio:</strong>
+            <br />
+            {report.municipality || 'No especificado'}
+          </p>
+
+          <p>
             <strong>Colonia:</strong>
             <br />
-            {report.colonia}
+            {report.colonia || "No especificada"}
           </p>
 
           <p>
             <strong>Titular del caso:</strong>
             <br />
-            {report.caseHolder ?? 'Sin asignar'}
+            {report.assignedUserInactive ? 'Cuenta desactivada — requiere reasignación' : report.caseHolder ?? 'Sin asignar'}
           </p>
 
           <p>
             <strong>NNA estimados:</strong>
             <br />
-            {report.nnaEstimate}
+            {report.childrenCount ?? report.nnaEstimate}
           </p>
 
           <p>

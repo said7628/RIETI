@@ -256,7 +256,11 @@ export async function refreshReports() {
   const response =
     await apiRequest<ReportsResponse>('/reportes')
 
-  reports = response.reports
+  reports = response.reports.map(report => ({
+    ...report,
+    workType: report.workType === 'Despachador en tortillería'
+      ? 'Trabajador de tortillería' : report.workType,
+  }))
   emit()
 }
 

@@ -141,7 +141,8 @@ class ReportSubmissionService(private val context: Context) {
         val ageIds = mapOf("0-5" to 1, "6-11" to 2, "12-14" to 3, "15-17" to 4)
         val workIds = mapOf(
             "Venta en semáforos" to 1, "Repartiendo volantes" to 2,
-            "Venta en mercado" to 3, "Trabajador de tortillería" to 4,
+            "Venta en mercado" to 3, "Despachador/trabajador de tortillería" to 4,
+            "Trabajador de tortillería" to 4,
             "Trabajo en construcción" to 5, "Lavado de autos" to 6,
             "Despachador de gasolina" to 7, "Cerillo en supermercado" to 8,
             "Limpiaparabrisas" to 9, "Mendicidad forzada o inducida" to 10,
@@ -153,6 +154,9 @@ class ReportSubmissionService(private val context: Context) {
         val ageId = ageIds[mainAge] ?: error("Selecciona un rango de edad válido")
         // La API acepta el nombre de catalogo como alternativa al ID numerico.
         // Si aun no existe 'Otro' como categoria, la API respondera un error de catalogo.
+        require(!state.workType.startsWith("Otro:") || state.workType.removePrefix("Otro:").isNotBlank()) {
+            "Especifica el tipo de trabajo cuando seleccionas Otro"
+        }
         val workValue: Any = if (state.workType.startsWith("Otro: ")) "Otro"
             else workIds[state.workType] ?: error("Selecciona una actividad válida")
         val ageDescription = "Edades aproximadas observadas: ${AgeBreakdown.display(state.childrenAges, state.numberOfChildren.toIntOrNull() ?: 0)}"

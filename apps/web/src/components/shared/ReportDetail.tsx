@@ -1,3 +1,4 @@
+import { workTypeLabel } from '../../data/shared/reportUtils'
 import {
   useEffect,
   useRef,
@@ -104,10 +105,21 @@ export function ReportLocationMap({
   }
 
   return (
-    <div
-      ref={elementRef}
-      className="report-location-map"
-    />
+    <div className="report-map-frame">
+      <div ref={elementRef} className="report-location-map" />
+      <button type="button" className="rieti-map-recenter"
+        aria-label="Centrar mapa en la ubicación del reporte"
+        title="Centrar mapa en la ubicación del reporte"
+        onClick={() => {
+          const map = mapRef.current
+          if (map) {
+            map.flyTo([latitude, longitude], 16)
+            map.invalidateSize()
+          }
+        }}>
+        <span aria-hidden="true">⌖</span><span>Centrar</span>
+      </button>
+    </div>
   )
 }
 
@@ -199,9 +211,19 @@ function ReportDetail({
 
         <div className="report-information-grid">
           <p>
+            <strong>Municipio:</strong>
+            <br />
+            {report.municipality || 'No especificado'}
+          </p>
+          <p>
+            <strong>Colonia:</strong>
+            <br />
+            {report.colonia || 'No especificada'}
+          </p>
+          <p>
             <strong>NNA estimados:</strong>
             <br />
-            {report.nnaEstimate}
+            {report.childrenCount ?? report.nnaEstimate}
           </p>
 
           <p>
@@ -213,7 +235,7 @@ function ReportDetail({
           <p>
             <strong>Tipo de trabajo:</strong>
             <br />
-            {report.workType}
+            {workTypeLabel(report.workType)}
           </p>
 
           <p>
@@ -225,7 +247,7 @@ function ReportDetail({
 
         <p className="case-holder">
           <strong>Titular del caso:</strong>{' '}
-          {report.caseHolder ?? 'Sin asignar'}
+          {report.assignedUserInactive ? 'Cuenta desactivada — requiere reasignación' : report.caseHolder ?? 'Sin asignar'}
         </p>
 
         <div className="report-description">

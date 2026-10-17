@@ -30,7 +30,6 @@ const STATUS_NAME_TO_CODE = new Map([
 const ALLOWED_STATUS_TRANSITIONS = new Map([
   ["REGISTRADO", new Set([
     "EN_REVISION",
-    "REINCIDENTE",
     "CANCELADO",
   ])],
 
@@ -159,6 +158,8 @@ async function login(req){
   const [rows]=await pool.execute(`SELECT u.*,r.codigo rol_codigo,r.nombre rol_nombre,r.acceso_web,r.acceso_android,r.es_administrador
     FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE LOWER(u.correo)=? LIMIT 1`,[email]);
   const user=rows[0];
+  if(user && String(req.body.platform||'web').toLowerCase()==='android' && user.rol_codigo!=='CIUDADANO')
+    throw httpError(403,'CITIZEN_ROLE_REQUIRED','La aplicación ciudadana no admite perfiles administrativos');
   if(!user||!user.activo||!(String(req.body.platform||"web").toLowerCase()==="android"?user.acceso_android:user.acceso_web)) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseña incorrectos");
   if(!(await bcrypt.compare(password,user.password_hash))) throw httpError(401,"INVALID_CREDENTIALS","Correo o contraseña incorrectos");
   await pool.execute(`UPDATE usuarios SET ultimo_acceso_at=UTC_TIMESTAMP(6),updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[user.id]);
@@ -218,6 +219,12 @@ async function mobileDeactivateAccount(req){
   const c=await pool.getConnection();
   try{
     await c.beginTransaction();
+    await c.execute("SELECT id FROM usuarios WHERE id=? FOR UPDATE",[u.id]);
+    const [assignedMobile8]=await c.execute(
+      "SELECT id FROM reportes WHERE asignado_usuario_id=? LIMIT 1",[u.id]);
+    if(assignedMobile8.length)
+      throw httpError(409,"USER_HAS_ASSIGNED_REPORTS",
+        "Esta cuenta tiene reportes asignados. Reasignalos antes de desactivarla");
     await c.execute("UPDATE usuarios SET activo=0,updated_at=UTC_TIMESTAMP(6) WHERE id=?",[u.id]);
     await c.execute("UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL",[u.id]);
     await c.commit();
@@ -258,6 +265,22 @@ async function listUsers(req){
   await requireUser(req,{web:true,admin:true});
   const [rows]=await pool.query(`SELECT u.id,u.uuid,u.nombre,u.correo,u.telefono,u.activo,u.municipio_id,u.dependencia_id,
     r.codigo rol_codigo,r.nombre rol_nombre,r.es_administrador FROM usuarios u JOIN roles r ON r.id=u.rol_id ORDER BY u.nombre`);
+  return response(200,{ok:true,users:rows.map(publicUser)});
+}
+async function listAssignableUsers(req){
+  const actor=await requireUser(req,{web:true});
+  requirePermission(actor,"REPORT_ASSIGN");
+  const params=[];
+  let scope="";
+  if(!actor.es_administrador){
+    if(!actor.municipio_id) throw httpError(403,"MUNICIPALITY_REQUIRED","Tu cuenta necesita un municipio asignado");
+    scope=" AND (u.municipio_id=? OR r.es_administrador=1)";
+    params.push(actor.municipio_id);
+  }
+  const [rows]=await pool.execute(`SELECT u.id,u.uuid,u.nombre,u.correo,u.telefono,u.activo,u.municipio_id,u.dependencia_id,
+    r.codigo rol_codigo,r.nombre rol_nombre,r.es_administrador FROM usuarios u JOIN roles r ON r.id=u.rol_id
+    WHERE u.activo=1 AND r.acceso_web=1 AND r.codigo IN ('ADMINISTRADOR_FUNDACION','GESTOR_MUNICIPAL','PROCURADOR','PROCURADOR_PROTECCION')
+      AND (r.es_administrador=1 OR u.municipio_id IS NOT NULL) ${scope} ORDER BY u.nombre`,params);
   return response(200,{ok:true,users:rows.map(publicUser)});
 }
 /**
@@ -307,47 +330,194 @@ async function createUser(req){
   await requireUser(req,{web:true,admin:true});
   const {name,email,password,roleId,municipalityId=null,dependencyId=null,phone=null}=req.body;
   if(!name||!email||!password||!roleId) throw httpError(400,"INVALID_INPUT","Faltan datos obligatorios");
+  const [targetRoles]=await pool.execute('SELECT codigo,es_administrador,activo FROM roles WHERE id=? LIMIT 1',[roleId]);
+  if(!targetRoles.length || !targetRoles[0].activo || targetRoles[0].codigo==='CIUDADANO')
+    throw httpError(403,'STAFF_ACCOUNT_ONLY','Desde el panel solo se crean cuentas de personal');
+  if(!targetRoles[0].es_administrador && !municipalityId)
+    throw httpError(400,'MUNICIPALITY_REQUIRED','El personal necesita municipio asignado');
   if(String(password).length<10) throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");
+  const [roles]=await pool.execute("SELECT id,codigo,es_administrador,acceso_web,activo FROM roles WHERE id=? LIMIT 1",[roleId]);
+  const role=roles[0];
+  if(!role||!role.activo) throw httpError(400,"ROLE_INVALID","El tipo de cuenta seleccionado no está disponible");
+  if(role.acceso_web&&!role.es_administrador&&!municipalityId) throw httpError(400,"MUNICIPALITY_REQUIRED","Selecciona el municipio para este perfil");
+  const finalMunicipality=role.es_administrador?null:municipalityId;
+  const finalDependency=role.es_administrador?null:dependencyId;
   try{
     await pool.execute(`INSERT INTO usuarios(uuid,rol_id,municipio_id,dependencia_id,nombre,correo,telefono,password_hash,activo,created_at,updated_at)
       VALUES(?,?,?,?,?,?,?,?,1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))`,
-      [crypto.randomUUID(),roleId,municipalityId,dependencyId,String(name).trim(),String(email).trim().toLowerCase(),phone,await bcrypt.hash(String(password),12)]);
-  }catch(e){ if(e.code==="ER_DUP_ENTRY") throw httpError(409,"EMAIL_EXISTS","Ese correo ya está registrado"); throw e; }
+      [crypto.randomUUID(),roleId,finalMunicipality,finalDependency,String(name).trim(),String(email).trim().toLowerCase(),phone,await bcrypt.hash(String(password),12)]);
+  }catch(e){if(e.code==="ER_DUP_ENTRY")throw httpError(409,"EMAIL_EXISTS","Ese correo ya está registrado");throw e;}
   return response(201,{ok:true});
 }
 async function updateUser(req,id){
-  await requireUser(req,{web:true,admin:true});
+  const actor=await requireUser(req,{web:true,admin:true});
+  const targetId=Number(id);
+  if(!Number.isSafeInteger(targetId)||targetId<1) throw httpError(400,"INVALID_USER","Cuenta inválida");
+  const has=Object.hasOwn(req.body,"roleId");
+  if(Number(actor.id)===targetId && (has||req.body.active===false)){
+    throw httpError(400,"SELF_ROLE_CHANGE","No puedes cambiar tus propios privilegios ni desactivar tu cuenta");
+  }
+  if(Object.hasOwn(req.body,"active") && typeof req.body.active!=="boolean"){
+    throw httpError(400,"INVALID_ACTIVE","El estado activo debe ser booleano");
+  }
+  if(req.body.active===false){
+    if(Object.keys(req.body).some(k=>k!=="active")){
+      throw httpError(400,"DEACTIVATE_SEPARATELY",
+        "Desactiva la cuenta por separado de otros cambios");
+    }
+    return deactivateUser(req,id);
+  }
+  const c=await pool.getConnection();
+  try{
+    await c.beginTransaction();
+    if(Object.hasOwn(req.body,"municipalityId")){
+      const municipalityNext8=req.body.municipalityId;
+      if(municipalityNext8!==null &&
+         (!Number.isSafeInteger(Number(municipalityNext8)) || Number(municipalityNext8)<=0)){
+        throw httpError(400,"INVALID_MUNICIPALITY","Municipio invalido");
+      }
+      const [municipalityTarget8]=await c.execute(
+        "SELECT id FROM usuarios WHERE id=? FOR UPDATE",[targetId]);
+      if(!municipalityTarget8.length)
+        throw httpError(404,"USER_NOT_FOUND","La cuenta no existe");
+      if(municipalityNext8!==null){
+        const [municipalityValid8]=await c.execute(
+          "SELECT id FROM municipios WHERE id=? LIMIT 1",[Number(municipalityNext8)]);
+        if(!municipalityValid8.length)
+          throw httpError(400,"INVALID_MUNICIPALITY","El municipio no existe");
+      }
+      const [municipalityConflicts8]=await c.execute(
+        "SELECT id FROM reportes WHERE asignado_usuario_id=? AND (? IS NULL OR municipio_id<>?) LIMIT 1",
+        [targetId,municipalityNext8,municipalityNext8]
+      );
+      if(municipalityConflicts8.length)
+        throw httpError(409,"MUNICIPALITY_HAS_REPORTS",
+          "Reasigna los reportes incompatibles antes de cambiar el municipio");
+    }
+    const [users]=await c.execute("SELECT id,rol_id,municipio_id,dependencia_id,activo FROM usuarios WHERE id=? FOR UPDATE",[targetId]);
+    const target=users[0];
+    if(!target)throw httpError(404,"USER_NOT_FOUND","La cuenta no existe");
+    let newRole=null;
+    if(has){
+      const [roles]=await c.execute("SELECT id,codigo,es_administrador,acceso_web,activo FROM roles WHERE id=? LIMIT 1",[req.body.roleId]);
+      newRole=roles[0];
+      if(!newRole||!newRole.activo)throw httpError(400,"ROLE_INVALID","El tipo de cuenta no está disponible");
+      const newMunicipality=Object.hasOwn(req.body,"municipalityId")?req.body.municipalityId:target.municipio_id;
+      if(newRole.acceso_web&&!newRole.es_administrador&&!newMunicipality){
+        throw httpError(400,"MUNICIPALITY_REQUIRED","Selecciona un municipio antes de guardar el nuevo rol");
+      }
+      const [assigned]=await c.execute("SELECT municipio_id FROM reportes WHERE asignado_usuario_id=? AND cerrado_at IS NULL LIMIT 100",[targetId]);
+      if(assigned.length&&(!newRole.acceso_web || (!newRole.es_administrador&&assigned.some(x=>Number(x.municipio_id)!==Number(newMunicipality))))){
+        throw httpError(409,"REPORTS_ASSIGNED","La cuenta tiene reportes activos asignados. Reasígnalos antes de cambiar a un rol sin acceso o a otro municipio");
+      }
+      if(newRole.es_administrador===0){
+        const [currentRole]=await c.execute("SELECT es_administrador FROM roles WHERE id=?",[target.rol_id]);
+        if(currentRole[0]?.es_administrador){
+          const [otherAdmins]=await c.execute(`SELECT COUNT(*) total FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE u.activo=1 AND r.es_administrador=1 AND u.id<>?`,[targetId]);
+          if(!Number(otherAdmins[0].total)) throw httpError(409,"LAST_ADMIN","No puedes quitar el último administrador activo");
+        }
+      }
+    }
+    if(!has && Object.hasOwn(req.body,"municipalityId")){
+      const [currentRoles]=await c.execute("SELECT codigo,es_administrador,acceso_web FROM roles WHERE id=? LIMIT 1",[target.rol_id]);
+      const currentRole=currentRoles[0];
+      const municipality=req.body.municipalityId;
+      if(currentRole?.acceso_web && !currentRole.es_administrador && !municipality){
+        throw httpError(400,"MUNICIPALITY_REQUIRED","Este perfil necesita un municipio asignado");
+      }
+      if(!currentRole?.es_administrador){
+        const [activeReports]=await c.execute("SELECT municipio_id FROM reportes WHERE asignado_usuario_id=? AND cerrado_at IS NULL LIMIT 100",[targetId]);
+        if(activeReports.some(r=>Number(r.municipio_id)!==Number(municipality))){
+          throw httpError(409,"REPORTS_ASSIGNED","Reasigna los reportes activos antes de cambiar de municipio");
+        }
+      }
+    }
+    // El UPDATE de usuario ya trabaja en transaccion: leer y bloquear la misma fila.
+  const [currentRows]=await c.execute(
+    `SELECT u.id,u.rol_id,r.codigo AS role_code
+     FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE u.id=? LIMIT 1 FOR UPDATE`,[targetId]);
+  if(!currentRows.length)throw httpError(404,'USER_NOT_FOUND','Cuenta no encontrada');
+  const currentRole=currentRows[0].role_code;
+  if(Object.hasOwn(req.body,'municipalityId') && currentRole==='CIUDADANO'){
+    throw httpError(403,'CITIZEN_MUNICIPALITY_FORBIDDEN','Un ciudadano no puede tener municipio administrativo');
+  }
+  if(Object.hasOwn(req.body,'roleId')){
+    if(!Number.isSafeInteger(Number(req.body.roleId)) || Number(req.body.roleId)<1)
+      throw httpError(400,'INVALID_ROLE','Rol no valido');
+    const [nextRoles]=await pool.execute('SELECT codigo,activo FROM roles WHERE id=? LIMIT 1',[Number(req.body.roleId)]);
+    if(!nextRoles.length || !nextRoles[0].activo)
+      throw httpError(400,'INVALID_ROLE','Rol inexistente o inactivo');
+    const nextRole=nextRoles[0].codigo;
+    if((currentRole==='CIUDADANO') !== (nextRole==='CIUDADANO'))
+      throw httpError(403,'ROLE_BOUNDARY_FORBIDDEN',
+        'Las cuentas ciudadanas y de personal son independientes; no se convierten entre sí');
+    if((currentRole==='ADMINISTRADOR_FUNDACION') !== (nextRole==='ADMINISTRADOR_FUNDACION'))
+      throw httpError(403,'ADMIN_ROLE_CHANGE_FORBIDDEN',
+        'No se permite elevar o degradar privilegios de administrador mediante edicion de cuentas');
+    if(nextRole==='CIUDADANO' && Object.hasOwn(req.body,'municipalityId') && req.body.municipalityId!==null)
+      throw httpError(403,'CITIZEN_MUNICIPALITY_FORBIDDEN','El ciudadano no admite municipio');
+  }
   const allowed={name:"nombre",roleId:"rol_id",municipalityId:"municipio_id",dependencyId:"dependencia_id",phone:"telefono",active:"activo"};
-  const sets=[],params=[];
-  for(const [k,c] of Object.entries(allowed)) if(Object.hasOwn(req.body,k)){sets.push(`${c}=?`);params.push(req.body[k]);}
-  if(req.body.password){if(String(req.body.password).length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");sets.push("password_hash=?");params.push(await bcrypt.hash(String(req.body.password),12));}
-  if(!sets.length) throw httpError(400,"NO_CHANGES","No hay cambios");
-  sets.push("updated_at=UTC_TIMESTAMP(6)");params.push(id);
-  await pool.execute(`UPDATE usuarios SET ${sets.join(",")} WHERE id=?`,params);
-  return response(200,{ok:true});
+    const sets=[],params=[];
+    for(const [k,col] of Object.entries(allowed))if(Object.hasOwn(req.body,k)){
+      if(newRole?.es_administrador && (k==="municipalityId"||k==="dependencyId")) continue;
+      sets.push(`${col}=?`);params.push(req.body[k]);
+    }
+    if(newRole?.es_administrador){sets.push("municipio_id=NULL","dependencia_id=NULL");}
+    if(req.body.password){
+      if(String(req.body.password).length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");
+      sets.push("password_hash=?");params.push(await bcrypt.hash(String(req.body.password),12));
+    }
+    if(!sets.length)throw httpError(400,"NO_CHANGES","No hay cambios");
+    sets.push("updated_at=UTC_TIMESTAMP(6)");params.push(targetId);
+    await c.execute(`UPDATE usuarios SET ${sets.join(',')} WHERE id=?`,params);
+    if(req.body.active===false||req.body.password){
+      await c.execute("UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL",[targetId]);
+    }
+    // Revocar tokens de renovacion dentro de la misma transaccion del cambio de rol.
+    // Los tokens de acceso se autorizan con el rol vigente en cada peticion.
+    if(Object.hasOwn(req.body,'roleId') && Number(req.body.roleId)!==Number(currentRows[0].rol_id)){
+      await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6)
+        WHERE usuario_id=? AND revocada_at IS NULL`,[targetId]);
+    }
+    await c.commit();
+    return response(200,{ok:true});
+  }catch(e){await c.rollback();throw e;}finally{c.release();}
 }
 async function deactivateUser(req,id){
   const actor=await requireUser(req,{web:true,admin:true});
   if(Number(actor.id)===Number(id)) throw httpError(400,"SELF_DEACTIVATE","No puedes desactivar tu propia cuenta");
-  await pool.execute(`UPDATE usuarios SET activo=0,updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[id]);
+  const [deactivation8]=await pool.execute(
+    `UPDATE usuarios u SET activo=0,updated_at=UTC_TIMESTAMP(6)
+     WHERE u.id=? AND NOT EXISTS(
+       SELECT 1 FROM reportes r WHERE r.asignado_usuario_id=u.id
+     )`,[id]);
+  if(deactivation8.affectedRows!==1){
+    const [assigned8]=await pool.execute(
+      "SELECT id FROM reportes WHERE asignado_usuario_id=? LIMIT 1",[id]);
+    if(assigned8.length)
+      throw httpError(409,"USER_HAS_ASSIGNED_REPORTS",
+        "Esta cuenta tiene reportes asignados. Reasignalos antes de desactivarla");
+    throw httpError(404,"USER_NOT_FOUND","La cuenta no existe o ya esta desactivada");
+  }
   await pool.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[id]);
   return response(200,{ok:true});
 }
 
-const REPORT_SELECT=`SELECT r.id,r.uuid,r.folio,r.municipio_id,r.colonia_id,r.modalidad,r.origen,r.estimacion_nna,
+const REPORT_SELECT=`SELECT r.id,r.uuid,r.folio,r.municipio_id,r.colonia_id,r.modalidad,r.origen,r.estimacion_nna,r.cantidad_nna,
  r.descripcion,r.latitud,r.longitud,r.ubicacion_origen,r.fecha_hora_observacion_utc,r.estatus_id,r.prioridad_id,
  r.asignado_usuario_id,r.asignado_dependencia_id,r.descripcion_solucion,r.cerrado_at,r.created_at,r.updated_at,
  r.direccion_referencia,r.codigo_postal,r.horario_observado,m.nombre municipio,c.nombre colonia,t.nombre work_type,
  nr.nombre nivel_riesgo,re.nombre age_range,eo.nombre status,eo.codigo status_code,p.nombre priority,p.codigo priority_code,
- au.nombre case_holder FROM reportes r JOIN municipios m ON m.id=r.municipio_id LEFT JOIN colonias c ON c.id=r.colonia_id
+ CASE WHEN au.activo=1 THEN au.nombre ELSE NULL END case_holder, CASE WHEN au.id IS NOT NULL AND au.activo=0 THEN 1 ELSE 0 END assigned_user_inactive, ad.nombre assigned_dependency FROM reportes r JOIN municipios m ON m.id=r.municipio_id LEFT JOIN colonias c ON c.id=r.colonia_id
  JOIN tipos_trabajo_infantil t ON t.id=r.tipo_trabajo_id JOIN niveles_riesgo nr ON nr.id=r.nivel_riesgo_id
  JOIN rangos_edad re ON re.id=r.rango_edad_id JOIN estatus_operacionales eo ON eo.id=r.estatus_id
- JOIN prioridades p ON p.id=r.prioridad_id LEFT JOIN usuarios au ON au.id=r.asignado_usuario_id`;
+ JOIN prioridades p ON p.id=r.prioridad_id LEFT JOIN usuarios au ON au.id=r.asignado_usuario_id LEFT JOIN dependencias ad ON ad.id=r.asignado_dependencia_id`;
 function mapReport(r){return{
   id:Number(r.id),uuid:r.uuid,folio:r.folio,createdAt:r.created_at,updatedAt:r.updated_at,workType:r.work_type,
-  colonia:r.colonia||r.municipio,municipality:r.municipio,address:[r.direccion_referencia,r.colonia,r.municipio,r.codigo_postal].filter(Boolean).join(", "),
-  postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,
-  nnaEstimate:r.estimacion_nna==="5_MAS"?"5+":r.estimacion_nna,ageRange:r.age_range,schedule:r.horario_observado||"—",description:r.descripcion,solution:r.descripcion_solucion||null,
+  colonia:r.colonia||null,municipality:r.municipio,address:[r.direccion_referencia,r.colonia,r.municipio,r.codigo_postal].filter(Boolean).join(", "),
+  postalCode:r.codigo_postal,status:r.status,statusCode:r.status_code,priority:r.priority_code||r.priority,caseHolder:r.case_holder||null,assignedUserId:r.asignado_usuario_id==null?null:Number(r.asignado_usuario_id),assignedUserInactive:Boolean(Number(r.assigned_user_inactive||0)),municipalityId:Number(r.municipio_id),assignedDependency:r.assigned_dependency||null,
+  nnaEstimate:r.estimacion_nna==="5_MAS"?"5+":r.estimacion_nna,childrenCount:r.cantidad_nna==null?null:Number(r.cantidad_nna),ageRange:r.age_range,schedule:r.horario_observado||"—",description:r.descripcion,solution:r.descripcion_solucion||null,
   latitude:Number(r.latitud),longitude:Number(r.longitud),risk:r.nivel_riesgo,modality:r.modalidad,origin:r.origen
 };}
 async function writeAudit(conn,{
@@ -441,8 +611,30 @@ function requirePermission(user,permission){
   }
 }
 
-function reportAccess(user,alias="r"){if(user.es_administrador)return{sql:"",params:[]};if(!user.municipio_id)throw httpError(403,"MUNICIPALITY_REQUIRED","El usuario no tiene municipio asignado");return{sql:` AND ${alias}.municipio_id=?`,params:[user.municipio_id]};}
+function reportAccess(user,alias="r"){if(user.es_administrador)return{sql:"",params:[]};if(!user.municipio_id){
+  if(alias!=="r")throw httpError(403,"MUNICIPALITY_REQUIRED","El usuario no tiene municipio asignado");
+  return {sql:` AND ${alias}.asignado_usuario_id=?`,params:[user.id]};
+ }return{sql:` AND ${alias}.municipio_id=?`,params:[user.municipio_id]};}
 // Seguimiento ciudadano: no devuelve ubicacion, fotos ni datos personales.
+/** Lista unicamente los reportes no anonimos creados por la cuenta autenticada. */
+async function listMyMobileReports(req){
+  const user = await requireUser(req);
+  if(!user.acceso_android && !user.acceso_web){
+    throw httpError(403,"ANDROID_ACCESS_DENIED","Sin acceso a seguimiento");
+  }
+  const [rows] = await pool.execute(`SELECT r.folio,r.created_at,r.updated_at,
+      m.nombre municipio,eo.codigo estatus_codigo
+    FROM reportes r
+    JOIN municipios m ON m.id=r.municipio_id
+    JOIN estatus_operacionales eo ON eo.id=r.estatus_id
+    WHERE r.creador_usuario_id=? AND r.modalidad='SEGUIMIENTO' AND r.origen='ANDROID'
+    ORDER BY r.created_at DESC LIMIT 1000`,[user.id]);
+  return response(200,{ok:true,reports:rows.map(r=>({
+    folio:r.folio,statusCode:r.estatus_codigo,municipality:r.municipio,
+    registeredAt:r.created_at,updatedAt:r.updated_at
+  }))});
+}
+
 async function mobileTracking(req,folio){
   const user=await requireUser(req);
   if(!user.acceso_android && !user.acceso_web) throw httpError(403,"ANDROID_ACCESS_DENIED","Sin acceso a seguimiento");
@@ -471,11 +663,74 @@ async function listReports(req){const u=await requireUser(req,{web:true});requir
 async function getReport(req,key){const u=await requireUser(req,{web:true});requirePermission(u,"REPORT_VIEW");const a=reportAccess(u);const[rows]=await pool.execute(`${REPORT_SELECT} WHERE (r.id=? OR r.folio=?) ${a.sql} LIMIT 1`,[key,key,...a.params]);if(!rows[0])throw httpError(404,"REPORT_NOT_FOUND","Reporte no encontrado");const[notes]=await pool.execute(`SELECT n.id,n.nota,n.created_at,u.nombre author FROM reporte_notas n JOIN usuarios u ON u.id=n.autor_usuario_id WHERE n.reporte_id=? ORDER BY n.created_at`,[rows[0].id]);return response(200,{ok:true,report:mapReport(rows[0]),notes});}
 async function lookupId(table,value,field="nombre"){if(value==null||value==="")return null;if(/^\d+$/.test(String(value)))return Number(value);const[rows]=await pool.execute(`SELECT id FROM ${table} WHERE LOWER(${field})=LOWER(?) LIMIT 1`,[String(value).trim()]);return rows[0]?.id??null;}
 
+
+/** Catalogo territorial: IDs verificados y nuevas colonias vinculadas a su municipio. */
+async function resolveColonyForReport(municipalityId,colonyId,neighborhood){
+  if(!municipalityId) return null;
+  if(colonyId!==undefined && colonyId!==null && String(colonyId).trim()!==''){
+    if(!/^\d+$/.test(String(colonyId)))throw httpError(400,'INVALID_COLONY','Colonia invalida');
+    const [match]=await pool.execute('SELECT id FROM colonias WHERE id=? AND municipio_id=? LIMIT 1',[Number(colonyId),municipalityId]);
+    if(!match.length)throw httpError(400,'INVALID_COLONY','La colonia no pertenece al municipio seleccionado');
+    return match[0].id;
+  }
+  const name=String(neighborhood??'').trim().replace(/\s+/g,' ');
+  if(!name)return null;
+  if(name.length>140)throw httpError(400,'INVALID_COLONY','La colonia excede 140 caracteres');
+  const [municipios]=await pool.execute('SELECT nombre FROM municipios WHERE id=? LIMIT 1',[municipalityId]);
+  if(!municipios.length)throw httpError(400,'INVALID_MUNICIPALITY','Municipio invalido');
+  if(municipios[0].nombre.trim().toLocaleLowerCase('es')===name.toLocaleLowerCase('es')){
+    // No convertir un municipio en colonia por error de autocompletado.
+    return null;
+  }
+  const [existing]=await pool.execute(
+    'SELECT id FROM colonias WHERE municipio_id=? AND LOWER(TRIM(nombre))=LOWER(?) LIMIT 1',
+    [municipalityId,name]);
+  if(existing.length)return existing[0].id;
+  try{
+    const [insert]=await pool.execute('INSERT INTO colonias(municipio_id,nombre,activo) VALUES(?,?,0)',[municipalityId,name]);
+    return insert.insertId;
+  }catch(e){
+    if(e.code!=='ER_DUP_ENTRY')throw e;
+    const [retry]=await pool.execute(
+      'SELECT id FROM colonias WHERE municipio_id=? AND LOWER(TRIM(nombre))=LOWER(?) LIMIT 1',
+      [municipalityId,name]);
+    if(retry.length)return retry[0].id;
+    throw e;
+  }
+}
+
+/** Cantidad exacta: nunca suponer que 5+ significa cinco, pues podria significar diez. */
+function parseChildrenCount(value){
+  const raw=String(value??'').trim();
+  if(!/^[1-9][0-9]{0,2}$/.test(raw)){
+    throw httpError(400,'INVALID_CHILDREN_COUNT','Indica la cantidad exacta de menores (1 a 999), no 5+');
+  }
+  return Number(raw);
+}
+
+/** Prioridad final = maxima prioridad de actividad y cantidad. */
+async function classifyInitialReport(workId,rawChildren){
+  const n=parseChildrenCount(rawChildren);
+  const [rows]=await pool.execute('SELECT codigo FROM tipos_trabajo_infantil WHERE id=? AND activo=1 LIMIT 1',[workId]);
+  if(!rows.length)throw httpError(400,'INVALID_WORK_TYPE','Actividad no valida o inactiva');
+  const code=String(rows[0].codigo).trim().toUpperCase();
+  const urgent=new Set(['EXPLOTACION_SEXUAL']);
+  const high=new Set(['VENTA_SEMAFOROS','TORTILLERIA','CONSTRUCCION','GASOLINERA','LIMPIAPARABRISAS','MENDICIDAD']);
+  const medium=new Set(['REPARTO_VOLANTES','VENTA_MERCADO','LAVADO_AUTOS','CERILLO','OTRO']);
+  if(!urgent.has(code)&&!high.has(code)&&!medium.has(code)){
+    throw httpError(400,'WORK_TYPE_NOT_CLASSIFIED','El tipo de trabajo requiere una prioridad aprobada');
+  }
+  const workLevel=urgent.has(code)?2:high.has(code)?1:0;
+  const quantityLevel=n>=10?2:n>=5?1:0;
+  const level=Math.max(workLevel,quantityLevel);
+  return {priority:['MEDIA','ALTA','URGENTE'][level],risk:code==='EXPLOTACION_SEXUAL'?'CRITICO':level>=1?'ALTO':'MEDIO',count:n};
+}
+
 async function createReport(req){
   const u=await requireUser(req,{web:true}),b=req.body;
   requirePermission(u,"REPORT_CREATE");
   const municipalityId=u.es_administrador?await lookupId("municipios",b.municipalityId??b.municipality):u.municipio_id;
-  const colonyId=await lookupId("colonias",b.colonyId??b.neighborhood);
+  const colonyId=await resolveColonyForReport(municipalityId,b.colonyId,b.neighborhood);
   let ageValue=b.ageRangeId??b.ageRange;
   if(!ageValue && b.ages!==undefined){
     const age=Number.parseInt(String(b.ages),10);
@@ -483,13 +738,14 @@ async function createReport(req){
   }
   const ageId=await resolveMobileCatalog("rangos_edad",ageValue);
   const workId=await resolveMobileCatalog("tipos_trabajo_infantil",b.workTypeId??b.workType);
-  let riskId=await resolveMobileCatalog("niveles_riesgo",b.riskId??b.risk);
-  if(!riskId) riskId=await lookupId("niveles_riesgo","MEDIO","codigo") || await lookupId("niveles_riesgo","Medio");
+  const triage=await classifyInitialReport(workId,b.children??b.nnaEstimate);
+  const riskId=await lookupId("niveles_riesgo",triage.risk,"codigo");
   const[st]=await pool.query(`SELECT id FROM estatus_operacionales WHERE codigo='REGISTRADO' OR LOWER(nombre)='registrado' ORDER BY id LIMIT 1`);
-  const[pr]=await pool.query(`SELECT id FROM prioridades WHERE codigo='MEDIA' OR LOWER(nombre)='media' ORDER BY id LIMIT 1`);
+  const[pr]=await pool.execute('SELECT id FROM prioridades WHERE codigo=? LIMIT 1',[triage.priority]);
   if(!municipalityId||!ageId||!workId||!riskId||!st[0]||!pr[0]) throw httpError(400,"CATALOG_VALUE_MISSING","No se pudieron resolver catálogos requeridos");
   const lat=Number(b.latitude),lon=Number(b.longitude); if(!Number.isFinite(lat)||!Number.isFinite(lon))throw httpError(400,"LOCATION_REQUIRED","Latitud y longitud son obligatorias");
-  const raw=String(b.children||b.nnaEstimate||"1"), nna=Number(raw)>=5?"5_MAS":(["1","2","3","4"].includes(raw)?raw:"1");
+  const childCount=triage.count;
+  const nna=childCount>=5?"5_MAS":String(childCount);
   const conn=await pool.getConnection();
   try{
     await conn.beginTransaction();
@@ -506,6 +762,7 @@ async function createReport(req){
       VALUES(?,?,?,?,'SEGUIMIENTO',?,'WEB',?,?,?,?,?,?,?,?,?,'MAPA',UTC_TIMESTAMP(6),?,?,?,NULL,NULL,NULL,NULL,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6),?,?,?)`,
       [crypto.randomUUID(),folio,municipalityId,colonyId,u.id,b.clientReportUuid||null,nna,ageId,b.sexId||null,workId,riskId,String(b.details||b.description||"").trim(),
        lat,lon,b.observedAt||null,st[0].id,pr[0].id,modality==="ANONIMO"?null:u.id,modality==="ANONIMO"?null:u.id,String(b.address||"").trim()||null,String(b.postalCode||"").trim()||null,String(b.schedule||"").trim()||null]);
+    await conn.execute('UPDATE reportes SET cantidad_nna=? WHERE id=?',[childCount,result.insertId]);
     await conn.commit(); return response(201,{ok:true,id:Number(result.insertId),folio});
   }catch(e){await conn.rollback();throw e;}finally{conn.release();}
 }
@@ -556,6 +813,9 @@ async function resolveMobileCatalog(table,value){
 }
 async function createMobileReport(req){
   const u=await requireUser(req),b=req.body;
+  if(u.rol_codigo!=='CIUDADANO')
+    throw httpError(403,'CITIZEN_ROLE_REQUIRED',
+      'Este perfil de personal no puede enviar reportes desde la aplicación ciudadana');
   if(!u.acceso_android && !u.acceso_web) throw httpError(403,"ANDROID_ACCESS_DENIED","Sin acceso a reportes");
   const modality=b.mode==="ANONYMOUS"?"ANONIMO":b.mode==="TRACKING"?"SEGUIMIENTO":null;
   if(!modality) throw httpError(400,"INVALID_MODALITY","Modalidad invalida");
@@ -574,7 +834,7 @@ async function createMobileReport(req){
     return response(200,{ok:true,id:Number(r.id),folio:r.folio});
   }
   const municipalityId=await resolveMobileMunicipality(b.municipalityId??b.municipality);
-  const colonyId=await lookupId("colonias",b.colonyId??b.neighborhood);
+  const colonyId=await resolveColonyForReport(municipalityId,b.colonyId,b.neighborhood);
   let ageValue=b.ageRangeId??b.ageRange;
   if(!ageValue && b.ages!==undefined){
     const age=Number.parseInt(String(b.ages),10);
@@ -582,13 +842,14 @@ async function createMobileReport(req){
   }
   const ageId=await resolveMobileCatalog("rangos_edad",ageValue);
   const workId=await resolveMobileCatalog("tipos_trabajo_infantil",b.workTypeId??b.workType);
-  let riskId=await resolveMobileCatalog("niveles_riesgo",b.riskId??b.risk);
-  if(!riskId) riskId=await lookupId("niveles_riesgo","MEDIO","codigo") || await lookupId("niveles_riesgo","Medio");
+  const triage=await classifyInitialReport(workId,b.children??b.nnaEstimate);
+  const riskId=await lookupId("niveles_riesgo",triage.risk,"codigo");
   const[st]=await pool.query(`SELECT id FROM estatus_operacionales WHERE codigo='REGISTRADO' OR LOWER(nombre)='registrado' ORDER BY id LIMIT 1`);
-  const[pr]=await pool.query(`SELECT id FROM prioridades WHERE codigo='MEDIA' OR LOWER(nombre)='media' ORDER BY id LIMIT 1`);
+  const[pr]=await pool.execute('SELECT id FROM prioridades WHERE codigo=? LIMIT 1',[triage.priority]);
   if(!municipalityId||!ageId||!workId||!riskId||!st[0]||!pr[0]) throw httpError(400,"CATALOG_VALUE_MISSING","No se pudieron resolver catálogos requeridos");
   const lat=Number(b.latitude),lon=Number(b.longitude); if(!Number.isFinite(lat)||!Number.isFinite(lon))throw httpError(400,"LOCATION_REQUIRED","Latitud y longitud son obligatorias");
-  const raw=String(b.children||b.nnaEstimate||"1"), nna=Number(raw)>=5?"5_MAS":(["1","2","3","4"].includes(raw)?raw:"1");
+  const childCount=triage.count;
+  const nna=childCount>=5?"5_MAS":String(childCount);
   const conn=await pool.getConnection();
   try{
     await conn.beginTransaction();
@@ -606,6 +867,7 @@ async function createMobileReport(req){
       VALUES(?,?,?,?,?,?,'ANDROID',?,?,?,?,?,?,?,?,?,'MAPA',UTC_TIMESTAMP(6),?,?,?,NULL,NULL,NULL,NULL,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6),?,?,?)`,
       [reportUuid,folio,municipalityId,colonyId,modality,modality==="ANONIMO"?null:u.id,b.clientReportUuid,nna,ageId,b.sexId||null,workId,riskId,String(b.details||b.description||"").trim(),
        lat,lon,b.observedAt||null,st[0].id,pr[0].id,modality==="ANONIMO"?null:u.id,modality==="ANONIMO"?null:u.id,String(b.address||"").trim()||null,String(b.postalCode||"").trim()||null,String(b.schedule||"").trim()||null]);
+    await conn.execute('UPDATE reportes SET cantidad_nna=? WHERE id=?',[childCount,result.insertId]);
     await conn.commit();
     return response(201,{ok:true,id:Number(result.insertId),folio,
       ...(modality==="ANONIMO"?{uploadToken:mobileUploadToken(result.insertId,reportUuid,u.id,b.clientReportUuid,Math.floor(Date.now()/1000))}:{})});
@@ -727,11 +989,45 @@ async function updateReport(req,key){
       const currentStatus=r.estatus_codigo
       const nextStatus=newStatus.codigo
 
+      if(nextStatus==='REINCIDENTE' && !['CONCLUIDO','ARCHIVADO','CANCELADO'].includes(currentStatus)){
+        throw httpError(409,'REINCIDENCE_NOT_ALLOWED',
+          'La reincidencia solo es posible al reabrir un reporte terminal');
+      }
+      if(['EN_SEGUIMIENTO','CANALIZADO'].includes(nextStatus)){
+        if(!r.asignado_usuario_id){
+          throw httpError(409,'REPORT_ASSIGNEE_REQUIRED',
+            'Asigna una persona responsable antes de cambiar a seguimiento o canalizado');
+        }
+        const [responsables]=await c.execute(
+          `SELECT u.id FROM usuarios u JOIN roles ro ON ro.id=u.rol_id
+           WHERE u.id=? AND u.activo=1 AND ro.codigo IN
+           ('ADMINISTRADOR_FUNDACION','GESTOR_MUNICIPAL','PROCURADOR','PROCURADOR_PROTECCION')
+           LIMIT 1`,[r.asignado_usuario_id]);
+        if(!responsables.length) throw httpError(409,'REPORT_ASSIGNEE_INVALID',
+          'La persona responsable está inactiva o carece de permisos');
+      }
+
       if(nextStatus!==currentStatus){
         const allowed=
           ALLOWED_STATUS_TRANSITIONS.get(currentStatus)
 
-        if(!allowed || !allowed.has(nextStatus)){
+        const reabrir =
+          ["CONCLUIDO","ARCHIVADO","CANCELADO"].includes(currentStatus) &&
+          nextStatus==="REINCIDENTE";
+
+        if(reabrir){
+          if(!u.es_administrador){
+            throw httpError(403,"REOPEN_ADMIN_ONLY",
+              "Solo un administrador puede reabrir este reporte");
+          }
+          const motivo=String(req.body.recurrenceReason||"").trim();
+          if(motivo.length<10 || motivo.length>1000){
+            throw httpError(400,"REOPEN_REASON_REQUIRED",
+              "Escribe un motivo de entre 10 y 1000 caracteres");
+          }
+        }
+
+        if(!reabrir && (!allowed || !allowed.has(nextStatus))){
           throw httpError(
             409,
             "INVALID_STATUS_TRANSITION",
@@ -767,6 +1063,11 @@ async function updateReport(req,key){
 
       if(nextStatus==="CONCLUIDO"){
         sets.push("cerrado_at=UTC_TIMESTAMP(6)")
+      }
+
+      if(nextStatus==="REINCIDENTE" &&
+        ["CONCLUIDO","ARCHIVADO","CANCELADO"].includes(r.estatus_codigo)){
+        sets.push("cerrado_at=NULL")
       }
     }else if(Object.hasOwn(req.body,"solution")){
       sets.push("descripcion_solucion=?")
@@ -826,6 +1127,18 @@ async function updateReport(req,key){
         ]
       )
 
+      if(newStatus.codigo==="REINCIDENTE" &&
+        ["CONCLUIDO","ARCHIVADO","CANCELADO"].includes(r.estatus_codigo)){
+        await c.execute(
+          `INSERT INTO reporte_notas
+           (reporte_id,autor_usuario_id,nota,created_at)
+           VALUES(?,?,?,UTC_TIMESTAMP(6))`,
+          [r.id,u.id,
+           "Motivo de reapertura como reincidente: "+
+           String(req.body.recurrenceReason).trim()]
+        )
+      }
+
       await writeAudit(c,{
         userId:u.id,
         municipalityId:r.municipio_id,
@@ -872,9 +1185,17 @@ async function addNote(req,key){const u=await requireUser(req,{web:true});requir
 async function assignReport(req,key){
   const u=await requireUser(req,{web:true})
   requirePermission(u,"REPORT_ASSIGN")
+  if(!u.es_administrador && !u.municipio_id){
+    throw httpError(403,"MUNICIPALITY_REQUIRED",
+      "Asigna un municipio a tu cuenta antes de reasignar reportes");
+  }
   const a=reportAccess(u)
 
-  const[rows]=await pool.execute(
+  const c=await pool.getConnection()
+  try{
+    await c.beginTransaction()
+
+  const[rows]=await c.execute(
     `SELECT
        r.id,
        r.folio,
@@ -887,7 +1208,7 @@ async function assignReport(req,key){
        ON eo.id=r.estatus_id
      WHERE (r.id=? OR r.folio=?)
        ${a.sql}
-     LIMIT 1`,
+     LIMIT 1 FOR UPDATE`,
     [key,key,...a.params]
   )
 
@@ -911,10 +1232,10 @@ async function assignReport(req,key){
     )
   }
 
-  const c=await pool.getConnection()
-
-  try{
-    await c.beginTransaction()
+  if(['EN_SEGUIMIENTO','CANALIZADO'].includes(report.estatus_codigo) && !assignee){
+    throw httpError(409,'REPORT_ASSIGNEE_REQUIRED',
+      'No puedes dejar un reporte en seguimiento o canalizado sin persona responsable');
+  }
 
     if(assignee){
       const[users]=await c.execute(
@@ -923,11 +1244,12 @@ async function assignReport(req,key){
            u.activo,
            u.municipio_id,
            r.codigo AS rol_codigo,
-           r.acceso_web
+           r.acceso_web,
+           r.es_administrador
          FROM usuarios u
          JOIN roles r ON r.id=u.rol_id
          WHERE u.id=?
-         LIMIT 1`,
+         LIMIT 1 FOR UPDATE`,
         [assignee]
       )
 
@@ -957,7 +1279,16 @@ async function assignReport(req,key){
         )
       }
 
+      if(!assignedUser.es_administrador && assignedUser.municipio_id==null){
+        throw httpError(409,"ASSIGNEE_MUNICIPALITY_REQUIRED",
+          "Asigna un municipio a la cuenta antes de asignarle reportes");
+      }
+      if(!["ADMINISTRADOR_FUNDACION","GESTOR_MUNICIPAL","PROCURADOR","PROCURADOR_PROTECCION"].includes(assignedUser.rol_codigo)){
+        throw httpError(403,"ASSIGNEE_ROLE_NOT_ALLOWED",
+          "El rol de esta cuenta no puede recibir reportes");
+      }
       if(
+        !assignedUser.es_administrador &&
         assignedUser.municipio_id!==null &&
         Number(assignedUser.municipio_id)!==Number(report.municipio_id)
       ){
@@ -1338,7 +1669,7 @@ async function recoveryRequest(req){
   })
 }
 
-async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=?`,[await bcrypt.hash(password,12),rows[0].usuario_id]);await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
+async function recoveryReset(req){const email=String(req.body.email||"").trim().toLowerCase(),code=String(req.body.code||"").trim(),password=String(req.body.password||"");if(password.length<10)throw httpError(400,"WEAK_PASSWORD","La contraseña debe tener al menos 10 caracteres");const[rows]=await pool.execute(`SELECT rp.id,rp.usuario_id FROM recuperaciones_password rp JOIN usuarios u ON u.id=rp.usuario_id WHERE LOWER(u.correo)=? AND u.activo=1 AND rp.token_hash=? AND rp.usado_at IS NULL AND rp.expira_at>UTC_TIMESTAMP(6) ORDER BY rp.id DESC LIMIT 1`,[email,sha256(code)]);if(!rows[0])throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o vencido");const c=await pool.getConnection();try{await c.beginTransaction();const [changed]=await c.execute(`UPDATE usuarios SET password_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE id=? AND activo=1`,[await bcrypt.hash(password,12),rows[0].usuario_id]);if(changed.affectedRows!==1)throw httpError(400,"INVALID_RECOVERY_CODE","Código inválido o cuenta inactiva");await c.execute(`UPDATE recuperaciones_password SET usado_at=UTC_TIMESTAMP(6) WHERE id=?`,[rows[0].id]);await c.execute(`UPDATE sesiones SET revocada_at=UTC_TIMESTAMP(6) WHERE usuario_id=? AND revocada_at IS NULL`,[rows[0].usuario_id]);await c.commit();}catch(e){await c.rollback();throw e;}finally{c.release();}return response(200,{ok:true});}
 
 
 
@@ -2214,7 +2545,7 @@ async function dashboardSummary(req){
       throw httpError(
         400,
         "INVALID_DATE_FROM",
-        "from debe usar formato YYYY-MM-DD"
+        "La fecha inicial debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2229,7 +2560,7 @@ async function dashboardSummary(req){
       throw httpError(
         400,
         "INVALID_DATE_TO",
-        "to debe usar formato YYYY-MM-DD"
+        "La fecha final debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2248,7 +2579,7 @@ async function dashboardSummary(req){
     throw httpError(
       400,
       "INVALID_DATE_RANGE",
-      "from no puede ser posterior a to"
+      "La fecha Desde no puede ser posterior a Hasta"
     )
   }
 
@@ -2316,7 +2647,8 @@ async function dashboardSummary(req){
       ) AS confirmed_duplicates,
 
       SUM(
-        CASE r.estimacion_nna
+COALESCE(r.cantidad_nna,
+          CASE r.estimacion_nna
           WHEN '1' THEN 1
           WHEN '2' THEN 2
           WHEN '3' THEN 3
@@ -2324,13 +2656,15 @@ async function dashboardSummary(req){
           WHEN '5_MAS' THEN 5
           ELSE 0
         END
+        )
       ) AS minimum_estimated_children,
 
       SUM(
         CASE
           WHEN s.codigo='ATENDIDO'
           THEN
-            CASE r.estimacion_nna
+COALESCE(r.cantidad_nna,
+              CASE r.estimacion_nna
               WHEN '1' THEN 1
               WHEN '2' THEN 2
               WHEN '3' THEN 3
@@ -2338,6 +2672,7 @@ async function dashboardSummary(req){
               WHEN '5_MAS' THEN 5
               ELSE 0
             END
+            )
           ELSE 0
         END
       ) AS minimum_children_attended,
@@ -2559,7 +2894,8 @@ async function dashboardSummary(req){
       ) AS urgent,
 
       SUM(
-        CASE r.estimacion_nna
+COALESCE(r.cantidad_nna,
+          CASE r.estimacion_nna
           WHEN '1' THEN 1
           WHEN '2' THEN 2
           WHEN '3' THEN 3
@@ -2567,6 +2903,7 @@ async function dashboardSummary(req){
           WHEN '5_MAS' THEN 5
           ELSE 0
         END
+        )
       ) AS minimum_children
 
     FROM reportes r
@@ -2611,10 +2948,9 @@ async function dashboardSummary(req){
   const[colonyRows]=await pool.execute(
     `
     SELECT
-      COALESCE(
-        c.nombre,
-        'Sin colonia especificada'
-      ) AS name,
+      CONCAT(COALESCE(NULLIF(c.nombre,''),'Sin colonia especificada'),
+             CASE WHEN c.activo=0 THEN ' (por validar)' ELSE '' END,
+             ' — ',m.nombre) AS name,
 
       COUNT(*) AS total
 
@@ -2622,16 +2958,20 @@ async function dashboardSummary(req){
 
     LEFT JOIN colonias c
       ON c.id=r.colonia_id
+    JOIN municipios m ON m.id=r.municipio_id
 
     WHERE ${condition}
 
     GROUP BY
+      r.municipio_id,
       r.colonia_id,
-      c.nombre
+      m.nombre,
+      c.nombre,
+      c.activo
 
     ORDER BY total DESC
 
-    LIMIT 10
+    LIMIT 30
     `,
     params
   )
@@ -2875,7 +3215,7 @@ async function reportMap(req){
       throw httpError(
         400,
         "INVALID_DATE_FROM",
-        "from debe usar formato YYYY-MM-DD"
+        "La fecha inicial debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2890,7 +3230,7 @@ async function reportMap(req){
       throw httpError(
         400,
         "INVALID_DATE_TO",
-        "to debe usar formato YYYY-MM-DD"
+        "La fecha final debe usar el formato AAAA-MM-DD"
       )
     }
 
@@ -2906,7 +3246,7 @@ async function reportMap(req){
     throw httpError(
       400,
       "INVALID_DATE_RANGE",
-      "from no puede ser posterior a to"
+      "La fecha Desde no puede ser posterior a Hasta"
     )
   }
 
@@ -3002,12 +3342,14 @@ async function router(req){
   if(req.method==="POST"&&req.path==="/auth/recovery/reset")return recoveryReset(req);
   if(req.method==="GET"&&req.path==="/catalogos")return listCatalogs(req);
   if(req.method==="GET"&&req.path==="/usuarios")return listUsers(req);
+  if(req.method==="GET"&&req.path==="/usuarios/asignables")return listAssignableUsers(req);
   if(req.method==="POST"&&req.path==="/usuarios")return createUser(req);
   let m;
   if((m=match(req.path,/^\/usuarios\/([^/]+)$/))&&req.method==="PATCH")return updateUser(req,m[0]);
   if((m=match(req.path,/^\/usuarios\/([^/]+)$/))&&req.method==="DELETE")return deactivateUser(req,m[0]);
   if(req.method==="GET"&&req.path==="/dashboard/resumen")return dashboardSummary(req);
   if((m=match(req.path,/^\/mobile\/seguimiento\/([^/]+)$/))&&req.method==="GET")return mobileTracking(req,m[0]);
+  if(req.method==="GET"&&req.path==="/mobile/mis-reportes")return listMyMobileReports(req);
   if(req.method==="GET"&&req.path==="/reportes/mapa")return reportMap(req);
   if(req.method==="GET"&&req.path==="/reportes")return listReports(req);
   if(req.method==="POST"&&req.path==="/reportes")return createReport(req);

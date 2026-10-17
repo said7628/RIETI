@@ -34,7 +34,7 @@ function RecentReports() {
                   <StatusBadge status={report.status} />
                 </td>
 
-                <td>{report.caseHolder ?? '—'}</td>
+                <td>{report.assignedUserInactive ? 'Cuenta desactivada — reasignar' : report.caseHolder ?? '—'}</td>
               </tr>
             ))}
           </tbody>

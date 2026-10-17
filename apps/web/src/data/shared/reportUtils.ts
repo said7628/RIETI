@@ -33,3 +33,8 @@ export function formatDate(isoDate: string) {
     year: 'numeric',
   })
 }
+
+/** Etiqueta comun con el catalogo mostrado en Android. No cambia IDs en la base. */
+export function workTypeLabel(value: string) {
+  return /tortiller[ií]a/i.test(value) ? 'Despachador/trabajador de tortillería' : value
+}

@@ -21,6 +21,8 @@ import {
 } from 'recharts'
 
 import graphIcon from '../../assets/graph-icon.png'
+import { useSessionUser, useReports } from '../../data/shared/session'
+import { extractReportAges } from '../shared/ReportAgeBreakdown'
 
 import {
   getDashboardSummary,
@@ -202,6 +204,9 @@ function ChartCard({
 }
 
 function StatisticsSection() {
+  const sessionUser = useSessionUser()
+  const reports = useReports()
+  const isAdmin = sessionUser?.roleCode === 'ADMINISTRADOR_FUNDACION'
   const [data, setData] =
     useState<DashboardResponse | null>(null)
 
@@ -216,6 +221,8 @@ function StatisticsSection() {
 
   const [to, setTo] =
     useState('')
+
+  const [retryIndex, setRetryIndex] = useState(0)
 
   const [appliedFrom, setAppliedFrom] =
     useState('')
@@ -263,7 +270,7 @@ function StatisticsSection() {
     return () => {
       cancelled = true
     }
-  }, [appliedFrom, appliedTo])
+  }, [appliedFrom, appliedTo, retryIndex])
 
   const monthly = useMemo(
     () =>
@@ -276,23 +283,53 @@ function StatisticsSection() {
     [data],
   )
 
-  const sexData = useMemo(
-    () => objectToChart(data?.bySex ?? {}),
-    [data],
-  )
+
+  // Últimas ocho semanas ISO (lunes a domingo); respeta el periodo seleccionado.
+  const weekly = useMemo(() => {
+    const anchor = new Date()
+    const today = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate()))
+    const monday = new Date(today)
+    monday.setUTCDate(today.getUTCDate() - ((today.getUTCDay() + 6) % 7))
+    const weeks = Array.from({ length: 8 }, (_, index) => {
+      const fromDate = new Date(monday)
+      fromDate.setUTCDate(monday.getUTCDate() - (7 - index) * 7)
+      const toDate = new Date(fromDate)
+      toDate.setUTCDate(fromDate.getUTCDate() + 7)
+      return { fromDate, toDate, label: `${fromDate.getUTCDate()}/${fromDate.getUTCMonth() + 1}`, reports: 0, concluded: 0 }
+    })
+    for (const report of reports) {
+      const created = new Date(report.createdAt)
+      if (!Number.isFinite(created.getTime())) continue
+      const day = created.toISOString().slice(0, 10)
+      if (appliedFrom && day < appliedFrom) continue
+      if (appliedTo && day > appliedTo) continue
+      const week = weeks.find(w => created >= w.fromDate && created < w.toDate)
+      if (!week) continue
+      week.reports++
+      if (['CONCLUIDO','ARCHIVADO'].includes(report.statusCode ?? '') || ['Concluido','Archivado'].includes(report.status)) week.concluded++
+    }
+    return weeks.map(({ label, reports, concluded }) => ({ label, reports, concluded }))
+  }, [reports, appliedFrom, appliedTo])
+
+  // Cantidades por rangos solo si el desglose de edades existe en el reporte.
+  // No inventar una distribución de menores cuando solo tenemos una edad dominante.
+  const childrenByAge = useMemo(() => {
+    const byAge = new Map(['0-5', '6-11', '12-14', '15-17'].map(a => [a, 0]))
+    for (const report of reports) {
+      const day = (report.createdAt ?? '').slice(0, 10)
+      if (appliedFrom && day < appliedFrom) continue
+      if (appliedTo && day > appliedTo) continue
+      for (const item of extractReportAges(report.description)) {
+        byAge.set(item.range, (byAge.get(item.range) ?? 0) + item.count)
+      }
+    }
+    return [...byAge].map(([name, total]) => ({ name, total }))
+  }, [reports, appliedFrom, appliedTo])
 
   const ageData = useMemo(
     () =>
       objectToChart(
         data?.byAgeRange ?? {},
-      ),
-    [data],
-  )
-
-  const riskData = useMemo(
-    () =>
-      objectToChart(
-        data?.byRisk ?? {},
       ),
     [data],
   )
@@ -308,7 +345,10 @@ function StatisticsSection() {
   const workTypeData = useMemo(
     () =>
       objectToChart(
-        data?.byWorkType ?? {},
+        Object.fromEntries(Object.entries(data?.byWorkType ?? {}).map(([name, total]) => [
+          name === 'Despachador en tortillería' ? 'Trabajador de tortillería' : name,
+          total,
+        ])),
       ),
     [data],
   )
@@ -420,8 +460,11 @@ function StatisticsSection() {
         )}
 
         {!loading && error && (
-          <div className="analytics-state analytics-state-error">
-            {error}
+          <div className="analytics-state analytics-state-error" role="alert">
+            <p>{error}</p>
+            <button type="button" onClick={() => setRetryIndex(index => index + 1)}>
+              Volver a intentar estadísticas
+            </button>
           </div>
         )}
 
@@ -503,7 +546,7 @@ function StatisticsSection() {
 
               <ChartCard
                 title="Evolución mensual"
-                subtitle="Reportes registrados y casos atendidos"
+                subtitle="Reportes registrados y casos completados"
                 wide
               >
                 <ResponsiveContainer
@@ -538,7 +581,7 @@ function StatisticsSection() {
                     <Line
                       type="monotone"
                       dataKey="attended"
-                      name="Atendidos"
+                      name="Completados"
                       stroke="#1fc5b4"
                       strokeWidth={3}
                     />
@@ -547,44 +590,23 @@ function StatisticsSection() {
               </ChartCard>
 
 
-              <ChartCard
-                title="Distribución por sexo"
-                subtitle="Sexo observado en los reportes"
-              >
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <PieChart>
-                    <Pie
-                      data={sexData}
-                      dataKey="total"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={90}
-                      paddingAngle={3}
-                    >
-                      {sexData.map(
-                        (_, index) => (
-                          <Cell
-                            key={index}
-                            fill={
-                              chartColors[
-                                index %
-                                  chartColors.length
-                              ]
-                            }
-                          />
-                        ),
-                      )}
-                    </Pie>
 
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
+
+              <ChartCard
+                title="Evolución semanal"
+                subtitle="Reportes creados por semana y casos completados de esa cohorte (estado actual)"
+                wide
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weekly}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="label" /><YAxis allowDecimals={false} />
+                    <Tooltip /><Legend />
+                    <Line type="monotone" dataKey="reports" name="Reportes" stroke="#d10073" strokeWidth={3} />
+                    <Line type="monotone" dataKey="concluded" name="Completados (estado actual)" stroke="#1fc5b4" strokeWidth={3} />
+                  </LineChart>
                 </ResponsiveContainer>
               </ChartCard>
-
 
               <ChartCard
                 title="Rangos de edad"
@@ -614,33 +636,16 @@ function StatisticsSection() {
               </ChartCard>
 
 
-              <ChartCard
-                title="Nivel de riesgo"
-                subtitle="Distribución territorial de riesgo"
-              >
-                <ResponsiveContainer
-                  width="100%"
-                  height="100%"
-                >
-                  <BarChart data={riskData}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                    />
-
-                    <XAxis dataKey="name" />
-                    <YAxis allowDecimals={false} />
+              <ChartCard title="Menores por rango de edad" subtitle="Total observado con desglose de edades disponible">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={childrenByAge}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" /><YAxis allowDecimals={false} />
                     <Tooltip />
-
-                    <Bar
-                      dataKey="total"
-                      name="Reportes"
-                      fill="#d10073"
-                      radius={[7, 7, 0, 0]}
-                    />
+                    <Bar dataKey="total" name="Menores" fill="#1fc5b4" radius={[7,7,0,0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartCard>
-
 
               <ChartCard
                 title="Prioridad"
@@ -711,6 +716,7 @@ function StatisticsSection() {
                 title="Tipos de trabajo infantil"
                 subtitle="Actividades observadas con mayor frecuencia"
               >
+                <div className="rieti-long-label-chart" style={{ height: Math.max(350, workTypeData.length * 34 + 44) }}>
                 <ResponsiveContainer
                   width="100%"
                   height="100%"
@@ -719,8 +725,8 @@ function StatisticsSection() {
                     data={workTypeData}
                     layout="vertical"
                     margin={{
-                      left: 40,
-                      right: 30,
+                      left: 15,
+                      right: 25,
                     }}
                   >
                     <CartesianGrid
@@ -735,7 +741,8 @@ function StatisticsSection() {
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={170}
+                      width={295}
+                      interval={0}
                     />
 
                     <Tooltip />
@@ -748,14 +755,32 @@ function StatisticsSection() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </ChartCard>
 
+
+              {isAdmin && <ChartCard
+                title="Reportes por municipio"
+                subtitle="Municipios con más casos registrados (máximo 20)"
+                wide
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.byMunicipality ?? []} layout="vertical" margin={{ left: 35, right: 30 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" width={170} />
+                    <Tooltip />
+                    <Bar dataKey="total" name="Reportes" fill="#ff8aca" radius={[0, 7, 7, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>}
 
               <ChartCard
                 title="Colonias con más reportes"
                 subtitle="Principales zonas registradas"
                 wide
               >
+                <div className="rieti-long-label-chart" style={{ height: Math.max(360, (data.topColonies?.length ?? 0) * 33 + 45) }}>
                 <ResponsiveContainer
                   width="100%"
                   height="100%"
@@ -764,8 +789,8 @@ function StatisticsSection() {
                     data={data.topColonies}
                     layout="vertical"
                     margin={{
-                      left: 35,
-                      right: 30,
+                      left: 10,
+                      right: 24,
                     }}
                   >
                     <CartesianGrid
@@ -780,7 +805,8 @@ function StatisticsSection() {
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={170}
+                      width={310}
+                      interval={0}
                     />
 
                     <Tooltip />
@@ -793,6 +819,7 @@ function StatisticsSection() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </ChartCard>
 
             </div>

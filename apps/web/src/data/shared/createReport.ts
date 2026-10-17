@@ -51,6 +51,20 @@ function toAgeRange(ages: string): AgeRange {
   return '15-17'
 }
 
+/** Solo para el formulario local de demostracion. La API decide la prioridad real. */
+function draftPriority(workType: string, children: string): 'MEDIA' | 'ALTA' | 'URGENTE' {
+  const count = Number(children.trim())
+  if (!Number.isInteger(count) || count < 1) throw new Error('Indica la cantidad exacta de menores')
+  const name = workType.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+  const isSexual = /EXPLOTACION SEXUAL|EXPLOTACION_SEXUAL/.test(name)
+  const isHigh = /SEMAFOR|TORTILLER|CONSTRUCCION|GASOLIN|LIMPIAPARABRISAS|MENDICIDAD/.test(name)
+  const isMedium = /VOLANTES|MERCADO|LAVADO DE AUTOS|EMPACADOR|CERILLO|\bOTRO\b/.test(name)
+  if (!isSexual && !isHigh && !isMedium) throw new Error('Tipo de trabajo sin prioridad definida')
+  if (isSexual || count >= 10) return 'URGENTE'
+  if (isHigh || count >= 5) return 'ALTA'
+  return 'MEDIA'
+}
+
 export function draftToReport(draft: ReportDraft, folio: string): Report {
   const address = [
     draft.address.trim(),
@@ -65,12 +79,14 @@ export function draftToReport(draft: ReportDraft, folio: string): Report {
     folio,
     createdAt: new Date().toISOString(),
     workType: draft.workType.trim(),
-    colonia: draft.neighborhood.trim() || draft.municipality.trim() || 'Sin colonia',
+    colonia: draft.neighborhood.trim(),
+    municipality: draft.municipality.trim(),
     address,
     status: 'Registrado',
-    priority: 'MEDIA',
+    priority: draftPriority(draft.workType, draft.children),
     caseHolder: null,
     nnaEstimate: toNnaEstimate(draft.children),
+    childrenCount: Number(draft.children.trim()),
     ageRange: toAgeRange(draft.ages),
     schedule: draft.schedule.trim() || '—',
     description: draft.details.trim(),

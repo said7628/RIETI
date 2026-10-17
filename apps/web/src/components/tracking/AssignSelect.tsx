@@ -4,17 +4,27 @@ import Modal from '../shared/Modal'
 
 interface AssignSelectProps {
   folio: string
+  reportMunicipalityId?: number | null
   onConfirm: (user: ApiUser) => Promise<void>
 }
 
+const ASSIGNABLE_ROLES = new Set([
+  'ADMINISTRADOR_FUNDACION',
+  'GESTOR_MUNICIPAL',
+  'PROCURADOR',
+  'PROCURADOR_PROTECCION',
+])
+
 function AssignSelect({
   folio,
+  reportMunicipalityId,
   onConfirm,
 }: AssignSelectProps) {
   const [staff, setStaff] = useState<ApiUser[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -27,9 +37,15 @@ function AssignSelect({
           users.filter(
             (user) =>
               user.active &&
-              user.roleCode !== 'GESTOR_MUNICIPAL',
+              ASSIGNABLE_ROLES.has(user.roleCode) &&
+              (user.roleCode === 'ADMINISTRADOR_FUNDACION' ||
+                (user.municipalityId != null &&
+                 (reportMunicipalityId == null || user.municipalityId === reportMunicipalityId))),
           ),
         )
+      })
+      .catch(() => {
+        if (active) setStaff([])
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -38,19 +54,20 @@ function AssignSelect({
     return () => {
       active = false
     }
-  }, [])
+  }, [folio, reportMunicipalityId])
 
   const selected =
     staff.find((user) => user.id === selectedId) ?? null
 
   async function confirmAssignment() {
     if (!selected) return
-
+    setError('')
     setSaving(true)
-
     try {
       await onConfirm(selected)
       setSelectedId(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible asignar el reporte.')
     } finally {
       setSaving(false)
     }
@@ -69,7 +86,7 @@ function AssignSelect({
           }
         >
           <option value="" disabled>
-            {loading ? 'Cargando...' : '(Asignar)'}
+            {loading ? 'Cargando personal...' : staff.length ? '(Asignar)' : 'Sin personal disponible para este municipio'}
           </option>
 
           {staff.map((user) => (
@@ -91,6 +108,7 @@ function AssignSelect({
             <strong>{selected.name}</strong>?
           </p>
 
+          {error && <p role="alert" className="modal-error">{error}</p>}
           <div className="modal-buttons">
             <button
               type="button"

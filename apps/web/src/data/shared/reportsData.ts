@@ -14,6 +14,7 @@ export interface Report {
   workType: string
   colonia: string
   municipality?: string
+  municipalityId?: number | null
   address: string
   postalCode?: string
   status: ReportStatus
@@ -21,8 +22,10 @@ export interface Report {
   priority: Priority
   caseHolder: string | null
   assignedUserId?: number | null
+  assignedUserInactive?: boolean
   assignedDependency?: string | null
   nnaEstimate: NnaEstimate
+  childrenCount?: number | null
   ageRange: AgeRange
   schedule: string
   description: string

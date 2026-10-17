@@ -10,6 +10,7 @@ import Modal from '../shared/Modal'
 interface UpdateStatusModalProps {
   report: Report
   saving?: boolean
+  serverError?: string
   isAdmin?: boolean
   onCancel: () => void
   onConfirm: (
@@ -22,6 +23,7 @@ interface UpdateStatusModalProps {
 function UpdateStatusModal({
   report,
   saving = false,
+  serverError = '',
   isAdmin = false,
   onCancel,
   onConfirm,
@@ -57,6 +59,11 @@ function UpdateStatusModal({
       setError(
         'Describe la solución brindada antes de marcar el caso como atendido.',
       )
+      return
+    }
+
+    if (['En seguimiento', 'Canalizado'].includes(status) && !report.assignedUserId) {
+      setError('Asigna un responsable autorizado antes de pasar a seguimiento o canalizado.')
       return
     }
 
@@ -135,9 +142,9 @@ function UpdateStatusModal({
         </p>
       )}
 
-      {error && (
-        <p className="modal-error">
-          {error}
+      {(error || serverError) && (
+        <p className="modal-error" role="alert">
+          {error || serverError}
         </p>
       )}
 

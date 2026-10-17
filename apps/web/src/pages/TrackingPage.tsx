@@ -63,6 +63,8 @@ function TrackingPage() {
   const [coloniaFilter, setColoniaFilter] =
     useState('')
 
+  const [municipalityFilter, setMunicipalityFilter] = useState('')
+
   const [pagination, setPagination] =
     useState({
       view,
@@ -92,19 +94,22 @@ function TrackingPage() {
     setIsDetailsModalOpen,
   ] = useState(false)
 
-  const [actionError, setActionError] =
-    useState('')
+  const [actionErrorState, setActionErrorState] = useState({ view, message: '' })
+  const actionError = actionErrorState.view === view ? actionErrorState.message : ''
+  function setActionError(message: string) {
+    setActionErrorState({ view, message })
+  }
 
   const [isSavingStatus, setIsSavingStatus] =
     useState(false)
 
-  const colonias = [
-    ...new Set(
-      reports.map(
-        (report) => report.colonia,
-      ),
-    ),
-  ].sort()
+  const municipios = [...new Set(reports.map(r => (r.municipality ?? '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'es'))
+  const colonias = [...new Set(reports
+    .filter(r => !municipalityFilter || r.municipality === municipalityFilter)
+    .filter(r => r.colonia && r.colonia.trim() && r.colonia.trim() !== (r.municipality ?? '').trim())
+    .map(r => r.colonia.trim()))]
+    .sort((a, b) => a.localeCompare(b, 'es'))
 
   const filteredReports = reports.filter(
     (report) =>
@@ -112,6 +117,7 @@ function TrackingPage() {
         report,
         view,
         user?.name ?? null,
+        user?.id ?? null,
       ) &&
       report.folio
         .toLowerCase()
@@ -123,9 +129,8 @@ function TrackingPage() {
       (priorityFilter === '' ||
         report.priority ===
           priorityFilter) &&
-      (coloniaFilter === '' ||
-        report.colonia ===
-          coloniaFilter),
+      (municipalityFilter === '' || report.municipality === municipalityFilter) &&
+      (coloniaFilter === '' || report.colonia === coloniaFilter),
   )
 
   const sortedReports =
@@ -229,8 +234,8 @@ function TrackingPage() {
       if (error instanceof ApiError && error.status === 409) {
         // Otra persona pudo actualizar el caso. Recargar la verdad del servidor.
         await refreshReports().catch(() => undefined)
-        setIsStatusModalOpen(false)
-        setActionError(`${error.message}. Se actualizó la lista para mostrar el estado real.`)
+        // Conservar el motivo escrito por el usuario para que pueda corregirlo.
+        setActionError(`${error.message}. No se guardó el cambio; revisa las reglas de la API.`)
       } else {
         setActionError(error instanceof Error
           ? error.message : 'No fue posible actualizar el estatus.')
@@ -249,6 +254,7 @@ function TrackingPage() {
       <>
         {isAdmin && (
           <AssignSelect
+            reportMunicipalityId={selectedReport.municipalityId}
             folio={
               selectedReport.folio
             }
@@ -262,7 +268,7 @@ function TrackingPage() {
           <button
             type="button"
             className="button-primary"
-            onClick={() => setIsStatusModalOpen(true)}
+            onClick={() => { setActionError(''); setIsStatusModalOpen(true) }}
           >
             Actualizar estatus
           </button>
@@ -337,6 +343,21 @@ function TrackingPage() {
             </select>
 
             <select
+              aria-label="Filtrar por municipio"
+              value={municipalityFilter}
+              onChange={(event) => {
+                setMunicipalityFilter(event.target.value)
+                setColoniaFilter('')
+                setPagination({ view, page: 1 })
+              }}
+            >
+              <option value="">Todos los municipios</option>
+              {municipios.map((municipio) => (
+                <option key={municipio} value={municipio}>{municipio}</option>
+              ))}
+            </select>
+
+            <select
               aria-label="Filtrar por colonia"
               value={coloniaFilter}
               onChange={(event) => {
@@ -365,6 +386,19 @@ function TrackingPage() {
                 ),
               )}
             </select>
+
+            <button type="button" className="tracking-clear-filters"
+              onClick={() => {
+                setFolioSearch('')
+                setPriorityFilter('')
+                setMunicipalityFilter('')
+                setColoniaFilter('')
+                setSort('recientes')
+                setPagination({ view, page: 1 })
+              }}
+              disabled={!folioSearch && !priorityFilter && !municipalityFilter && !coloniaFilter && sort === 'recientes'}
+              aria-label="Borrar todos los filtros de seguimiento"
+            >Borrar filtros</button>
 
             <label className="tracking-sort">
               Ordenar por:{' '}
@@ -447,6 +481,7 @@ function TrackingPage() {
             report={selectedReport}
             isAdmin={isAdmin}
             saving={isSavingStatus}
+            serverError={actionError}
             onCancel={() =>
               setIsStatusModalOpen(
                 false,
